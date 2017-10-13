@@ -17,8 +17,8 @@ niter = 100
 nburn = 10
 nlcs = 0 #numero de la courbe a traiter
 
-open('./MCMC_test/rt_file' + object +"_"+ picklename + "_" + str(niter) +'.txt', 'w').close() # to clear the file
-rt_file = open('./MCMC_test/rt_file' + object +"_"+ picklename + "_" + str(niter) +'.txt','a')
+open('./MCMC_test/rt_file_' + object +"_"+ picklename + "_" + str(niter) +'.txt', 'w').close() # to clear the file
+rt_file = open('./MCMC_test/rt_file_' + object +"_"+ picklename + "_" + str(niter) +'.txt','a')
 
 (lcs, spline) = pycs.gen.util.readpickle(picklepath + picklename)
 
@@ -34,7 +34,8 @@ fit_error = [0.05,0.02]
 pycs.sim.draw.saveresiduals(lcs, spline)
 
 initial_position = [-1.5,0.1]
-theta_walk, chi2_walk = mcmc.mcmc_metropolis(initial_position, lcs, fit_vector,fit_error, niter = niter, burntime = nburn, savefile = rt_file, nlcs=0)
+theta_walk, chi2_walk = mcmc.mcmc_metropolis(initial_position, lcs, fit_vector,fit_error,spline,
+                                 niter = niter, burntime = nburn, savefile = rt_file, nlcs=0, recompute_spline= True, para= True, knotstep = kntstp)
 
 print("--- %s seconds ---" % (time.time() - start_time))
 
@@ -44,7 +45,8 @@ pickle.dump(chi2_walk, open("./MCMC_test/chi2_walk_" + object +"_"+ picklename +
 
 
 
-#TODO : check how many curve you need to have a good statistic on zruns and sigma
-#TODO : check if it changes something to use draw with one lightcurve or with all lightcurve
+#TODO : check how many curve you need to have a good statistic on zruns and sigma DONE 50 CURVES IS GOOD
+#TODO : check if it changes something to use draw with one lightcurve or with all lightcurve no !
+#TODO : write a script to restart mcmc from a certain point.
 
 

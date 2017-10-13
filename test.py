@@ -11,8 +11,8 @@ kntstp = 80
 ml_kntstep =350
 picklepath = "./"+object+"/save/"
 picklename ="opt_spl_ml_"+str(kntstp)+"-"+str(ml_kntstep) + "knt.pkl"
-niter = 100
-nburn = 10
+niter = 10
+nburn = 0
 nlcs = 0 #numero de la courbe a traiter
 
 open('./MCMC_test/rt_file' + object +"_"+ picklename + "_" + str(niter) +'.txt', 'w').close() # to clear the file
