@@ -17,8 +17,8 @@ niter = 100
 nburn = 10
 nlcs = 0 #numero de la courbe a traiter
 
-open('./MCMC_test/rt_file' + object +"_"+ picklename + "_" + str(niter) +'.txt', 'w').close() # to clear the file
-rt_file = open('./MCMC_test/rt_file' + object +"_"+ picklename + "_" + str(niter) +'.txt','a')
+open('./MCMC_test/rt_file_' + object +"_"+ picklename + "_" + str(niter) +'.txt', 'w').close() # to clear the file
+rt_file = open('./MCMC_test/rt_file_' + object +"_"+ picklename + "_" + str(niter) +'.txt','a')
 
 (lcs, spline) = pycs.gen.util.readpickle(picklepath + picklename)
 pycs.sim.draw.saveresiduals(lcs, spline)
