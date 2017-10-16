@@ -5,16 +5,30 @@ import numpy as np
 import pycs
 import mcmc_function as fmcmc
 
-theta = pickle.load(open("./MCMC_test/theta_walk_10000.pkl", "rb"))
-chi2 = pickle.load(open("./MCMC_test/chi2_walk_10000.pkl", "rb"))
+
 makeplot = True
+source ="rt_file"
+object = "LCJ0806b"
+picklepath = "./LCJ0806b/save/"
+picklename ="opt_spl_ml_80-350knt.pkl"
+burntime = 10
+knotstep = 80
+niter = 100
+nlcs = 0 #numero de la courbe a traiter
+
+if source == "pickle":
+    theta = pickle.load(open("./MCMC_test/theta_walk_10000.pkl", "rb"))
+    chi2 = pickle.load(open("./MCMC_test/chi2_walk_10000.pkl", "rb"))
+
+if source == "rt_file":
+    rt_filename = './MCMC_test/rt_file' + object + "_" + picklename + "_" + str(niter) + '.txt'
+    vec = np.loadtxt(rt_filename, delimiter=',')
+    vec = np.asarray(vec)
+    theta = vec[burntime:,0:2]
+    chi2 = vec[burntime:,2]
 
 theta = np.asarray(theta)
 chi2 = np.asarray(chi2)
-
-picklepath = "./LCJ0806b/save/"
-picklename ="opt_spl_ml_80-350knt.pkl"
-nlcs = 0 #numero de la courbe a traiter
 
 (lcs, spline) = pycs.gen.util.readpickle(picklepath + picklename)
 
@@ -35,7 +49,7 @@ min_theta = theta[N_min,:]
 
 print "min Chi2 : ", min_chi2
 print "min theta :", min_theta
-fmcmc.make_mocks(min_theta,lcs[nlcs],spline,ncurve=100, verbose=True)
+fmcmc.make_mocks_para(min_theta,lcs,spline,ncurve=100, recompute_spline= True, knotstep=knotstep, nlcs=nlcs, verbose=True)
 print "compared to sigma, nruns, zruns : "+ str(fit_sigma) + ', ' + str(fit_nruns) + ', ' + str(fit_zruns)
 
 if makeplot :
@@ -46,7 +60,7 @@ if makeplot :
     plt.xlabel('N', fontdict={"fontsize" : 16})
     plt.ylabel('$\chi^2$', fontdict={"fontsize" : 16})
     plt.plot(x,chi2)
-    plt.savefig('./MCMC_test/chi2-random.png')
+    plt.savefig('./MCMC_test/chi2-random'+ picklename + "_" + str(niter) + '.png')
 
     fig3, axe = plt.subplots(2,1,sharex=True)
     axe[0].plot(x,theta[:,0],'r')
@@ -54,7 +68,7 @@ if makeplot :
     plt.xlabel('N', fontdict={"fontsize" : 16})
     axe[0].set_ylabel('beta', fontdict={"fontsize" : 16})
     axe[1].set_ylabel('$\sigma$', fontdict={"fontsize" : 16})
-    plt.savefig('./MCMC_test/beta-sigma-random.png')
+    plt.savefig('./MCMC_test/beta-sigma-random'+ picklename + "_" + str(niter) + '.png')
     plt.show()
 
-    fig1.savefig("./MCMC_test/plot.png")
+    fig1.savefig("./MCMC_test/cornerplot_" + picklename + "_" + str(niter) + '.png')

@@ -4,7 +4,6 @@ import pycs
 import pycs.regdiff
 import numpy as np
 import pickle
-import emcee
 import corner
 
 import scipy.optimize as op

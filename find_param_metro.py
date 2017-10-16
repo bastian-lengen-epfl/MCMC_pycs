@@ -43,8 +43,6 @@ pickle.dump(theta_walk, open("./MCMC_test/theta_walk_" + object +"_"+ picklename
 pickle.dump(chi2_walk, open("./MCMC_test/chi2_walk_" + object +"_"+ picklename + "_" + str(niter) +".pkl", "wb" ))
 
 
-
-
 #TODO : check how many curve you need to have a good statistic on zruns and sigma DONE 50 CURVES IS GOOD
 #TODO : check if it changes something to use draw with one lightcurve or with all lightcurve no !
 #TODO : write a script to restart mcmc from a certain point.
