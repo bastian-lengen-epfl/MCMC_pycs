@@ -96,6 +96,8 @@ def make_mocks_para(theta, lcs, spline, ncurve = 20, verbose = False, knotstep =
     job_args = [(theta,lcs,spline, job_kwarg) for j in range(ncurve)]
 
     stat_out = pool.map(fct_para_aux, job_args)
+    pool.close()
+    pool.join()
 
     for i in range(len(stat_out)):
         zruns.append(stat_out[i][0]['zruns'])
