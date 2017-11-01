@@ -5,8 +5,8 @@ import copy
 import time
 import multiprocessing
 
-def mcmc_metropolis(theta, lcs, fit_vector, fit_error, spline, knotstep = None, niter=1000,
-                    burntime=100, savefile = None, nlcs = 0, recompute_spline = False, para = True):
+def mcmc_metropolis(theta, lcs, fit_vector, spline, gaussian_stp = [0.05,0.02], knotstep = None, niter=1000,
+                    burntime=100, savefile = None, nlcs = 0, recompute_spline = False, para = True, rdm_walk = 'gaussian'):
     theta_save = []
     chi2_save = []
     chi2_current = compute_chi2(theta, lcs, fit_vector, spline, knotstep= knotstep, nlcs = nlcs, recompute_spline= recompute_spline)
@@ -15,8 +15,12 @@ def mcmc_metropolis(theta, lcs, fit_vector, fit_error, spline, knotstep = None, 
     for i in range(niter):
         t_now = time.time() - t
         print "time : ", t_now
-
-        theta_new = theta + fit_error*np.random.randn(2)
+		
+		if rdm_walk == 'gaussian':
+			theta_new = make_random_step_gaussian(theta,gaussian_step)
+		elif rdm_walk == 'lognormal':
+			theta_new = make_random_step_lognormal(theta)
+			
         if not prior(theta_new):
             continue
 
@@ -42,10 +46,16 @@ def mcmc_metropolis(theta, lcs, fit_vector, fit_error, spline, knotstep = None, 
     return theta_save, chi2_save
 
 def prior(theta):
-    if -2.0<theta[0]<-1.0 and 0<theta[1]< 0.5:
+    if -4.0<theta[0]<-1.0 and 0<theta[1]< 0.5:
         return True
     else:
         return False
+
+def make_random_step_gaussian(theta, sigma_step):
+	return theta + sigma_step*np.random.randn(2)
+	
+def mak_random_step_lognormal(theta,sigma_step):
+	return [theta[0] + sigma_step[0]*np.random.randn(), theta[1] + np.random.lognormal(mean = 0 )
 
 def make_mocks(theta, lcs, spline, ncurve = 20, verbose = False, knotstep = None, recompute_spline = True, nlcs = 0, display = False):
     mocklcs = []
