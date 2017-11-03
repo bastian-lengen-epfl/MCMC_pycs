@@ -55,7 +55,7 @@ def make_random_step_gaussian(theta, sigma_step):
 	return theta + sigma_step*np.random.randn(2)
 	
 def mak_random_step_lognormal(theta,sigma_step):
-	return [theta[0] + sigma_step[0]*np.random.randn(), theta[1] + np.random.lognormal(mean = 0 )
+	return [theta[0] + sigma_step[0]*np.random.randn(), theta[1] + np.log(np.random.lognormal(mean = 0 ))]
 
 def make_mocks(theta, lcs, spline, ncurve = 20, verbose = False, knotstep = None, recompute_spline = True, nlcs = 0, display = False):
     mocklcs = []
