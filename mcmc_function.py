@@ -7,11 +7,11 @@ import multiprocessing
 
 
 def mcmc_metropolis(theta, lcs, fit_vector, spline, gaussian_step=[0.05, 0.02], knotstep=None, niter=1000,
-                    burntime=100, savefile=None, nlcs=0, recompute_spline=False, para=True, rdm_walk='gaussian'):
+                    burntime=100, savefile=None, nlcs=0, recompute_spline=False, para=True, rdm_walk='gaussian', max_core = 16):
     theta_save = []
     chi2_save = []
     chi2_current = compute_chi2(theta, lcs, fit_vector, spline, knotstep=knotstep, nlcs=nlcs,
-                                recompute_spline=recompute_spline)
+                                recompute_spline=recompute_spline, max_core = max_core)
     t = time.time()
 
     for i in range(niter):
@@ -28,7 +28,7 @@ def mcmc_metropolis(theta, lcs, fit_vector, spline, gaussian_step=[0.05, 0.02], 
 
         print theta_new
         chi2_new = compute_chi2(theta_new, lcs, fit_vector, spline, knotstep=knotstep, nlcs=nlcs,
-                                recompute_spline=recompute_spline, para=para)
+                                recompute_spline=recompute_spline, para=para, max_core = max_core)
         ratio = np.exp((-chi2_new + chi2_current) / 2.0);
 
         if np.random.rand() < ratio:
@@ -114,13 +114,13 @@ def make_mocks(theta, lcs, spline, ncurve=20, verbose=False, knotstep=None, reco
 
 
 def make_mocks_para(theta, lcs, spline, ncurve=20, verbose=False, knotstep=None, recompute_spline=True, nlcs=0,
-                    display=False):
+                    display=False, max_core = 16):
     stat = []
     zruns = []
     sigmas = []
     nruns = []
 
-    pool = multiprocessing.Pool()
+    pool = multiprocessing.Pool(processes = max_core)
     job_kwarg = {'knotstep': knotstep, 'recompute_spline': recompute_spline, 'nlcs': nlcs}
     job_args = [(theta, lcs, spline, job_kwarg) for j in range(ncurve)]
 
@@ -141,11 +141,11 @@ def make_mocks_para(theta, lcs, spline, ncurve=20, verbose=False, knotstep=None,
     return [np.mean(zruns), np.mean(sigmas)], [np.std(zruns), np.std(sigmas)]
 
 
-def compute_chi2(theta, lcs, fit_vector, spline, nlcs=0, knotstep=40, recompute_spline=False, para=True):
+def compute_chi2(theta, lcs, fit_vector, spline, nlcs=0, knotstep=40, recompute_spline=False, para=True, max_core = 16):
     chi2 = 0.0
     if para:
         out, error = make_mocks_para(theta, lcs, spline, nlcs=nlcs, recompute_spline=recompute_spline,
-                                     knotstep=knotstep)
+                                     knotstep=knotstep, max_core = max_core)
     else:
         out, error = make_mocks(theta, lcs, spline, nlcs=nlcs, recompute_spline=recompute_spline, knotstep=knotstep)
 

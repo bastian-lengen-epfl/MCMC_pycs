@@ -13,10 +13,11 @@ kntstp = 80
 ml_kntstep =350
 picklepath = "./"+object+"/save/"
 picklename ="opt_spl_ml_"+str(kntstp)+"-"+str(ml_kntstep) + "knt.pkl"
-niter = 10
+niter = 10000
 nburn = 0
 nlcs = 0 #numero de la courbe a traiter
 rdm_walk = 'exp'
+max_process = 16
 
 open('./MCMC_test/rt_file_' + object +"_"+ picklename + "_" + str(niter)+"_"+rdm_walk +'.txt', 'w').close() # to clear the file
 rt_file = open('./MCMC_test/rt_file_' + object +"_"+ picklename + "_" + str(niter)+"_"+rdm_walk +'.txt','a')
@@ -37,7 +38,7 @@ pycs.sim.draw.saveresiduals(lcs, spline)
 initial_position = [-1.5,0.1]
 theta_walk, chi2_walk = mcmc.mcmc_metropolis(initial_position, lcs, fit_vector,spline, gaussian_step = sigma_step,
                                  niter = niter, burntime = nburn, savefile = rt_file, nlcs=0, recompute_spline= True,
-                                  para= True, knotstep = kntstp, rdm_walk=rdm_walk)
+                                  para= True, knotstep = kntstp, rdm_walk=rdm_walk, max_core = max_process)
 
 print("--- %s seconds ---" % (time.time() - start_time))
 
