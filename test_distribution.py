@@ -31,6 +31,8 @@ print "Integral:", sc.quad(fct_exp, 0, np.inf)
 var = np.random.lognormal(mu,sigma,10000)
 var2 = np.random.exponential(scale=beta, size=10000)
 var3 = np.exp(np.random.normal(mu,sigma,size=10000))
+var4 = np.random.normal(loc=0, scale=2.0, size=10000)
+var5 = 2*np.random.normal(loc = 0, scale=1.0,size=10000)
 print var3
 
 
@@ -48,6 +50,9 @@ plt.figure(5)
 plt.hist(var2, bins =100)
 plt.figure(6)
 plt.hist(var3, bins =100)
+
+plt.figure(7)
+plt.hist([var4, var5], bins=100)
 
 
 # plt.figure(2)
