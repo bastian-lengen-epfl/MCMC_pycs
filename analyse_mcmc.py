@@ -7,18 +7,18 @@ import mcmc_function as fmcmc
 
 
 makeplot = True
-source ="rt_file"
+source ="pickle"
 object = "LCJ0806b"
 picklepath = "./LCJ0806b/save/"
 picklename ="opt_spl_ml_80-350knt.pkl"
 burntime = 10
 knotstep = 80
-niter = 100
+niter = 15000
 nlcs = 0 #numero de la courbe a traiter
 
 if source == "pickle":
-    theta = pickle.load(open("./MCMC_test/theta_walk_10000.pkl", "rb"))
-    chi2 = pickle.load(open("./MCMC_test/chi2_walk_10000.pkl", "rb"))
+    theta = pickle.load(open("./MCMC_test/theta_walk_"+ object + "_" + picklename + "_" + str(niter) + ".pkl", "rb"))
+    chi2 = pickle.load(open("./MCMC_test/chi2_walk_"+ object + "_" + picklename + "_" + str(niter) + ".pkl", "rb"))
 
 if source == "rt_file":
     rt_filename = './MCMC_test/rt_file' + object + "_" + picklename + "_" + str(niter) + '.txt'
@@ -37,7 +37,7 @@ rls = pycs.gen.stat.subtract(lcs, spline)
 pycs.sim.draw.saveresiduals(lcs, spline)
 
 print 'Residuals from the fit : '
-print pycs.gen.stat.mapresistats(rls)
+print pycs.gen.stat.mapresistats(rls)[nlcs]
 fit_sigma = pycs.gen.stat.mapresistats(rls)[nlcs]["std"]
 fit_zruns = pycs.gen.stat.mapresistats(rls)[nlcs]["zruns"]
 fit_nruns = pycs.gen.stat.mapresistats(rls)[nlcs]["nruns"]
@@ -49,8 +49,10 @@ min_theta = theta[N_min,:]
 
 print "min Chi2 : ", min_chi2
 print "min theta :", min_theta
-fmcmc.make_mocks_para(min_theta,lcs,spline,ncurve=100, recompute_spline= True, knotstep=knotstep, nlcs=nlcs, verbose=True)
+mean_mini,sigma_mini = fmcmc.make_mocks_para(min_theta,lcs,spline,ncurve=100, recompute_spline= True, knotstep=knotstep, nlcs=nlcs, verbose=True)
 print "compared to sigma, nruns, zruns : "+ str(fit_sigma) + ', ' + str(fit_nruns) + ', ' + str(fit_zruns)
+print "For minimum Chi2, we are standing at " + str(np.abs(mean_mini[0]-fit_zruns)/sigma_mini[0]) + " sigma [zruns]" 
+print "For minimum Chi2, we are standing at " + str(np.abs(mean_mini[1]-fit_sigma)/sigma_mini[1]) + " sigma [sigma]"
 
 if makeplot :
     fig1 = corner.corner(theta, labels=["$beta$", "$\sigma$"])

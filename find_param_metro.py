@@ -30,12 +30,13 @@ fit_sigma = pycs.gen.stat.mapresistats(rls)[nlcs]["std"]
 fit_zruns = pycs.gen.stat.mapresistats(rls)[nlcs]["zruns"]
 fit_nruns = pycs.gen.stat.mapresistats(rls)[nlcs]["nruns"]
 fit_vector = [fit_zruns,fit_sigma]
-fit_error = [0.05,0.02]
+sigma_step = [0.05,0.02] # standard deviation for gaussian step
 pycs.sim.draw.saveresiduals(lcs, spline)
 
 initial_position = [-1.5,0.1]
-theta_walk, chi2_walk = mcmc.mcmc_metropolis(initial_position, lcs, fit_vector,fit_error,spline,
-                                 niter = niter, burntime = nburn, savefile = rt_file, nlcs=0, recompute_spline= True, para= True, knotstep = kntstp)
+theta_walk, chi2_walk = mcmc.mcmc_metropolis(initial_position, lcs, fit_vector,spline, gaussian_stp = sigma_step,
+                                 niter = niter, burntime = nburn, savefile = rt_file, nlcs=0, recompute_spline= True,
+                                  para= True, knotstep = kntstp)
 
 print("--- %s seconds ---" % (time.time() - start_time))
 
