@@ -26,7 +26,7 @@ def mcmc_metropolis(theta, lcs, fit_vector, spline, gaussian_step=[0.05, 0.02], 
         if not prior(theta_new):
             continue
 
-        print theta_new
+        print i,theta_new
         chi2_new = compute_chi2(theta_new, lcs, fit_vector, spline, knotstep=knotstep, nlcs=nlcs,
                                 recompute_spline=recompute_spline, para=para, max_core = max_core)
         ratio = np.exp((-chi2_new + chi2_current) / 2.0);
@@ -70,7 +70,7 @@ def make_random_step_exp(theta, sigma_step):
         return [theta[0] + sigma_step[0] * np.random.randn(), theta[1] - np.random.exponential(scale=sigma_step[1])]
 
 
-def make_mocks(theta, lcs, spline, ncurve=20, verbose=False, knotstep=None, recompute_spline=True, nlcs=0,
+def make_mocks(theta, lcs, spline, ncurve=32, verbose=False, knotstep=None, recompute_spline=True, nlcs=0,
                display=False):
     mocklcs = []
     mockrls = []
@@ -113,7 +113,7 @@ def make_mocks(theta, lcs, spline, ncurve=20, verbose=False, knotstep=None, reco
     return [np.mean(zruns), np.mean(sigmas)], [np.std(zruns), np.std(sigmas)]
 
 
-def make_mocks_para(theta, lcs, spline, ncurve=20, verbose=False, knotstep=None, recompute_spline=True, nlcs=0,
+def make_mocks_para(theta, lcs, spline, ncurve=32, verbose=False, knotstep=None, recompute_spline=True, nlcs=0,
                     display=False, max_core = 16):
     stat = []
     zruns = []

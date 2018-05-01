@@ -8,20 +8,22 @@ import mcmc_function as fmcmc
 
 makeplot = True
 source ="pickle"
-object = "LCJ0806b"
-picklepath = "./LCJ0806b/save/"
-picklename ="opt_spl_ml_80-350knt.pkl"
-burntime = 10
-knotstep = 80
-niter = 15000
+object = "HE0435"
+picklepath = "./HE0435/save/"
+kntstp = 40
+ml_kntstep =360
+picklename ="opt_spl_ml_"+str(kntstp)+"-"+str(ml_kntstep) + "knt.pkl"
+burntime = 1000
+niter = 10000
+rdm_walk = 'exp'
 nlcs = 0 #numero de la courbe a traiter
 
 if source == "pickle":
-    theta = pickle.load(open("./MCMC_test/theta_walk_"+ object + "_" + picklename + "_" + str(niter) + ".pkl", "rb"))
-    chi2 = pickle.load(open("./MCMC_test/chi2_walk_"+ object + "_" + picklename + "_" + str(niter) + ".pkl", "rb"))
+    theta = pickle.load(open("./MCMC_test/theta_walk_"+ object + "_" + picklename + "_" + str(niter) + "_"+rdm_walk+"_"+str(nlcs)+".pkl", "rb"))
+    chi2 = pickle.load(open("./MCMC_test/chi2_walk_"+ object + "_" + picklename + "_" + str(niter) + "_"+rdm_walk+"_"+str(nlcs)+".pkl", "rb"))
 
 if source == "rt_file":
-    rt_filename = './MCMC_test/rt_file' + object + "_" + picklename + "_" + str(niter) + '.txt'
+    rt_filename = './MCMC_test/rt_file' + object + "_" + picklename + "_" + str(niter) + "_"+ rdm_walk+ '.txt'
     vec = np.loadtxt(rt_filename, delimiter=',')
     vec = np.asarray(vec)
     theta = vec[burntime:,0:2]
@@ -49,7 +51,7 @@ min_theta = theta[N_min,:]
 
 print "min Chi2 : ", min_chi2
 print "min theta :", min_theta
-mean_mini,sigma_mini = fmcmc.make_mocks_para(min_theta,lcs,spline,ncurve=100, recompute_spline= True, knotstep=knotstep, nlcs=nlcs, verbose=True)
+mean_mini,sigma_mini = fmcmc.make_mocks_para(min_theta,lcs,spline,ncurve=100, recompute_spline= True, knotstep=kntstp, nlcs=nlcs, verbose=True)
 print "compared to sigma, nruns, zruns : "+ str(fit_sigma) + ', ' + str(fit_nruns) + ', ' + str(fit_zruns)
 print "For minimum Chi2, we are standing at " + str(np.abs(mean_mini[0]-fit_zruns)/sigma_mini[0]) + " sigma [zruns]" 
 print "For minimum Chi2, we are standing at " + str(np.abs(mean_mini[1]-fit_sigma)/sigma_mini[1]) + " sigma [sigma]"
@@ -62,7 +64,7 @@ if makeplot :
     plt.xlabel('N', fontdict={"fontsize" : 16})
     plt.ylabel('$\chi^2$', fontdict={"fontsize" : 16})
     plt.plot(x,chi2)
-    plt.savefig('./MCMC_test/chi2-random'+ picklename + "_" + str(niter) + '.png')
+    plt.savefig('./MCMC_test/chi2-random_'+ object+ "_" + picklename + "_" + str(niter) +"_"+rdm_walk+"_"+str(nlcs)+ '.png')
 
     fig3, axe = plt.subplots(2,1,sharex=True)
     axe[0].plot(x,theta[:,0],'r')
@@ -70,7 +72,7 @@ if makeplot :
     plt.xlabel('N', fontdict={"fontsize" : 16})
     axe[0].set_ylabel('beta', fontdict={"fontsize" : 16})
     axe[1].set_ylabel('$\sigma$', fontdict={"fontsize" : 16})
-    plt.savefig('./MCMC_test/beta-sigma-random'+ picklename + "_" + str(niter) + '.png')
+    plt.savefig('./MCMC_test/beta-sigma-random_'+ object+ "_" + picklename + "_" + str(niter) + "_"+rdm_walk+"_"+str(nlcs)+'.png')
     plt.show()
 
-    fig1.savefig("./MCMC_test/cornerplot_" + picklename + "_" + str(niter) + '.png')
+    fig1.savefig("./MCMC_test/cornerplot_" +object+ "_" + picklename + "_" + str(niter) + "_"+rdm_walk+"_"+str(nlcs)+'.png')
