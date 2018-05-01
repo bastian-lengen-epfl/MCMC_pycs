@@ -1,0 +1,13 @@
+(lp0
+(lp1
+F-1.5
+aF0.1
+aag1
+ag1
+ag1
+ag1
+ag1
+ag1
+ag1
+ag1
+a.
