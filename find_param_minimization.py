@@ -1,4 +1,4 @@
-#Find micro lensing Power spectrum using MCMC algo
+#Find micro lensing Power spectrum using minimization algorythm algo
 
 import pycs
 import pycs.regdiff
