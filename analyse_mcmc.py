@@ -11,15 +11,15 @@ source ="pickle"
 object = "HE0435"
 
 picklepath = "./"+object+"/save/"
-sim_path = "./"+object+"/simulation_log/"
+sim_path = "./"+object+"/simulation_exp/"
 plot_path = sim_path + "figure/"
 display = True
 kntstp = 40
 ml_kntstep =360
 picklename ="opt_spl_ml_"+str(kntstp)+"-"+str(ml_kntstep) + "knt.pkl"
-burntime = 0
-niter = 10
-rdm_walk = 'log'
+burntime = 1000
+niter = 10000
+rdm_walk = 'exp'
 nlcs = [0] #curve to process, can be a list of indices
 
 for i in nlcs :
@@ -85,4 +85,6 @@ for i in nlcs :
 
         if display :
             plt.show()
+
+
 

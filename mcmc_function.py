@@ -8,10 +8,13 @@ import multiprocessing
 
 def mcmc_metropolis(theta, lcs, fit_vector, spline, gaussian_step=[0.05, 0.02], knotstep=None, niter=1000,
                     burntime=100, savefile=None, nlcs=0, recompute_spline=False, para=True, rdm_walk='gaussian', max_core = 16,
-                    n_curve_stat = 32):
+                    n_curve_stat = 32, stopping_condition = True):
     theta_save = []
     chi2_save = []
-    chi2_current = compute_chi2(theta, lcs, fit_vector, spline, knotstep=knotstep, nlcs=nlcs,
+    sz_save = []
+    errorsz_save = []
+    hundred_last = 100
+    chi2_current, sz_current, errorsz_current = compute_chi2(theta, lcs, fit_vector, spline, knotstep=knotstep, nlcs=nlcs,
                                 recompute_spline=recompute_spline, max_core = max_core, n_curve_stat = n_curve_stat)
     t = time.time()
 
@@ -30,25 +33,33 @@ def mcmc_metropolis(theta, lcs, fit_vector, spline, gaussian_step=[0.05, 0.02], 
             continue
 
         print i,theta_new
-        chi2_new = compute_chi2(theta_new, lcs, fit_vector, spline, knotstep=knotstep, nlcs=nlcs,
+        chi2_new, sz_new, errorsz_new = compute_chi2(theta_new, lcs, fit_vector, spline, knotstep=knotstep, nlcs=nlcs,
                                 recompute_spline=recompute_spline, para=para, max_core = max_core,n_curve_stat = n_curve_stat)
         ratio = np.exp((-chi2_new + chi2_current) / 2.0);
 
         if np.random.rand() < ratio:
             theta = copy.deepcopy(theta_new)
             chi2_current = copy.deepcopy(chi2_new)
+            sz_current = copy.deepcopy(sz_new)
+            errorsz_current = copy.deepcopy(sz_new)
 
         if i > burntime:
             theta_save.append(theta)
             chi2_save.append(chi2_current)
+            sz_save.append(sz_current)
+            errorsz_save.append(errorsz_current)
 
         if savefile != None:
-            data = np.asarray([theta[0], theta[1], chi2_current])
-            data = np.reshape(data, (1, 3))
+            data = np.asarray([theta[0], theta[1], chi2_current, sz_current[0],sz_current[1]])
+            data = np.reshape(data, (1, 5))
             np.savetxt(savefile, data, delimiter=',')
 
+        if stopping_condition == True:
+            if check_if_stop(fit_vector, sz_current, errorsz_current, hundred_last):
+                break
 
-    return theta_save, chi2_save
+
+    return theta_save, chi2_save, sz_save, errorsz_save
 
 
 def prior(theta):
@@ -161,7 +172,7 @@ def compute_chi2(theta, lcs, fit_vector, spline, nlcs=0, knotstep=40, recompute_
 
     for i in range(len(out)):
         chi2 += (fit_vector[i] - out[i]) ** 2 / error[i] ** 2
-    return chi2
+    return chi2, out, error
 
 
 def fct_para(theta, lcs, spline, knotstep=None, recompute_spline=True, nlcs=0):
@@ -187,3 +198,12 @@ def fct_para_aux(args):
     kwargs = args[-1]
     args = args[0:-1]
     return fct_para(*args, **kwargs)
+
+def check_if_stop(fitvector, sz, sz_error, hundred_last):
+    if np.abs(fitvector[0] - sz[0]) < sz_error[0] and np.abs(fitvector[0] - sz[0]) < sz_error[0]:
+        hundred_last -= 1
+
+    if hundred_last == 0 :
+        return True
+    else :
+        return False

@@ -1,1 +1,5 @@
 to run on regor :
+
+rsync -avlH Desktop/xxxxx <username>@10.194.66.253:/SCRATCH/millon/xxxx
+
+sbatch job.s pour soumettre
