@@ -13,6 +13,7 @@ def mcmc_metropolis(theta, lcs, fit_vector, spline, gaussian_step=[0.05, 0.02], 
     chi2_save = []
     sz_save = []
     errorsz_save = []
+    global hundred_last
     hundred_last = 100
     chi2_current, sz_current, errorsz_current = compute_chi2(theta, lcs, fit_vector, spline, knotstep=knotstep, nlcs=nlcs,
                                 recompute_spline=recompute_spline, max_core = max_core, n_curve_stat = n_curve_stat)
@@ -32,7 +33,7 @@ def mcmc_metropolis(theta, lcs, fit_vector, spline, gaussian_step=[0.05, 0.02], 
         if not prior(theta_new):
             continue
 
-        print i,theta_new
+        print "Iteration, Theta :", i,theta_new
         chi2_new, sz_new, errorsz_new = compute_chi2(theta_new, lcs, fit_vector, spline, knotstep=knotstep, nlcs=nlcs,
                                 recompute_spline=recompute_spline, para=para, max_core = max_core,n_curve_stat = n_curve_stat)
         ratio = np.exp((-chi2_new + chi2_current) / 2.0);
@@ -50,12 +51,12 @@ def mcmc_metropolis(theta, lcs, fit_vector, spline, gaussian_step=[0.05, 0.02], 
             errorsz_save.append(errorsz_current)
 
         if savefile != None:
-            data = np.asarray([theta[0], theta[1], chi2_current, sz_current[0],sz_current[1]])
-            data = np.reshape(data, (1, 5))
+            data = np.asarray([theta[0], theta[1], chi2_current, sz_current[0],sz_current[1], errorsz_current[0], errorsz_current[1]])
+            data = np.reshape(data, (1, 7))
             np.savetxt(savefile, data, delimiter=',')
 
         if stopping_condition == True:
-            if check_if_stop(fit_vector, sz_current, errorsz_current, hundred_last):
+            if check_if_stop(fit_vector, sz_current, errorsz_current):
                 break
 
 
@@ -199,9 +200,17 @@ def fct_para_aux(args):
     args = args[0:-1]
     return fct_para(*args, **kwargs)
 
-def check_if_stop(fitvector, sz, sz_error, hundred_last):
-    if np.abs(fitvector[0] - sz[0]) < sz_error[0] and np.abs(fitvector[0] - sz[0]) < sz_error[0]:
+def check_if_stop(fitvector, sz, sz_error):
+    global hundred_last
+    if hundred_last != 100 :
+        hundred_last -= 1# check if we already
+        print "I have already matched the stopping condition, I will do %i more steps." %hundred_last
+
+    elif np.abs(fitvector[0] - sz[0]) < 0.5*sz_error[0] and np.abs(fitvector[0] - sz[0]) < 0.5*sz_error[0]:
         hundred_last -= 1
+        print "I'm matching the stopping condition at this iteration, I will do %i more steps."%hundred_last
+    else :
+        print "Stopping condition not reached."
 
     if hundred_last == 0 :
         return True

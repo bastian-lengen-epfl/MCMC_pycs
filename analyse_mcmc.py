@@ -7,25 +7,38 @@ import mcmc_function as fmcmc
 
 
 makeplot = True
+display = True
+measure_posterior = True
 source ="pickle"
 object = "HE0435"
 
 picklepath = "./"+object+"/save/"
 sim_path = "./"+object+"/simulation_exp/"
 plot_path = sim_path + "figure/"
-display = True
+
 kntstp = 40
 ml_kntstep =360
 picklename ="opt_spl_ml_"+str(kntstp)+"-"+str(ml_kntstep) + "knt.pkl"
-burntime = 1000
 niter = 10000
+burntime = 1000
+
 rdm_walk = 'exp'
 nlcs = [0] #curve to process, can be a list of indices
 
 for i in nlcs :
+    recompute_sz = False
     if source == "pickle":
         theta = pickle.load(open(sim_path + "theta_walk_"+ object + "_" + picklename[:-4] + "_" + str(niter) + "_"+rdm_walk+"_"+str(i)+".pkl", "rb"))
         chi2 = pickle.load(open(sim_path + "chi2_walk_"+ object + "_" + picklename[:-4] + "_" + str(niter) + "_"+rdm_walk+"_"+str(i)+".pkl", "rb"))
+        try :
+            sz = pickle.load(open(sim_path + "sz_walk_" + object + "_" + picklename[:-4] + "_" + str(
+                niter) + "_" + rdm_walk + "_" + str(i) + ".pkl", "rb"))
+            errorsz = pickle.load(open(sim_path + "errorsz_walk_" + object + "_" + picklename[:-4] + "_" + str(
+                niter) + "_" + rdm_walk + "_" + str(i) + ".pkl", "rb"))\
+
+        except :
+            print "You didn't save the sigma, zruns for this chain."
+            recompute_sz = True
 
     if source == "rt_file":
         rt_filename = sim_path + 'rt_file_' + object +"_"+ picklename[:-4]  + "_" + str(niter)+"_"+rdm_walk +"_"+str(i)+'.txt'
@@ -33,9 +46,17 @@ for i in nlcs :
         vec = np.asarray(vec)
         theta = vec[burntime:,0:2]
         chi2 = vec[burntime:,2]
+        try :
+            sz = vec[burntime:,3:5]
+            errorsz = vec[burntime:,5:7]
+        except :
+            print "You didn't save the sigma, zruns for this chain."
+            recompute_sz = True
 
     theta = np.asarray(theta)
     chi2 = np.asarray(chi2)
+    sz = np.asarray(sz)
+    errorsz=np.asarray(errorsz)
 
     (lcs, spline) = pycs.gen.util.readpickle(picklepath + picklename)
 
@@ -56,7 +77,12 @@ for i in nlcs :
 
     print "min Chi2 : ", min_chi2
     print "min theta :", min_theta
-    mean_mini,sigma_mini = fmcmc.make_mocks_para(min_theta,lcs,spline,n_curve_stat=64, recompute_spline= True, knotstep=kntstp, nlcs=i, verbose=True)
+    if recompute_sz :
+        mean_mini,sigma_mini = fmcmc.make_mocks_para(min_theta,lcs,spline,n_curve_stat=64, recompute_spline= True, knotstep=kntstp, nlcs=i, verbose=True)
+    else :
+        mean_mini = sz[N_min,:]
+        sigma_mini = errorsz[N_min,:]
+
     print "compared to sigma, nruns, zruns : "+ str(fit_sigma) + ', ' + str(fit_nruns) + ', ' + str(fit_zruns)
     print "For minimum Chi2, we are standing at " + str(np.abs(mean_mini[0]-fit_zruns)/sigma_mini[0]) + " sigma [zruns]"
     print "For minimum Chi2, we are standing at " + str(np.abs(mean_mini[1]-fit_sigma)/sigma_mini[1]) + " sigma [sigma]"
@@ -85,6 +111,11 @@ for i in nlcs :
 
         if display :
             plt.show()
+
+    if measure_posterior:
+        disperions_sig = np.std()
+
+
 
 
 

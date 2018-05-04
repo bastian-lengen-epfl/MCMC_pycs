@@ -22,13 +22,13 @@ if not os.path.exists(plot_path):
 
 
 picklename ="opt_spl_ml_"+str(kntstp)+"-"+str(ml_kntstep) + "knt.pkl"
-niter = 10000
-nburn = 1000
+niter = 1
+nburn = 0
 nlcs = 3 #numero de la courbe a traiter
 rdm_walk = 'log'
-n_curve_stat = 32 #number of curve to optimise to compute the statistic.
-max_process = 16
-stopping_condition = False
+n_curve_stat = 1 #number of curve to optimise to compute the statistic.
+max_process = 8
+stopping_condition =True
 
 open(sim_path + 'rt_file_' + object +"_"+ picklename[:-4] + "_" + str(niter)+"_"+rdm_walk +"_"+str(nlcs)+'.txt', 'w').close() # to clear the file
 rt_file = open(sim_path + 'rt_file_' + object +"_"+ picklename[:-4]  + "_" + str(niter)+"_"+rdm_walk +"_"+str(nlcs)+'.txt','a')
