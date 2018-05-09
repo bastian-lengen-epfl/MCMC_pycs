@@ -8,7 +8,7 @@ import multiprocessing
 
 def mcmc_metropolis(theta, lcs, fit_vector, spline, gaussian_step=[0.05, 0.02], knotstep=None, niter=1000,
                     burntime=100, savefile=None, nlcs=0, recompute_spline=False, para=True, rdm_walk='gaussian', max_core = 16,
-                    n_curve_stat = 32, stopping_condition = True):
+                    n_curve_stat = 32, stopping_condition = True, shotnoise = "magerrs"):
     theta_save = []
     chi2_save = []
     sz_save = []
@@ -16,7 +16,7 @@ def mcmc_metropolis(theta, lcs, fit_vector, spline, gaussian_step=[0.05, 0.02], 
     global hundred_last
     hundred_last = 100
     chi2_current, sz_current, errorsz_current = compute_chi2(theta, lcs, fit_vector, spline, knotstep=knotstep, nlcs=nlcs,
-                                recompute_spline=recompute_spline, max_core = max_core, n_curve_stat = n_curve_stat)
+                                recompute_spline=recompute_spline, max_core = max_core, n_curve_stat = n_curve_stat, shotnoise = shotnoise)
     t = time.time()
 
     for i in range(niter):
@@ -35,14 +35,14 @@ def mcmc_metropolis(theta, lcs, fit_vector, spline, gaussian_step=[0.05, 0.02], 
 
         print "Iteration, Theta :", i,theta_new
         chi2_new, sz_new, errorsz_new = compute_chi2(theta_new, lcs, fit_vector, spline, knotstep=knotstep, nlcs=nlcs,
-                                recompute_spline=recompute_spline, para=para, max_core = max_core,n_curve_stat = n_curve_stat)
+                                recompute_spline=recompute_spline, para=para, max_core = max_core,n_curve_stat = n_curve_stat, shotnoise = shotnoise)
         ratio = np.exp((-chi2_new + chi2_current) / 2.0);
 
         if np.random.rand() < ratio:
             theta = copy.deepcopy(theta_new)
             chi2_current = copy.deepcopy(chi2_new)
             sz_current = copy.deepcopy(sz_new)
-            errorsz_current = copy.deepcopy(sz_new)
+            errorsz_current = copy.deepcopy(errorsz_new)
 
         if i > burntime:
             theta_save.append(theta)
@@ -92,7 +92,7 @@ def make_random_step_exp(theta, sigma_step):
 
 
 def make_mocks(theta, lcs, spline, n_curve_stat=32, verbose=False, knotstep=None, recompute_spline=True, nlcs=0,
-               display=False):
+               display=False, shotnoise = "magerrs"):
     mocklcs = []
     mockrls = []
     stat = []
@@ -107,7 +107,7 @@ def make_mocks(theta, lcs, spline, n_curve_stat=32, verbose=False, knotstep=None
                                                                                                       fmin=1 / 300.0,
                                                                                                       fmax=None,
                                                                                                       psplot=False),
-                                          shotnoise="magerrs", keeptweakedml=False))
+                                          shotnoise=shotnoise, keeptweakedml=False))
 
         if recompute_spline:
             if knotstep == None:
@@ -135,14 +135,14 @@ def make_mocks(theta, lcs, spline, n_curve_stat=32, verbose=False, knotstep=None
 
 
 def make_mocks_para(theta, lcs, spline, verbose=False, knotstep=None, recompute_spline=True, nlcs=0,
-                    display=False, max_core = 16, n_curve_stat = 32):
+                    display=False, max_core = 16, n_curve_stat = 32, shotnoise = "magerrs"):
     stat = []
     zruns = []
     sigmas = []
     nruns = []
 
     pool = multiprocessing.Pool(processes = max_core)
-    job_kwarg = {'knotstep': knotstep, 'recompute_spline': recompute_spline, 'nlcs': nlcs}
+    job_kwarg = {'knotstep': knotstep, 'recompute_spline': recompute_spline, 'nlcs': nlcs, 'shotnoise' : shotnoise}
     job_args = [(theta, lcs, spline, job_kwarg) for j in range(n_curve_stat)]
 
     stat_out = pool.map(fct_para_aux, job_args)
@@ -162,26 +162,28 @@ def make_mocks_para(theta, lcs, spline, verbose=False, knotstep=None, recompute_
     return [np.mean(zruns), np.mean(sigmas)], [np.std(zruns), np.std(sigmas)]
 
 
-def compute_chi2(theta, lcs, fit_vector, spline, nlcs=0, knotstep=40, recompute_spline=False, para=True, max_core = 16, n_curve_stat = 32):
+def compute_chi2(theta, lcs, fit_vector, spline, nlcs=0, knotstep=40, recompute_spline=False,
+                 para=True, max_core = 16, n_curve_stat = 32, shotnoise = "magerrs"):
     chi2 = 0.0
     if para:
         out, error = make_mocks_para(theta, lcs, spline, nlcs=nlcs, recompute_spline=recompute_spline,
-                                     knotstep=knotstep, max_core = max_core, n_curve_stat= n_curve_stat)
+                                     knotstep=knotstep, max_core = max_core, n_curve_stat= n_curve_stat, shotnoise=shotnoise)
     else:
         out, error = make_mocks(theta, lcs, spline, nlcs=nlcs, recompute_spline=recompute_spline,
-                                knotstep=knotstep, n_curve_stat = n_curve_stat)
+                                knotstep=knotstep, n_curve_stat = n_curve_stat, shotnoise=shotnoise)
 
     for i in range(len(out)):
         chi2 += (fit_vector[i] - out[i]) ** 2 / error[i] ** 2
     return chi2, out, error
 
 
-def fct_para(theta, lcs, spline, knotstep=None, recompute_spline=True, nlcs=0):
+def fct_para(theta, lcs, spline, knotstep=None, recompute_spline=True, nlcs=0,shotnoise = "magerrs"):
+
     mocklcs = pycs.sim.draw.draw([lcs[nlcs]], spline, tweakml=lambda x: pycs.sim.twk.tweakml(x, beta=theta[0],
                                                                                              sigma=theta[1],
                                                                                              fmin=1 / 300.0, fmax=None,
                                                                                              psplot=False),
-                                 shotnoise="magerrs", keeptweakedml=False)
+                                 shotnoise=shotnoise, keeptweakedml=False)
 
     if recompute_spline:
         if knotstep == None:

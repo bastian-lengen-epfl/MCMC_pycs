@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pycs
 import mcmc_function as fmcmc
+import os
 
 
 makeplot = True
@@ -13,8 +14,11 @@ source ="pickle"
 object = "HE0435"
 
 picklepath = "./"+object+"/save/"
-sim_path = "./"+object+"/simulation_exp/"
+sim_path = "./"+object+"/simulation_log/"
 plot_path = sim_path + "figure/"
+
+if not os.path.exists(plot_path):
+    os.mkdir(plot_path)
 
 kntstp = 40
 ml_kntstep =360
@@ -22,8 +26,8 @@ picklename ="opt_spl_ml_"+str(kntstp)+"-"+str(ml_kntstep) + "knt.pkl"
 niter = 10000
 burntime = 1000
 
-rdm_walk = 'exp'
-nlcs = [0] #curve to process, can be a list of indices
+rdm_walk = 'log'
+nlcs = [3] #curve to process, can be a list of indices
 
 for i in nlcs :
     recompute_sz = False
@@ -83,7 +87,8 @@ for i in nlcs :
         mean_mini = sz[N_min,:]
         sigma_mini = errorsz[N_min,:]
 
-    print "compared to sigma, nruns, zruns : "+ str(fit_sigma) + ', ' + str(fit_nruns) + ', ' + str(fit_zruns)
+    print "Target sigma, nruns, zruns : "+ str(fit_sigma) + ', ' + str(fit_nruns) + ', ' + str(fit_zruns)
+    print "Minimum sigma, zruns : "+ str(mean_mini[1]) + ', ' + str(mean_mini[0])
     print "For minimum Chi2, we are standing at " + str(np.abs(mean_mini[0]-fit_zruns)/sigma_mini[0]) + " sigma [zruns]"
     print "For minimum Chi2, we are standing at " + str(np.abs(mean_mini[1]-fit_sigma)/sigma_mini[1]) + " sigma [sigma]"
 
@@ -113,9 +118,16 @@ for i in nlcs :
             plt.show()
 
     if measure_posterior:
-        disperions_sig = np.std()
+        theta[:,1] = 10**(theta[:,1])
+        mean_sig, disperions_sig = np.mean(theta[:,1]),np.std(theta[:,1])
+        mean_beta, disperions_beta = np.mean(theta[:,0]),np.std(theta[:,0])
+        print "Your posterior has a gaussian distribution with :"
+        print "Beta : %2.4f +/- %2.4f"%(mean_beta,disperions_beta)
+        print "Sigma : %2.4f +/- %2.4f"%(mean_sig,disperions_sig)
 
-
+        print "Covariance matrix of the posterior : "
+        A = np.cov(theta.T)
+        print A
 
 
 
