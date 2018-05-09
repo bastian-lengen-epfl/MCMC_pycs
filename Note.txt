@@ -5,5 +5,4 @@ rsync -avlH Desktop/xxxxx <username>@10.194.66.253:/SCRATCH/millon/xxxx
 sbatch job.s pour soumettre
 
 sinfo
-
 squeue - u millon pour voir les jobs
