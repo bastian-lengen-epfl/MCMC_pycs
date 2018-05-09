@@ -33,10 +33,10 @@ def mcmc_metropolis(theta, lcs, fit_vector, spline, gaussian_step=[0.05, 0.02], 
         if not prior(theta_new):
             continue
 
-        print "Iteration, Theta :", i,theta_new
         chi2_new, sz_new, errorsz_new = compute_chi2(theta_new, lcs, fit_vector, spline, knotstep=knotstep, nlcs=nlcs,
                                 recompute_spline=recompute_spline, para=para, max_core = max_core,n_curve_stat = n_curve_stat, shotnoise = shotnoise)
         ratio = np.exp((-chi2_new + chi2_current) / 2.0);
+        print "Iteration, Theta, Chi2, sz, errorsz :", i, theta_new, chi2_new, sz_new, errorsz_new
 
         if np.random.rand() < ratio:
             theta = copy.deepcopy(theta_new)
@@ -44,16 +44,16 @@ def mcmc_metropolis(theta, lcs, fit_vector, spline, gaussian_step=[0.05, 0.02], 
             sz_current = copy.deepcopy(sz_new)
             errorsz_current = copy.deepcopy(errorsz_new)
 
-        if i > burntime:
+
             theta_save.append(theta)
             chi2_save.append(chi2_current)
             sz_save.append(sz_current)
             errorsz_save.append(errorsz_current)
 
-        if savefile != None:
-            data = np.asarray([theta[0], theta[1], chi2_current, sz_current[0],sz_current[1], errorsz_current[0], errorsz_current[1]])
-            data = np.reshape(data, (1, 7))
-            np.savetxt(savefile, data, delimiter=',')
+            if savefile != None:
+                data = np.asarray([theta[0], theta[1], chi2_current, sz_current[0],sz_current[1], errorsz_current[0], errorsz_current[1]])
+                data = np.reshape(data, (1, 7))
+                np.savetxt(savefile, data, delimiter=',')
 
         if stopping_condition == True:
             if check_if_stop(fit_vector, sz_current, errorsz_current):

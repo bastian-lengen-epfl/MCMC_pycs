@@ -10,11 +10,11 @@ import os
 makeplot = True
 display = True
 measure_posterior = True
-source ="pickle"
+source ="rt_file"
 object = "HE0435"
 
 picklepath = "./"+object+"/save/"
-sim_path = "./"+object+"/simulation_log/"
+sim_path = "./"+object+"/simulation_log_mcres/"
 plot_path = sim_path + "figure/"
 
 if not os.path.exists(plot_path):
@@ -23,8 +23,8 @@ if not os.path.exists(plot_path):
 kntstp = 40
 ml_kntstep =360
 picklename ="opt_spl_ml_"+str(kntstp)+"-"+str(ml_kntstep) + "knt.pkl"
-niter = 10000
-burntime = 1000
+niter = 5000
+burntime = 0
 
 rdm_walk = 'log'
 nlcs = [3] #curve to process, can be a list of indices
