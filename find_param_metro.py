@@ -13,7 +13,7 @@ object = "HE0435"
 kntstp = 40
 ml_kntstep =360
 picklepath = "./"+object+"/save/"
-sim_path = "./"+object+"/simulation_log/"
+sim_path = "./"+object+"/simulation_log2/"
 plot_path = sim_path + "figure/"
 shotnoise = "mcres" #'magerrs' or "mcres"
 if not os.path.exists(sim_path):
@@ -23,11 +23,11 @@ if not os.path.exists(plot_path):
 
 
 picklename ="opt_spl_ml_"+str(kntstp)+"-"+str(ml_kntstep) + "knt.pkl"
-niter = 1
+niter = 5
 nburn = 0
 nlcs = 3 #numero de la courbe a traiter
 rdm_walk = 'log'
-n_curve_stat = 1 #number of curve to optimise to compute the statistic.
+n_curve_stat = 8 #number of curve to optimise to compute the statistic.
 max_process = 8
 stopping_condition =True
 
@@ -44,7 +44,7 @@ fit_sigma = pycs.gen.stat.mapresistats(rls)[nlcs]["std"]
 fit_zruns = pycs.gen.stat.mapresistats(rls)[nlcs]["zruns"]
 fit_nruns = pycs.gen.stat.mapresistats(rls)[nlcs]["nruns"]
 fit_vector = [fit_zruns,fit_sigma]
-sigma_step = [0.22,0.0005] # standard deviation for gaussian step
+sigma_step = [0.22,0.005] # standard deviation for gaussian step
 pycs.sim.draw.saveresiduals(lcs, spline)
 
 initial_position = [-1.9,0.1]
