@@ -208,7 +208,7 @@ def check_if_stop(fitvector, sz, sz_error):
         hundred_last -= 1# check if we already
         print "I have already matched the stopping condition, I will do %i more steps." %hundred_last
 
-    elif np.abs(fitvector[0] - sz[0]) < 0.5*sz_error[0] and np.abs(fitvector[1] - sz[1]) < 0.5*sz_error[1]:
+    elif np.abs(fitvector[0] - sz[0]) < 0.75*sz_error[0] and np.abs(fitvector[1] - sz[1]) < 0.75*sz_error[1]:
         hundred_last -= 1
         print "I'm matching the stopping condition at this iteration, I will do %i more steps."%hundred_last
     else :
