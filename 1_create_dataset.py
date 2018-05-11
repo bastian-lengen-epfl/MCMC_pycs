@@ -18,6 +18,8 @@ if display :
     pycs.gen.lc.display(lcs,showdates=True)
 
 pycs.gen.util.writepickle(lcs,'pkl/'+lensname + "_" + dataname+'.pkl')
-sys.exit()
+
+if not os.exists(lens_directory + 'figure/')
+
 
 
