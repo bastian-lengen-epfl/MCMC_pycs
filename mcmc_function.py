@@ -218,3 +218,29 @@ def check_if_stop(fitvector, sz, sz_error):
         return True
     else :
         return False
+
+class LikelihoodModule :
+    def __init__(self, lcs, fit_vector, spline, rt_file, nlcs, knotstep,max_core = 8, shotnoise = 'magerrs',
+                 recompute_spline = True, n_curve_stat= 32, para = True):
+        self.savefile = rt_file
+        self.nlcs = nlcs
+        self.recompute_spline = recompute_spline
+        self.para = para
+        self.knotstep = knotstep
+        self.n_curve_stat = n_curve_stat
+        self.max_core = max_core,
+        self.shotnoise = shotnoise
+        self.lcs = lcs
+        self.fit_vector = fit_vector
+        self.spline = spline
+
+    def __call__(self, theta):
+        return self.likelihood(theta)
+
+    def likelihood(self, theta):
+        chi2, _ ,_  = compute_chi2(theta, self.lcs, self.fit_vector, self.spline, knotstep=self.knotstep,                             nlcs=self.nlcs,recompute_spline=self.recompute_spline, max_core=self.max_core, n_curve_stat=self.n_curve_stat,
+                     shotnoise=self.shotnoise, para= self.para)
+
+        return 0.5*chi2
+
+

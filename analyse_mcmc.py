@@ -10,11 +10,11 @@ import os
 makeplot = True
 display = True
 measure_posterior = True
-source ="rt_file"
+source ="pickle"
 object = "HE0435"
 
 picklepath = "./"+object+"/save/"
-sim_path = "./"+object+"/simulation_log_mcres/"
+sim_path = "./"+object+"/simulation_log_magerrs2/"
 plot_path = sim_path + "figure/"
 
 if not os.path.exists(plot_path):
@@ -23,8 +23,8 @@ if not os.path.exists(plot_path):
 kntstp = 40
 ml_kntstep =360
 picklename ="opt_spl_ml_"+str(kntstp)+"-"+str(ml_kntstep) + "knt.pkl"
-niter = 5000
-burntime = 0
+niter = 10000
+burntime = 1000
 
 rdm_walk = 'log'
 nlcs = [3] #curve to process, can be a list of indices
@@ -44,7 +44,7 @@ for i in nlcs :
             print "You didn't save the sigma, zruns for this chain."
             recompute_sz = True
 
-    if source == "rt_file":
+    elif source == "rt_file":
         rt_filename = sim_path + 'rt_file_' + object +"_"+ picklename[:-4]  + "_" + str(niter)+"_"+rdm_walk +"_"+str(i)+'.txt'
         vec = np.loadtxt(rt_filename, delimiter=',')
         vec = np.asarray(vec)
@@ -56,6 +56,10 @@ for i in nlcs :
         except :
             print "You didn't save the sigma, zruns for this chain."
             recompute_sz = True
+
+    else :
+        print "I didn't recognize your source format."
+        exit()
 
     theta = np.asarray(theta)
     chi2 = np.asarray(chi2)
