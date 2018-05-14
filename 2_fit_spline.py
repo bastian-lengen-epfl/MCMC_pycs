@@ -23,43 +23,60 @@ def applyshifts(lcs,timeshifts,magshifts):
 
 lcs = pycs.gen.util.readpickle(data)
 applyshifts(lcs, timeshifts, magshifts)
+name = ['A','B','C','D']
+for i,lc in enumerate(lcs):
+	print "I will aplly a initail shift of : %2.4f days, %2.4f mag for %s" %(timeshifts[i],magshifts[i],name[i])
 
 
-if optfct==regdiff: #regdiff just to display the fit...
 
-	for ind, l in enumerate(lcs):
-		l.shiftmag(ind*0.1)
-	myrslcs = [pycs.regdiff.rslc.factory(l, pd=pointdensity, covkernel=covkernel, pow=pow, amp=amp, scale=scale, errscale=errscale) for l in lcs]
+# for i,kn in enumerate(knotstep) :
+# 	for j, knml in enumerate(mlknotsteps):
+# 		attachml(lcs, knml) # add microlensing
+# 		spline = optfct(lcs, kn)
+# 		# add the polyml shift as a magshift to the iniopt
+# 		if 0:  # FOR polyml only, put 0 if you use splml
+# 			for lc in lcs:
+# 				pass
+# 				print lc.ml.longinfo()
+# 				magshift = lc.ml.getfreeparams()[0]
+# 				lc.rmml()
+# 				lc.shiftmag(magshift)
+#
+# 		rls = pycs.gen.stat.subtract(lcs, spline)
+# 		if display :
+# 			pycs.gen.lc.display(lcs, [spline], showlegend=True, showdelays=True, filename="screen")
+# 			pycs.gen.stat.plotresiduals([rls])
+# 		else :
+# 			pycs.gen.lc.display(lcs, [spline], showlegend=True, showdelays=True,
+# 								filename=figure_directory + "spline_fit_ks%i_ksml%i.png"%(kn,knml))
+# 			pycs.gen.stat.plotresiduals([rls], filename=figure_directory + "residual_fit_ks%i_ksml%i.png"%(kn,knml))
+#
+#
+#
+# 		# and write data, again
+# 		if not os.path.isdir(lens_directory + combkw[i,j]):
+# 			os.mkdir(lens_directory + combkw[i,j])
+#
+# 		pycs.gen.util.writepickle((lcs, spline), lens_directory + '%s/initopt_%s_ks%i.pkl' % (combkw[i,j], dataname, kn))
+#
+#
+
+#DO the optimisation with regdiff as well !
+import pycs.regdiff
+for ind, l in enumerate(lcs):
+	l.shiftmag(ind*0.1)
+
+myrslcs = [pycs.regdiff.rslc.factory(l, pd=pointdensity, covkernel=covkernel, pow=pow, amp=amp, scale=scale, errscale=errscale) for l in lcs]
+
+if display :
 	pycs.gen.lc.display(lcs, myrslcs)
-	for ind, l in enumerate(lcs):
-		l.shiftmag(-ind*0.1)
+pycs.gen.lc.display(lcs, myrslcs, filename = figure_directory + "regdiff_fit.png")
 
-	attachml(lcs)
-	map(optfct, [lcs])
+for ind, l in enumerate(lcs):
+	l.shiftmag(-ind*0.1)
 
+map(regdiff, [lcs])
+
+if display :
 	pycs.gen.lc.display(lcs, showlegend=False, showdelays=True)
-	sys.exit()
-
-
-else:
-	for i,kn in enumerate(knotstep) :
-		attachml(lcs) # add microlensing
-		spline = optfct(lcs, kn)
-		# add the polyml shift as a magshift to the iniopt
-		if 0:  # FOR polyml only, put 0 if you use splml
-			for lc in lcs:
-				pass
-				print lc.ml.longinfo()
-				magshift = lc.ml.getfreeparams()[0]
-				lc.rmml()
-				lc.shiftmag(magshift)
-
-		if display :
-			pycs.gen.lc.display(lcs, [spline], showlegend=True, showdelays=True)
-
-		# and write data, again
-		print lens_directory
-		if not os.path.isdir(lens_directory + combkw[i]):
-			os.mkdir(lens_directory + combkw[i])
-
-		pycs.gen.util.writepickle((lcs, spline), lens_directory + '%s/initopt_%s_ks%i.pkl' % (combkw[i], dataname, kn))
+pycs.gen.lc.display(lcs, showlegend=False, showdelays=True, filename = figure_directory + "regdiff_opt_fit.png")
