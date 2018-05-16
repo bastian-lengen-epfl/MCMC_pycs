@@ -14,7 +14,7 @@ source ="pickle"
 object = "HE0435"
 
 picklepath = "./"+object+"/save/"
-sim_path = "./"+object+"/simulation_log_magerrs2/"
+sim_path = "./"+object+"/simulation_log_mcres/"
 plot_path = sim_path + "figure/"
 
 if not os.path.exists(plot_path):

@@ -122,9 +122,9 @@ def make_mocks(theta, lcs, spline, n_curve_stat=32, verbose=False, knotstep=None
             pycs.gen.stat.plotresiduals([mockrls[i]])
 
         stat.append(pycs.gen.stat.mapresistats(mockrls[i]))
-        zruns.append(stat[i][nlcs]['zruns'])
-        sigmas.append(stat[i][nlcs]['std'])
-        nruns.append(stat[i][nlcs]['nruns'])
+        zruns.append(stat[i][0]['zruns'])
+        sigmas.append(stat[i][0]['std'])
+        nruns.append(stat[i][0]['nruns'])
 
     if verbose:
         print 'Mean zruns (simu): ', np.mean(zruns), '+/-', np.std(zruns)
@@ -165,6 +165,9 @@ def make_mocks_para(theta, lcs, spline, verbose=False, knotstep=None, recompute_
 def compute_chi2(theta, lcs, fit_vector, spline, nlcs=0, knotstep=40, recompute_spline=False,
                  para=True, max_core = 16, n_curve_stat = 32, shotnoise = "magerrs"):
     chi2 = 0.0
+    if n_curve_stat ==1 :
+        print "Warning : I cannot compute statistics with one single curves !!"
+
     if para:
         out, error = make_mocks_para(theta, lcs, spline, nlcs=nlcs, recompute_spline=recompute_spline,
                                      knotstep=knotstep, max_core = max_core, n_curve_stat= n_curve_stat, shotnoise=shotnoise)
@@ -174,6 +177,7 @@ def compute_chi2(theta, lcs, fit_vector, spline, nlcs=0, knotstep=40, recompute_
 
     for i in range(len(out)):
         chi2 += (fit_vector[i] - out[i]) ** 2 / error[i] ** 2
+
     return chi2, out, error
 
 
@@ -238,9 +242,10 @@ class LikelihoodModule :
         return self.likelihood(theta)
 
     def likelihood(self, theta):
-        chi2, _ ,_  = compute_chi2(theta, self.lcs, self.fit_vector, self.spline, knotstep=self.knotstep,                             nlcs=self.nlcs,recompute_spline=self.recompute_spline, max_core=self.max_core, n_curve_stat=self.n_curve_stat,
+        chi2, out ,error  = compute_chi2(theta, self.lcs, self.fit_vector, self.spline, knotstep=self.knotstep,                             nlcs=self.nlcs,recompute_spline=self.recompute_spline, max_core=self.max_core, n_curve_stat=self.n_curve_stat,
                      shotnoise=self.shotnoise, para= self.para)
 
-        return 0.5*chi2
+
+        return [-0.5*chi2]
 
 
