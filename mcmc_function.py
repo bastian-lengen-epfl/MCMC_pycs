@@ -175,8 +175,11 @@ def compute_chi2(theta, lcs, fit_vector, spline, nlcs=0, knotstep=40, recompute_
         out, error = make_mocks(theta, lcs, spline, nlcs=nlcs, recompute_spline=recompute_spline,
                                 knotstep=knotstep, n_curve_stat = n_curve_stat, shotnoise=shotnoise)
 
-    for i in range(len(out)):
-        chi2 += (fit_vector[i] - out[i]) ** 2 / error[i] ** 2
+    # for i in range(len(out)):
+    #     chi2 += (fit_vector[i] - out[i]) ** 2 / error[i] ** 2
+
+    chi2 = (fit_vector[0] - out[0]) ** 2 / error[0] ** 2
+    chi2 += (fit_vector[1] - out[1]) ** 2 / (2*error[1] ** 2)
 
     return chi2, out, error
 

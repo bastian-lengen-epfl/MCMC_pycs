@@ -41,7 +41,7 @@ for i in nlcs :
         print"hello"
         pass
 
-    position = chain[2]
+    position = chain[1]
     (lcs, spline) = pycs.gen.util.readpickle(picklepath + picklename)
     if recompute_sz :
 
@@ -56,8 +56,10 @@ for i in nlcs :
         fit_vector = [fit_zruns,fit_sigma]
         print "Converged position :", position[-1]
         mean_mini,sigma_mini = fmcmc.make_mocks_para(position[-1],lcs,spline,n_curve_stat=64, recompute_spline= True, knotstep=kntstp, nlcs=i, verbose=True)
+        chi2 = np.sum((mean_mini - fit_vector)**2/(sigma_mini**2))
         print "Target sigma, nruns, zruns : "+ str(fit_sigma) + ', ' + str(fit_nruns) + ', ' + str(fit_zruns)
         print "Minimum sigma, zruns : "+ str(mean_mini[1]) + ', ' + str(mean_mini[0])
+        print "Minimum chi2 : ", chi2
         print "For minimum Chi2, we are standing at " + str(np.abs(mean_mini[0]-fit_zruns)/sigma_mini[0]) + " sigma [zruns]"
         print "For minimum Chi2, we are standing at " + str(np.abs(mean_mini[1]-fit_sigma)/sigma_mini[1]) + " sigma [sigma]"
 
