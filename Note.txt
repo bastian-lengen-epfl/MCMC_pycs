@@ -6,3 +6,7 @@ sbatch job.s pour soumettre
 
 sinfo
 squeue - u millon pour voir les jobs
+
+
+
+TODO : maybe add a visualization code for the png after the fitting

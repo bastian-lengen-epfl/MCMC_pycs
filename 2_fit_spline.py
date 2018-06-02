@@ -31,7 +31,8 @@ for i,lc in enumerate(lcs):
 
 # for i,kn in enumerate(knotstep) :
 # 	for j, knml in enumerate(mlknotsteps):
-# 		attachml(lcs, knml) # add microlensing
+# 		if knml != 0 :
+# 			attachml(lcs, knml) # add microlensing
 # 		spline = optfct(lcs, kn)
 # 		# add the polyml shift as a magshift to the iniopt
 # 		if 0:  # FOR polyml only, put 0 if you use splml
@@ -57,9 +58,9 @@ for i,lc in enumerate(lcs):
 # 		if not os.path.isdir(lens_directory + combkw[i,j]):
 # 			os.mkdir(lens_directory + combkw[i,j])
 #
-# 		pycs.gen.util.writepickle((lcs, spline), lens_directory + '%s/initopt_%s_ks%i.pkl' % (combkw[i,j], dataname, kn))
+# 		pycs.gen.util.writepickle((lcs, spline), lens_directory + '%s/initopt_%s_ks%i_ksml%i.pkl' % (combkw[i,j], dataname, kn,knml))
 #
-#
+
 
 #DO the optimisation with regdiff as well !
 import pycs.regdiff
@@ -70,7 +71,7 @@ myrslcs = [pycs.regdiff.rslc.factory(l, pd=pointdensity, covkernel=covkernel, po
 
 if display :
 	pycs.gen.lc.display(lcs, myrslcs)
-pycs.gen.lc.display(lcs, myrslcs, filename = figure_directory + "regdiff_fit.png")
+pycs.gen.lc.display(lcs, myrslcs, showdelays=True, filename = figure_directory + "regdiff_fit.png")
 
 for ind, l in enumerate(lcs):
 	l.shiftmag(-ind*0.1)
@@ -79,4 +80,7 @@ map(regdiff, [lcs])
 
 if display :
 	pycs.gen.lc.display(lcs, showlegend=False, showdelays=True)
-pycs.gen.lc.display(lcs, showlegend=False, showdelays=True, filename = figure_directory + "regdiff_opt_fit.png")
+pycs.gen.lc.display(lcs, showlegend=False, showdelays=True, filename = figure_directory + "regdiff_optimized_fit.png")
+if not os.path.isdir(lens_directory + 'regdiff_fitting'):
+	os.mkdir(lens_directory + 'regdiff_fitting')
+pycs.gen.util.writepickle(lcs, lens_directory + 'regdiff_fitting/initopt_regdiff.pkl')

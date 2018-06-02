@@ -23,12 +23,12 @@ if not os.path.exists(plot_path):
 kntstp = 40
 ml_kntstep =360
 picklename ="opt_spl_ml_"+str(kntstp)+"-"+str(ml_kntstep) + "knt.pkl"
-n_iterations = 200
-n_particles = 16
+n_iterations = 50
+n_particles = 64
 
 param_list = ['beta','sigma']
 
-nlcs = [3] #curve to process, can be a list of indices
+nlcs = [1] #curve to process, can be a list of indices
 
 for i in nlcs :
     if source == "pickle":
@@ -53,9 +53,11 @@ for i in nlcs :
         fit_sigma = pycs.gen.stat.mapresistats(rls)[i]["std"]
         fit_zruns = pycs.gen.stat.mapresistats(rls)[i]["zruns"]
         fit_nruns = pycs.gen.stat.mapresistats(rls)[i]["nruns"]
-        fit_vector = [fit_zruns,fit_sigma]
+        fit_vector = np.asarray([fit_zruns,fit_sigma])
         print "Converged position :", position[-1]
         mean_mini,sigma_mini = fmcmc.make_mocks_para(position[-1],lcs,spline,n_curve_stat=64, recompute_spline= True, knotstep=kntstp, nlcs=i, verbose=True)
+        mean_mini = np.asarray(mean_mini)
+        sigma_mini = np.asarray(sigma_mini)
         chi2 = np.sum((mean_mini - fit_vector)**2/(sigma_mini**2))
         print "Target sigma, nruns, zruns : "+ str(fit_sigma) + ', ' + str(fit_nruns) + ', ' + str(fit_zruns)
         print "Minimum sigma, zruns : "+ str(mean_mini[1]) + ', ' + str(mean_mini[0])

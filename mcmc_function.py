@@ -252,3 +252,11 @@ class LikelihoodModule :
         return [-0.5*chi2]
 
 
+def fftnoise(f):
+    f = np.array(f, dtype='complex')
+    Np = (len(f) - 1) // 2
+    phases = np.random.rand(Np) * 2 * np.pi
+    phases = np.cos(phases) + 1j * np.sin(phases)
+    f[1:Np+1] *= phases
+    f[-1:-1-Np:-1] = np.conj(f[1:Np+1])
+    return np.fft.ifft(f).real
