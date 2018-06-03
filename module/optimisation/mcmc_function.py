@@ -4,10 +4,11 @@ import pycs.regdiff
 import copy
 import time
 import multiprocessing
+from module import tweakml_PS_from_data as twk
 
 
-def mcmc_metropolis(theta, lcs, fit_vector, spline, gaussian_step=[0.05, 0.02], knotstep=None, niter=1000,
-                    burntime=100, savefile=None, nlcs=0, recompute_spline=False, para=True, rdm_walk='gaussian', max_core = 16,
+def mcmc_metropolis(theta, lc, fit_vector, spline, gaussian_step=[0.05, 0.02], knotstep=None, niter=1000,
+                    burntime=100, savefile=None, recompute_spline=False, para=True, rdm_walk='gaussian', max_core = 16,
                     n_curve_stat = 32, stopping_condition = True, shotnoise = "magerrs"):
     theta_save = []
     chi2_save = []
@@ -15,7 +16,7 @@ def mcmc_metropolis(theta, lcs, fit_vector, spline, gaussian_step=[0.05, 0.02], 
     errorsz_save = []
     global hundred_last
     hundred_last = 100
-    chi2_current, sz_current, errorsz_current = compute_chi2(theta, lcs, fit_vector, spline, knotstep=knotstep, nlcs=nlcs,
+    chi2_current, sz_current, errorsz_current = compute_chi2(theta, lc, fit_vector, spline, knotstep=knotstep,
                                 recompute_spline=recompute_spline, max_core = max_core, n_curve_stat = n_curve_stat, shotnoise = shotnoise)
     t = time.time()
 
@@ -33,7 +34,7 @@ def mcmc_metropolis(theta, lcs, fit_vector, spline, gaussian_step=[0.05, 0.02], 
         if not prior(theta_new):
             continue
 
-        chi2_new, sz_new, errorsz_new = compute_chi2(theta_new, lcs, fit_vector, spline, knotstep=knotstep, nlcs=nlcs,
+        chi2_new, sz_new, errorsz_new = compute_chi2(theta_new, lc, fit_vector, spline, knotstep=knotstep,
                                 recompute_spline=recompute_spline, para=para, max_core = max_core,n_curve_stat = n_curve_stat, shotnoise = shotnoise)
         ratio = np.exp((-chi2_new + chi2_current) / 2.0);
         print "Iteration, Theta, Chi2, sz, errorsz :", i, theta_new, chi2_new, sz_new, errorsz_new
@@ -91,9 +92,11 @@ def make_random_step_exp(theta, sigma_step):
         return [theta[0] + sigma_step[0] * np.random.randn(), theta[1] - np.random.exponential(scale=sigma_step[1])]
 
 
-def make_mocks(theta, lcs, spline, n_curve_stat=32, verbose=False, knotstep=None, recompute_spline=True, nlcs=0,
+def make_mocks(lc, spline, theta = [-2.0,0.2], tweakml_type='colored_noise', n_curve_stat=32, verbose=False, knotstep=None, recompute_spline=True,
                display=False, shotnoise = "magerrs"):
-    mocklcs = []
+    
+    #by default this function is using colored noise, but you can change tweak_ml type to make it work for PS_from_residuals. In this case, theta has length 1. 
+    mocklc = []
     mockrls = []
     stat = []
     zruns = []
@@ -101,24 +104,32 @@ def make_mocks(theta, lcs, spline, n_curve_stat=32, verbose=False, knotstep=None
     nruns = []
 
     for i in range(n_curve_stat):
-
-        mocklcs.append(pycs.sim.draw.draw([lcs[nlcs]], spline, tweakml=lambda x: pycs.sim.twk.tweakml(x, beta=theta[0],
+        
+        if tweakml_type == 'colored_noise' :
+            mocklc.append(pycs.sim.draw.draw([lc], spline, tweakml=lambda x: pycs.sim.twk.tweakml(x, beta=theta[0],
                                                                                                       sigma=theta[1],
                                                                                                       fmin=1 / 300.0,
                                                                                                       fmax=None,
                                                                                                       psplot=False),
                                           shotnoise=shotnoise, keeptweakedml=False))
 
+        elif tweakml_type == 'PS_from_residuals':
+            mocklc.append(pycs.sim.draw.draw([lc], spline, tweakml=twk.tweakml_PS([lc], spline, theta[0], f_min = 1/300.0,
+                                                                              psplot=False, save_figure_folder = None,  verbose = False,
+                                                                              interpolation = 'linear')
+                                             , shotnoise=shotnoise, keeptweakedml=False))
+            
+
         if recompute_spline:
             if knotstep == None:
                 print "Error : you must give a knotstep to recompute the spline"
-            spline_on_mock = pycs.spl.topopt.opt_fine(mocklcs[i], nit=5, knotstep=knotstep, verbose=False)
-            mockrls.append(pycs.gen.stat.subtract(mocklcs[i], spline_on_mock))
+            spline_on_mock = pycs.spl.topopt.opt_fine(mocklc[i], nit=5, knotstep=knotstep, verbose=False)
+            mockrls.append(pycs.gen.stat.subtract(mocklc[i], spline_on_mock))
         else:
-            mockrls.append(pycs.gen.stat.subtract(mocklcs[i], spline))
+            mockrls.append(pycs.gen.stat.subtract(mocklc[i], spline))
 
         if recompute_spline and display:
-            pycs.gen.lc.display([lcs[nlcs]], [spline_on_mock], showdelays=True)
+            pycs.gen.lc.display([lc], [spline_on_mock], showdelays=True)
             pycs.gen.stat.plotresiduals([mockrls[i]])
 
         stat.append(pycs.gen.stat.mapresistats(mockrls[i]))
@@ -134,16 +145,16 @@ def make_mocks(theta, lcs, spline, n_curve_stat=32, verbose=False, knotstep=None
     return [np.mean(zruns), np.mean(sigmas)], [np.std(zruns), np.std(sigmas)]
 
 
-def make_mocks_para(theta, lcs, spline, verbose=False, knotstep=None, recompute_spline=True, nlcs=0,
-                    display=False, max_core = 16, n_curve_stat = 32, shotnoise = "magerrs"):
+def make_mocks_para(lc, spline, theta = [-2.0,0.2], tweakml_type='colored_noise', knotstep=None, recompute_spline=True,
+                    display=False, max_core = 16, n_curve_stat = 32, shotnoise = "magerrs", verbose = False):
     stat = []
     zruns = []
     sigmas = []
     nruns = []
 
     pool = multiprocessing.Pool(processes = max_core)
-    job_kwarg = {'knotstep': knotstep, 'recompute_spline': recompute_spline, 'nlcs': nlcs, 'shotnoise' : shotnoise}
-    job_args = [(theta, lcs, spline, job_kwarg) for j in range(n_curve_stat)]
+    job_kwarg = {'knotstep': knotstep, 'recompute_spline': recompute_spline, 'shotnoise' : shotnoise, 'theta' : theta, 'tweakml_type' : tweakml_type}
+    job_args = [(lc, spline, job_kwarg) for j in range(n_curve_stat)]
 
     stat_out = pool.map(fct_para_aux, job_args)
     pool.close()
@@ -162,17 +173,17 @@ def make_mocks_para(theta, lcs, spline, verbose=False, knotstep=None, recompute_
     return [np.mean(zruns), np.mean(sigmas)], [np.std(zruns), np.std(sigmas)]
 
 
-def compute_chi2(theta, lcs, fit_vector, spline, nlcs=0, knotstep=40, recompute_spline=False,
-                 para=True, max_core = 16, n_curve_stat = 32, shotnoise = "magerrs"):
+def compute_chi2(theta, lc, fit_vector, spline, knotstep=40, recompute_spline=False,
+                 para=True, max_core = 16, n_curve_stat = 32, shotnoise = "magerrs",tweakml_type = 'colored_noise'):
     chi2 = 0.0
     if n_curve_stat ==1 :
         print "Warning : I cannot compute statistics with one single curves !!"
 
     if para:
-        out, error = make_mocks_para(theta, lcs, spline, nlcs=nlcs, recompute_spline=recompute_spline,
+        out, error = make_mocks_para(lc, spline, theta=theta, tweakml_type=tweakml_type, recompute_spline=recompute_spline,
                                      knotstep=knotstep, max_core = max_core, n_curve_stat= n_curve_stat, shotnoise=shotnoise)
     else:
-        out, error = make_mocks(theta, lcs, spline, nlcs=nlcs, recompute_spline=recompute_spline,
+        out, error = make_mocks(lc, spline, theta=theta, tweakml_type=tweakml_type, recompute_spline=recompute_spline,
                                 knotstep=knotstep, n_curve_stat = n_curve_stat, shotnoise=shotnoise)
 
     # for i in range(len(out)):
@@ -184,21 +195,28 @@ def compute_chi2(theta, lcs, fit_vector, spline, nlcs=0, knotstep=40, recompute_
     return chi2, out, error
 
 
-def fct_para(theta, lcs, spline, knotstep=None, recompute_spline=True, nlcs=0,shotnoise = "magerrs"):
+def fct_para(lc, spline, theta='theta', knotstep=None, recompute_spline=True, shotnoise = "magerrs", tweakml_type = 'colored_noise'):
+    if tweakml_type == 'colored_noise':
+        mocklc = pycs.sim.draw.draw([lc], spline, tweakml=lambda x: pycs.sim.twk.tweakml(x, beta=theta[0],
+                                                                                              sigma=theta[1],
+                                                                                              fmin=1 / 300.0,
+                                                                                              fmax=None,
+                                                                                              psplot=False),
+                                         shotnoise=shotnoise, keeptweakedml=False)
 
-    mocklcs = pycs.sim.draw.draw([lcs[nlcs]], spline, tweakml=lambda x: pycs.sim.twk.tweakml(x, beta=theta[0],
-                                                                                             sigma=theta[1],
-                                                                                             fmin=1 / 300.0, fmax=None,
-                                                                                             psplot=False),
-                                 shotnoise=shotnoise, keeptweakedml=False)
+    elif tweakml_type == 'PS_from_residuals':
+        mocklc = pycs.sim.draw.draw([lc], spline, tweakml=twk.tweakml_PS([lc], spline, theta[0], f_min = 1/300.0,
+                                                                              psplot=False, save_figure_folder = None,  verbose = False,
+                                                                              interpolation = 'linear')
+                                    , shotnoise=shotnoise, keeptweakedml=False)
 
     if recompute_spline:
         if knotstep == None:
             print "Error : you must give a knotstep to recompute the spline"
-        spline_on_mock = pycs.spl.topopt.opt_fine(mocklcs, nit=5, knotstep=knotstep, verbose=False)
-        mockrls = pycs.gen.stat.subtract(mocklcs, spline_on_mock)
+        spline_on_mock = pycs.spl.topopt.opt_fine(mocklc, nit=5, knotstep=knotstep, verbose=False)
+        mockrls = pycs.gen.stat.subtract(mocklc, spline_on_mock)
     else:
-        mockrls = pycs.gen.stat.subtract(mocklcs, spline)
+        mockrls = pycs.gen.stat.subtract(mocklc, spline)
 
     stat = pycs.gen.stat.mapresistats(mockrls)
     return stat
@@ -227,17 +245,16 @@ def check_if_stop(fitvector, sz, sz_error):
         return False
 
 class LikelihoodModule :
-    def __init__(self, lcs, fit_vector, spline, rt_file, nlcs, knotstep,max_core = 8, shotnoise = 'magerrs',
+    def __init__(self, lc, fit_vector, spline, rt_file, knotstep,max_core = 8, shotnoise = 'magerrs',
                  recompute_spline = True, n_curve_stat= 32, para = True):
         self.savefile = rt_file
-        self.nlcs = nlcs
         self.recompute_spline = recompute_spline
         self.para = para
         self.knotstep = knotstep
         self.n_curve_stat = n_curve_stat
         self.max_core = max_core,
         self.shotnoise = shotnoise
-        self.lcs = lcs
+        self.lc = lc
         self.fit_vector = fit_vector
         self.spline = spline
 
@@ -245,7 +262,8 @@ class LikelihoodModule :
         return self.likelihood(theta)
 
     def likelihood(self, theta):
-        chi2, out ,error  = compute_chi2(theta, self.lcs, self.fit_vector, self.spline, knotstep=self.knotstep,                             nlcs=self.nlcs,recompute_spline=self.recompute_spline, max_core=self.max_core, n_curve_stat=self.n_curve_stat,
+        chi2, out ,error  = compute_chi2(theta, self.lc, self.fit_vector, self.spline, knotstep=self.knotstep,
+                    recompute_spline=self.recompute_spline, max_core=self.max_core, n_curve_stat=self.n_curve_stat,
                      shotnoise=self.shotnoise, para= self.para)
 
 

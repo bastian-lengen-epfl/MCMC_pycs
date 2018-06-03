@@ -1,10 +1,6 @@
-
-import pycs
 import pycs.regdiff
 import numpy as np
-import mcmc_function as mcmc
-import pickle
-
+from module.optimisation import mcmc_function as mcmc
 
 object = "LCJ0806b"
 kntstp = 80

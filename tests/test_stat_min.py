@@ -1,8 +1,6 @@
-import pycs
 import pycs.regdiff
-import pickle
 import time
-import mcmc_function as mcmc
+from module.optimisation import mcmc_function as mcmc
 import numpy as np
 import matplotlib.pyplot as plt
 

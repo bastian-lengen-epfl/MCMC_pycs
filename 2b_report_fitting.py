@@ -1,8 +1,5 @@
 import pycs
-import os,sys
-import numpy as np
-import util_func as ut
-
+from module import util_func as ut
 
 execfile("config.py")
 

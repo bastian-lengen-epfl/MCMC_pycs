@@ -29,37 +29,37 @@ for i,lc in enumerate(lcs):
 
 
 
-# for i,kn in enumerate(knotstep) :
-# 	for j, knml in enumerate(mlknotsteps):
-# 		if knml != 0 :
-# 			attachml(lcs, knml) # add microlensing
-# 		spline = optfct(lcs, kn)
-# 		# add the polyml shift as a magshift to the iniopt
-# 		if 0:  # FOR polyml only, put 0 if you use splml
-# 			for lc in lcs:
-# 				pass
-# 				print lc.ml.longinfo()
-# 				magshift = lc.ml.getfreeparams()[0]
-# 				lc.rmml()
-# 				lc.shiftmag(magshift)
-#
-# 		rls = pycs.gen.stat.subtract(lcs, spline)
-# 		if display :
-# 			pycs.gen.lc.display(lcs, [spline], showlegend=True, showdelays=True, filename="screen")
-# 			pycs.gen.stat.plotresiduals([rls])
-# 		else :
-# 			pycs.gen.lc.display(lcs, [spline], showlegend=True, showdelays=True,
-# 								filename=figure_directory + "spline_fit_ks%i_ksml%i.png"%(kn,knml))
-# 			pycs.gen.stat.plotresiduals([rls], filename=figure_directory + "residual_fit_ks%i_ksml%i.png"%(kn,knml))
-#
-#
-#
-# 		# and write data, again
-# 		if not os.path.isdir(lens_directory + combkw[i,j]):
-# 			os.mkdir(lens_directory + combkw[i,j])
-#
-# 		pycs.gen.util.writepickle((lcs, spline), lens_directory + '%s/initopt_%s_ks%i_ksml%i.pkl' % (combkw[i,j], dataname, kn,knml))
-#
+for i,kn in enumerate(knotstep) :
+	for j, knml in enumerate(mlknotsteps):
+		if knml != 0 :
+			attachml(lcs, knml) # add microlensing
+		spline = optfct(lcs, kn)
+		# add the polyml shift as a magshift to the iniopt
+		if 0:  # FOR polyml only, put 0 if you use splml
+			for lc in lcs:
+				pass
+				print lc.ml.longinfo()
+				magshift = lc.ml.getfreeparams()[0]
+				lc.rmml()
+				lc.shiftmag(magshift)
+
+		rls = pycs.gen.stat.subtract(lcs, spline)
+		if display :
+			pycs.gen.lc.display(lcs, [spline], showlegend=True, showdelays=True, filename="screen")
+			pycs.gen.stat.plotresiduals([rls])
+		else :
+			pycs.gen.lc.display(lcs, [spline], showlegend=True, showdelays=True,
+								filename=figure_directory + "spline_fit_ks%i_ksml%i.png"%(kn,knml))
+			pycs.gen.stat.plotresiduals([rls], filename=figure_directory + "residual_fit_ks%i_ksml%i.png"%(kn,knml))
+
+
+
+		# and write data, again
+		if not os.path.isdir(lens_directory + combkw[i,j]):
+			os.mkdir(lens_directory + combkw[i,j])
+
+		pycs.gen.util.writepickle((lcs, spline), lens_directory + '%s/initopt_%s_ks%i_ksml%i.pkl' % (combkw[i,j], dataname, kn,knml))
+
 
 
 #DO the optimisation with regdiff as well !

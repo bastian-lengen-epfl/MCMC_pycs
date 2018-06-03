@@ -1,10 +1,9 @@
 #Find micro lensing Power spectrum using MCMC algo
 
-import pycs
 import pycs.regdiff
 import pickle
 import time
-import mcmc_function as mcmc
+from module.optimisation import mcmc_function as mcmc
 import os
 
 start_time = time.time()
@@ -23,7 +22,7 @@ if not os.path.exists(plot_path):
 
 
 picklename ="opt_spl_ml_"+str(kntstp)+"-"+str(ml_kntstep) + "knt.pkl"
-niter = 5
+niter = 2
 nburn = 0
 nlcs = 3 #numero de la courbe a traiter
 rdm_walk = 'log'
@@ -48,8 +47,8 @@ sigma_step = [0.22,0.005] # standard deviation for gaussian step
 pycs.sim.draw.saveresiduals(lcs, spline)
 
 initial_position = [-1.9,0.1]
-theta_walk, chi2_walk, sz_walk, errorsz_walk = mcmc.mcmc_metropolis(initial_position, lcs, fit_vector,spline, gaussian_step = sigma_step,
-                                 niter = niter, burntime = nburn, savefile = rt_file, nlcs=nlcs, recompute_spline= True,
+theta_walk, chi2_walk, sz_walk, errorsz_walk = mcmc.mcmc_metropolis(initial_position, lcs[nlcs], fit_vector,spline, gaussian_step = sigma_step,
+                                 niter = niter, burntime = nburn, savefile = rt_file, recompute_spline= True,
                                   para= True, knotstep = kntstp, rdm_walk=rdm_walk, n_curve_stat=n_curve_stat,
                                 max_core = max_process, stopping_condition=stopping_condition, shotnoise = shotnoise)
 

@@ -1,17 +1,13 @@
 #Find micro lensing Power spectrum using MCMC algo
 
-import pycs
 import pycs.regdiff
 import pickle
 import time
-import mcmc_function as mcmc
+from module.optimisation import mcmc_function as mcmc
 import os
 import numpy as np
 from cosmoHammer import MpiParticleSwarmOptimizer
 from cosmoHammer import ParticleSwarmOptimizer
-import plot_functions as plotfct
-import matplotlib.pyplot as plt
-
 
 start_time = time.time()
 
@@ -28,7 +24,7 @@ if not os.path.exists(plot_path):
     os.mkdir(plot_path)
 
 n_particles = 5
-n_iterations = 5
+n_iterations = 2
 picklename ="opt_spl_ml_"+str(kntstp)+"-"+str(ml_kntstep) + "knt.pkl"
 nlcs = 3 #numero de la courbe a traiter
 n_curve_stat = 2 #number of curve to optimise to compute the statistic.
@@ -56,7 +52,7 @@ initial_position = [-1.9,0.1]
 lowerLimit = [-8., 0.]
 upperLimit = [-1.0, 0.5]
 
-chain = mcmc.LikelihoodModule(lcs, fit_vector, spline, rt_file, nlcs,
+chain = mcmc.LikelihoodModule(lcs[nlcs], fit_vector, spline, rt_file,
                               kntstp, max_core = max_process, shotnoise = shotnoise,
                               recompute_spline = True, n_curve_stat= n_curve_stat, para = False)
 

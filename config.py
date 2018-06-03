@@ -3,11 +3,14 @@
 #####################
 import os
 from shutil import copyfile
-import util_func as ut
+from module import util_func as ut
 
 lensname = 'UM673'
 full_lensname ='UM673'
 dataname = "Euler"
+lcs_label = ['A','B']
+
+
 lens_directory = "/Users/martin/Desktop/MCMC_pycs/" + lensname + "_" + dataname + "/"
 figure_directory = "/Users/martin/Desktop/MCMC_pycs/" + lensname + "_" + dataname + "/figure/"
 report_directory = "/Users/martin/Desktop/MCMC_pycs/" + lensname + "_" + dataname + "/report/"

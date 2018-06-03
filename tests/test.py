@@ -1,8 +1,6 @@
-import pycs
 import pycs.regdiff
-import pickle
 import time
-import mcmc_function as mcmc
+from module.optimisation import mcmc_function as mcmc
 
 start_time = time.time()
 

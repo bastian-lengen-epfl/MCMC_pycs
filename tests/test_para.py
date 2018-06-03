@@ -1,6 +1,5 @@
-import pycs
 import pycs.regdiff
-import mcmc_function as mcmc
+from module.optimisation import mcmc_function as mcmc
 import time
 
 

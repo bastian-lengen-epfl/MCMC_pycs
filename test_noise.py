@@ -1,12 +1,7 @@
-import pickle
 import matplotlib.pyplot as plt
 import numpy as np
 import pycs
 import scipy.signal as sc
-import plot_functions as pltfct
-import mcmc_function as fmcmc
-import os
-
 
 source ="pickle"
 object = "HE0435"

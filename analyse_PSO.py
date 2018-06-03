@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pycs
 import plot_functions as pltfct
-import mcmc_function as fmcmc
+from module.optimisation import mcmc_function as fmcmc
 import os
 
 

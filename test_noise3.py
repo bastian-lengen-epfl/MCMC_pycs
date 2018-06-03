@@ -1,19 +1,17 @@
-import pickle
 import matplotlib.pyplot as plt
 import numpy as np
 import pycs
 import scipy.signal as sc
-import plot_functions as pltfct
-import mcmc_function as fmcmc
-import os
-
 
 source ="pickle"
 object = "HE0435"
+# object = "UM673_Euler"
 
 picklepath = "./"+object+"/save/"
 
+# kntstp = 60
 kntstp = 40
+# ml_kntstep =500
 ml_kntstep =360
 picklename ="opt_spl_ml_"+str(kntstp)+"-"+str(ml_kntstep) + "knt.pkl"
 curve = 3
@@ -86,16 +84,16 @@ def interpolate(x1,x2, interpolate = 'nearest'):
     elif interpolate == 'linear' :
         new = [x1.copy()]
         new[0].mags = np.interp(new[0].jds, x2.jds, x2.mags, left=0., right=0.)
-        plt.figure(3)
-        plt.plot(new[0].jds,new[0].mags, label = 'fully sampled noise')
-        plt.plot(x2.jds,x2.mags,'r', label = 'resampled noise')
-        plt.title("resampling by linear interpolation")
+        # plt.figure(3)
+        # plt.plot(new[0].jds,new[0].mags, label = 'fully sampled noise')
+        # plt.plot(x2.jds,x2.mags,'r', label = 'resampled noise')
+        # plt.title("resampling by linear interpolation")
         # plt.show()
         return new
 
 
 
-samples = 10000
+samples = int(span) * 5
 samplerate = 1
 
 freqs_noise = np.abs(np.fft.fftfreq(samples, 1/samplerate))
@@ -105,7 +103,7 @@ pgram = sc.lombscargle(x, y, freqs_data)
 print "min max, lenght frequency of noise: ", np.min(freqs_noise),np.max(freqs_noise), len(freqs_noise)
 print "min max, lenght frequency of data: ", np.min(freqs_data),np.max(freqs_data), len(freqs_data)
 
-band_noise = band_limited_noise_withPS(freqs_data,pgram, samples=samples, samplerate=samplerate)
+band_noise = band_limited_noise_withPS(freqs_data,len(freqs_data)*pgram, samples=samples, samplerate=samplerate)
 x_sample = np.linspace(start,stop,samples)
 
 noise_lcs_band = [pycs.gen.lc.lightcurve()]
@@ -125,15 +123,15 @@ nruns = []
 A_vec = np.linspace(1,Amp,50)
 
 for i,A in enumerate(A_vec):
-    band_noise_scan = band_limited_noise_withPS(freqs_data, A*pgram, samples=samples, samplerate=samplerate)
+    band_noise_scan = band_limited_noise_withPS(freqs_data, len(freqs_data)*pgram, samples=samples, samplerate=samplerate)
     noise_lcs_scan = [pycs.gen.lc.lightcurve()]
     noise_lcs_scan[0].jds = x_sample
     noise_lcs_scan[0].mags = band_noise_scan
-    print "generated %i:"%i ,pycs.gen.stat.mapresistats(noise_lcs_scan)
+    # print "generated %i:"%i ,pycs.gen.stat.mapresistats(noise_lcs_scan)
     std.append(pycs.gen.stat.mapresistats(noise_lcs_scan)[0]['std'])
     nruns.append(pycs.gen.stat.mapresistats(noise_lcs_scan)[0]['nruns'])
 
-band_noise_rescaled = band_limited_noise_withPS(freqs_data, Amp*pgram, samples=samples, samplerate=samplerate)
+band_noise_rescaled = band_limited_noise_withPS(freqs_data, len(freqs_data)*Amp*pgram, samples=samples, samplerate=samplerate)
 noise_lcs_rescaled = [pycs.gen.lc.lightcurve()]
 noise_lcs_rescaled[0].jds = x_sample
 noise_lcs_rescaled[0].mags = band_noise_rescaled
@@ -153,9 +151,9 @@ plt.ylabel("nruns")
 
 #resampling :
 noise_lcs_resampled = interpolate(rls[curve],noise_lcs_rescaled[0], interpolate=interpolation)
-noise_lcs_resampled[0].magerrs = errors
 
 print "resampled 1:", pycs.gen.stat.mapresistats(noise_lcs_resampled)
+print "target : ", pycs.gen.stat.mapresistats(rls)[curve]
 
 #check if the periodogram of the resampled data looks the same :
 pgram_generated = sc.lombscargle(noise_lcs_band[0].jds, noise_lcs_band[0].mags, freqs_data)
@@ -188,7 +186,7 @@ for i,B in enumerate(B_vec):
     freqs_data_Bscan = np.linspace(1/300.0, B*1/(sampling*2.0), 10000)
     pgram_Bscan = sc.lombscargle(x, y, freqs_data_Bscan)
 
-    band_noise_Bscan = band_limited_noise_withPS(freqs_data_Bscan,pgram_Bscan, samples=samples, samplerate=samplerate)
+    band_noise_Bscan = band_limited_noise_withPS(freqs_data_Bscan,len(freqs_data_Bscan)*pgram_Bscan, samples=samples, samplerate=samplerate)
     x_sample = np.linspace(start,stop,samples)
 
     noise_lcs_Bscan = [pycs.gen.lc.lightcurve()]
@@ -200,7 +198,7 @@ for i,B in enumerate(B_vec):
     print "Amplification required f: ", Amp
 
     #redo it know that we know the amplitude :
-    band_noise_Bscan = band_limited_noise_withPS(freqs_data_Bscan, Amp* pgram_Bscan, samples=samples, samplerate=samplerate)
+    band_noise_Bscan = band_limited_noise_withPS(freqs_data_Bscan, len(freqs_data_Bscan)*Amp* pgram_Bscan, samples=samples, samplerate=samplerate)
     x_sample = np.linspace(start, stop, samples)
 
     noise_lcs_Bscan = [pycs.gen.lc.lightcurve()]
@@ -218,7 +216,7 @@ for i,B in enumerate(B_vec):
     nruns_resampled.append(pycs.gen.stat.mapresistats(noise_lcs_Bscan_resampled)[0]['nruns'])
     zruns_resampled.append(pycs.gen.stat.mapresistats(noise_lcs_Bscan_resampled)[0]['zruns'])
 
-    res_Bscan.append(noise_lcs_Bscan_resampled[0])
+    res_Bscan.append(noise_lcs_Bscan_resampled)
 
 plt.figure(1)
 plt.plot(B_vec,std)
@@ -245,9 +243,12 @@ plt.ylabel("zruns")
 ind = np.argmin(np.abs(nruns_resampled - target_nruns))
 
 print "target : ", pycs.gen.stat.mapresistats(rls)[curve]
-print "Best fit :", pycs.gen.stat.resistats(res_Bscan[ind])
+print "Best fit :", pycs.gen.stat.mapresistats(res_Bscan[ind])
 print "Best fit for i=%i and B=%2.2f"%(ind,B_vec[ind])
 
+plt.show()
 
-
+best_lc = res_Bscan[ind]
+pycs.gen.stat.plotresiduals([best_lc],filename='resinoise.png')
+pycs.gen.stat.plotresiduals([rls],filename='resinoise.png')
 plt.show()

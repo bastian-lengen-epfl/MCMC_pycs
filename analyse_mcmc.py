@@ -3,7 +3,7 @@ import corner
 import matplotlib.pyplot as plt
 import numpy as np
 import pycs
-import mcmc_function as fmcmc
+from module.optimisation import mcmc_function as fmcmc
 import os
 
 
