@@ -32,7 +32,7 @@ def tweakml_PS(lcs, spline, B, f_min = 1/300.0,psplot=False, save_figure_folder 
 
         samples =  int(span) * 5  #number of samples you want in the generated noise, the final curve is interpolated from this
         if samples%2 ==1 :
-            samples += 1
+            samples -= 1
         samplerate = 1 # don't touch this, add more sample if you want
 
         freqs_noise = np.abs(np.fft.fftfreq(samples, 1 / samplerate))
@@ -72,7 +72,13 @@ def tweakml_PS(lcs, spline, B, f_min = 1/300.0,psplot=False, save_figure_folder 
             print "target : ", pycs.gen.stat.resistats(rls)
 
 
-        source = pycs.sim.src.Source(ml_spline, name=name, sampling=span/float(samples) )
+        source = pycs.sim.src.Source(ml_spline, name=name, sampling=span/float(samples))
+        if len(noise_lcs_rescaled) != len(source.imags): #weird error can happen for some curves due to round error...
+            print "Warning : round error somewhere, I will need to change a little bit the sampling of your source, but don't worry, I can deal with that."
+            source.sampling = float(source.jdmax - source.jdmin) / float(len(noise_lcs_rescaled))
+            source.ijds = np.linspace(source.jdmin, source.jdmax, float(len(noise_lcs_rescaled)))
+            source.imags = source.inispline.eval(jds=source.ijds)
+
         source.imags += noise_lcs_rescaled.mags
         newspline = source.spline()
         l.ml.replacespline(newspline) # replace the previous spline with the tweaked one...

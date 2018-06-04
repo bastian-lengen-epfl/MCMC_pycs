@@ -114,16 +114,17 @@ def make_mocks(lc, spline, theta = [-2.0,0.2], tweakml_type='colored_noise', n_c
                                           shotnoise=shotnoise, keeptweakedml=False))
 
         elif tweakml_type == 'PS_from_residuals':
-            mocklc.append(pycs.sim.draw.draw([lc], spline, tweakml=twk.tweakml_PS([lc], spline, theta[0], f_min = 1/300.0,
+            mocklc.append(pycs.sim.draw.draw([lc], spline, tweakml=lambda x: twk.tweakml_PS(x, spline, theta[0], f_min = 1/300.0,
                                                                               psplot=False, save_figure_folder = None,  verbose = False,
                                                                               interpolation = 'linear')
                                              , shotnoise=shotnoise, keeptweakedml=False))
-            
+
+
 
         if recompute_spline:
             if knotstep == None:
                 print "Error : you must give a knotstep to recompute the spline"
-            spline_on_mock = pycs.spl.topopt.opt_fine(mocklc[i], nit=5, knotstep=knotstep, verbose=False)
+            spline_on_mock = pycs.spl.topopt.opt_fine(mocklc[i], nit=5, knotstep=knotstep, verbose=True)
             mockrls.append(pycs.gen.stat.subtract(mocklc[i], spline_on_mock))
         else:
             mockrls.append(pycs.gen.stat.subtract(mocklc[i], spline))
@@ -146,12 +147,14 @@ def make_mocks(lc, spline, theta = [-2.0,0.2], tweakml_type='colored_noise', n_c
 
 
 def make_mocks_para(lc, spline, theta = [-2.0,0.2], tweakml_type='colored_noise', knotstep=None, recompute_spline=True,
-                    display=False, max_core = 16, n_curve_stat = 32, shotnoise = "magerrs", verbose = False):
+                    display=False, max_core = None, n_curve_stat = 32, shotnoise = "magerrs", verbose = False):
     stat = []
     zruns = []
     sigmas = []
     nruns = []
 
+    if max_core == None :
+        max_core = multiprocessing.cpu_count()
     pool = multiprocessing.Pool(processes = max_core)
     job_kwarg = {'knotstep': knotstep, 'recompute_spline': recompute_spline, 'shotnoise' : shotnoise, 'theta' : theta, 'tweakml_type' : tweakml_type}
     job_args = [(lc, spline, job_kwarg) for j in range(n_curve_stat)]
@@ -205,7 +208,7 @@ def fct_para(lc, spline, theta='theta', knotstep=None, recompute_spline=True, sh
                                          shotnoise=shotnoise, keeptweakedml=False)
 
     elif tweakml_type == 'PS_from_residuals':
-        mocklc = pycs.sim.draw.draw([lc], spline, tweakml=twk.tweakml_PS([lc], spline, theta[0], f_min = 1/300.0,
+        mocklc = pycs.sim.draw.draw([lc], spline, tweakml=lambda x: twk.tweakml_PS(x, spline, theta[0], f_min = 1/300.0,
                                                                               psplot=False, save_figure_folder = None,  verbose = False,
                                                                               interpolation = 'linear')
                                     , shotnoise=shotnoise, keeptweakedml=False)

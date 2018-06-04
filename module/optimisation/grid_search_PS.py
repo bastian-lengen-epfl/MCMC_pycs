@@ -1,7 +1,7 @@
 import numpy as np
 from module.optimisation import mcmc_function as mcmc
 
-def grid_search_PS(lc,spline,B_vec, target,  max_core=8, n_curve_stat=32, verbose = False, shotnoise = None, knotstep = None):
+def grid_search_PS(lc,spline,B_vec, target,  max_core=None, n_curve_stat=32, verbose = False, shotnoise = None, knotstep = None):
 
 
     sigma = []
@@ -13,9 +13,12 @@ def grid_search_PS(lc,spline,B_vec, target,  max_core=8, n_curve_stat=32, verbos
     sigma_target = target['std']
 
     for i,B in enumerate(B_vec):
-        [[zruns_c,sigma_c],[zruns_std_c,sigma_std_c]] = mcmc.make_mocks_para(lc, spline, theta=[B], tweakml_type='PS_from_residuals', knotstep=knotstep,
+        # [[zruns_c,sigma_c],[zruns_std_c,sigma_std_c]] = mcmc.make_mocks_para(lc, spline, theta=[B], tweakml_type='PS_from_residuals', knotstep=knotstep,
+        #                     recompute_spline=True,max_core=max_core,
+        #                     display=False, n_curve_stat=n_curve_stat, shotnoise= shotnoise, verbose=verbose)
+        [[zruns_c,sigma_c],[zruns_std_c,sigma_std_c]] = mcmc.make_mocks(lc, spline, theta=[B], tweakml_type='PS_from_residuals', knotstep=knotstep,
                             recompute_spline=True,
-                            display=False, max_core=max_core, n_curve_stat=n_curve_stat, shotnoise= shotnoise, verbose=verbose)
+                            display=False, n_curve_stat=n_curve_stat, shotnoise= shotnoise, verbose=verbose)
 
         chi2.append((zruns_c-zruns_target)**2 / zruns_std_c**2 + (sigma_c-sigma_target)**2 / sigma_std_c**2)
 
@@ -41,6 +44,6 @@ def grid_search_PS(lc,spline,B_vec, target,  max_core=8, n_curve_stat=32, verbos
     else :
         success = False
 
-    return success, B_vec[min_ind], [zruns[min_ind],sigma[min_ind]], [zruns_std[min_ind],sigma_std[min_ind]], chi2
+    return success, B_vec[min_ind], [zruns,sigma], [zruns_std,sigma_std], chi2,min_ind
 
 

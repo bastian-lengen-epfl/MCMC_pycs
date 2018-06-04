@@ -1,6 +1,7 @@
 import pycs
 import os,sys, glob
 import numpy as np
+import dill
 
 
 
@@ -39,6 +40,10 @@ for i,kn in enumerate(knotstep) :
         if run_on_sims:
                 # add splml so that mytweakml will be applied by multidraw
                 # Will not work if you have polyml ! But why would you do that ?
+
+                f = open(lens_directory + combkw[i, j] + '/tweakml_' + tweakml_name + '.dill', 'r')
+                mytweakml = dill.load(f)
+
                 for l in lcs:
                     if l.ml == None:
                         pycs.gen.splml.addtolc(l, n=2)
