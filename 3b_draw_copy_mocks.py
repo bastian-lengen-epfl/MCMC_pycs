@@ -1,7 +1,8 @@
 import pycs
 import os,sys, glob
 import numpy as np
-import dill
+import pickle
+from module import tweakml_PS_from_data as twk
 
 
 
@@ -38,37 +39,37 @@ for i,kn in enumerate(knotstep) :
 
 
         if run_on_sims:
-                # add splml so that mytweakml will be applied by multidraw
-                # Will not work if you have polyml ! But why would you do that ?
+            # add splml so that mytweakml will be applied by multidraw
+            # Will not work if you have polyml ! But why would you do that ?
 
-                f = open(lens_directory + combkw[i, j] + '/tweakml_' + tweakml_name + '.dill', 'r')
-                mytweakml = dill.load(f)
+            for l in lcs:
+                if l.ml == None:
+                    pycs.gen.splml.addtolc(l, n=2)
 
-                for l in lcs:
-                    if l.ml == None:
-                        pycs.gen.splml.addtolc(l, n=2)
+            execfile(lens_directory + combkw[i, j] + '/tweakml_' + tweakml_name + '.py')
 
-                files_mock = glob.glob("sims_" + simset_mock + '/*.pkl')
-                if len(files_mock) != 0 and askquestions == True:
-                    answer = raw_input("You already have mocks in the folder %s. Do you want to add more ? (yes/no)" % simset_mock)
-                    if answer[:3] == "yes":
-                        pycs.sim.draw.multidraw(lcs, spline, onlycopy=False, n=nsim, npkl=nsimpkls,
-                                                simset=simset_mock, tweakml=mytweakml, shotnoise=shotnoise_type, truetsr=truetsr, shotnoisefrac=1.0)
-                    elif answer[:2] == "no":
-                        answer2 = raw_input("Should I erase everything and create new ones ? (yes/no)")
-                        if answer2[:3] == "yes":
-                            print "OK, deleting everything ! "
-                            for f in files_mock:
-                                os.remove(f)
-                            pycs.sim.draw.multidraw(lcs, spline, onlycopy=False, n=nsim, npkl=nsimpkls,
-                                                        simset=simset_mock, tweakml=mytweakml, shotnoise=shotnoise_type,
-                                                        truetsr=truetsr, shotnoisefrac=1.0)
-                        elif answer2[:2] == "no":
-                            print "OK, I am doing nothing then !"
-                else:
-                    for f in files_mock:
-                        os.remove(f)
-                        print "deleting %s"%f
+
+            files_mock = glob.glob("sims_" + simset_mock + '/*.pkl')
+            if len(files_mock) != 0 and askquestions == True:
+                answer = raw_input("You already have mocks in the folder %s. Do you want to add more ? (yes/no)" % simset_mock)
+                if answer[:3] == "yes":
                     pycs.sim.draw.multidraw(lcs, spline, onlycopy=False, n=nsim, npkl=nsimpkls,
-                                            simset=simset_mock, tweakml=mytweakml, shotnoise=shotnoise_type,
-                                            truetsr=truetsr, shotnoisefrac=1.0)
+                                            simset=simset_mock, tweakml=tweakml_list, shotnoise=shotnoise_type, truetsr=truetsr, shotnoisefrac=1.0)
+                elif answer[:2] == "no":
+                    answer2 = raw_input("Should I erase everything and create new ones ? (yes/no)")
+                    if answer2[:3] == "yes":
+                        print "OK, deleting everything ! "
+                        for f in files_mock:
+                            os.remove(f)
+                        pycs.sim.draw.multidraw(lcs, spline, onlycopy=False, n=nsim, npkl=nsimpkls,
+                                                    simset=simset_mock, tweakml=tweakml_list, shotnoise=shotnoise_type,
+                                                    truetsr=truetsr, shotnoisefrac=1.0)
+                    elif answer2[:2] == "no":
+                        print "OK, I am doing nothing then !"
+            else:
+                for f in files_mock:
+                    os.remove(f)
+                    print "deleting %s"%f
+                pycs.sim.draw.multidraw(lcs, spline, onlycopy=False, n=nsim, npkl=nsimpkls,
+                                        simset=simset_mock, tweakml=tweakml_list, shotnoise=shotnoise_type,
+                                        truetsr=truetsr, shotnoisefrac=1.0)

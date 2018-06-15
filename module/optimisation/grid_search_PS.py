@@ -13,12 +13,12 @@ def grid_search_PS(lc,spline,B_vec, target,  max_core=None, n_curve_stat=32, ver
     sigma_target = target['std']
 
     for i,B in enumerate(B_vec):
-        # [[zruns_c,sigma_c],[zruns_std_c,sigma_std_c]] = mcmc.make_mocks_para(lc, spline, theta=[B], tweakml_type='PS_from_residuals', knotstep=knotstep,
-        #                     recompute_spline=True,max_core=max_core,
-        #                     display=False, n_curve_stat=n_curve_stat, shotnoise= shotnoise, verbose=verbose)
-        [[zruns_c,sigma_c],[zruns_std_c,sigma_std_c]] = mcmc.make_mocks(lc, spline, theta=[B], tweakml_type='PS_from_residuals', knotstep=knotstep,
-                            recompute_spline=True,
+        [[zruns_c,sigma_c],[zruns_std_c,sigma_std_c]] = mcmc.make_mocks_para(lc, spline, theta=[B], tweakml_type='PS_from_residuals', knotstep=knotstep,
+                            recompute_spline=True,max_core=max_core,
                             display=False, n_curve_stat=n_curve_stat, shotnoise= shotnoise, verbose=verbose)
+        # [[zruns_c,sigma_c],[zruns_std_c,sigma_std_c]] = mcmc.make_mocks(lc, spline, theta=[B], tweakml_type='PS_from_residuals', knotstep=knotstep,
+        #                     recompute_spline=True,
+        #                     display=False, n_curve_stat=n_curve_stat, shotnoise= shotnoise, verbose=verbose)
 
         chi2.append((zruns_c-zruns_target)**2 / zruns_std_c**2 + (sigma_c-sigma_target)**2 / sigma_std_c**2)
 

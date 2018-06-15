@@ -2,7 +2,7 @@ import pickle
 import matplotlib.pyplot as plt
 import numpy as np
 import pycs
-import plot_functions as pltfct
+from module.plots import plot_functions as pltfct
 from module.optimisation import mcmc_function as fmcmc
 import os
 
@@ -38,7 +38,6 @@ for i in nlcs :
 
 
     elif source == "rt_file":
-        print"hello"
         pass
 
     position = chain[1]
@@ -64,7 +63,7 @@ for i in nlcs :
         print "Minimum chi2 : ", chi2
         print "For minimum Chi2, we are standing at " + str(np.abs(mean_mini[0]-fit_zruns)/sigma_mini[0]) + " sigma [zruns]"
         print "For minimum Chi2, we are standing at " + str(np.abs(mean_mini[1]-fit_sigma)/sigma_mini[1]) + " sigma [sigma]"
-
+        param_list = ['beta', 'sigma']
 
     f, axes = pltfct.plot_chain(chain, param_list)
 

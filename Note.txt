@@ -8,5 +8,13 @@ sinfo
 squeue - u millon pour voir les jobs
 
 
+CHANGE TO PYCS :
+sim.run.py l23 : change in applyopt, add kn kwargs
+
+
+RESTE
+TODO : coder la marginalisation
+TODO : ameliorer le grid search
+TODO : permetrre de runner plusieurs parametres en meme temps pour regdiff
 
 TODO : maybe add a visualization code for the png after the fitting

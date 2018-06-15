@@ -1,7 +1,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import corner
 
-def plot_chain(chain, param_list):
+def plot_chain_PSO(chain, param_list):
     X2_list, pos_list, vel_list = chain
 
     f, axes = plt.subplots(1, 3, figsize=(18, 6), sharex=False, sharey=False)
@@ -25,3 +26,21 @@ def plot_chain(chain, param_list):
     ax.set_title('param velocity')
     ax.legend()
     return f, axes
+
+def plot_chain_MCMC(theta, chi2, param_list):
+    fig1 = corner.corner(theta, labels=param_list)
+
+    fig2 = plt.figure(2)
+    x = np.arange(len(chi2))
+    plt.xlabel('N', fontdict={"fontsize": 16})
+    plt.ylabel('$\chi^2$', fontdict={"fontsize": 16})
+    plt.plot(x, chi2)
+
+    fig3, axe = plt.subplots(2, 1, sharex=True)
+    axe[0].plot(x, theta[:, 0], 'r')
+    axe[1].plot(x, theta[:, 1], 'g')
+    plt.xlabel('N', fontdict={"fontsize": 16})
+    axe[0].set_ylabel(param_list[0], fontdict={"fontsize": 16})
+    axe[1].set_ylabel(param_list[1], fontdict={"fontsize": 16})
+
+    return fig1,fig2,fig3

@@ -27,7 +27,7 @@ nburn = 0
 nlcs = 3 #numero de la courbe a traiter
 rdm_walk = 'log'
 n_curve_stat = 8 #number of curve to optimise to compute the statistic.
-max_process = 8
+max_process = 1
 stopping_condition =True
 
 open(sim_path + 'rt_file_' + object +"_"+ picklename[:-4] + "_" + str(niter)+"_"+rdm_walk +"_"+str(nlcs)+'.txt', 'w').close() # to clear the file
@@ -47,10 +47,13 @@ sigma_step = [0.22,0.005] # standard deviation for gaussian step
 pycs.sim.draw.saveresiduals(lcs, spline)
 
 initial_position = [-1.9,0.1]
-theta_walk, chi2_walk, sz_walk, errorsz_walk = mcmc.mcmc_metropolis(initial_position, lcs[nlcs], fit_vector,spline, gaussian_step = sigma_step,
+MH_opt = mcmc.Metropolis_Hasting_Optimiser(lcs[nlcs], fit_vector,spline, gaussian_step = sigma_step,
                                  niter = niter, burntime = nburn, savefile = rt_file, recompute_spline= True,
-                                  para= True, knotstep = kntstp, rdm_walk=rdm_walk, n_curve_stat=n_curve_stat,
-                                max_core = max_process, stopping_condition=stopping_condition, shotnoise = shotnoise)
+                                knotstep = kntstp, rdm_walk=rdm_walk, n_curve_stat=n_curve_stat,
+                                max_core = max_process, stopping_condition=stopping_condition, shotnoise = shotnoise,
+                                           tweak_ml_type = 'colored_noise',theta_init = initial_position)
+
+theta_walk, chi2_walk, sz_walk, errorsz_walk = MH_opt.optimise()
 
 print("--- %s seconds ---" % (time.time() - start_time))
 

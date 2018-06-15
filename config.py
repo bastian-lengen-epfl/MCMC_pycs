@@ -11,6 +11,7 @@ dataname = "Euler"
 lcs_label = ['A','B']
 
 
+module_directory = "/Users/martin/Desktop/MCMC_pycs/"
 lens_directory = "/Users/martin/Desktop/MCMC_pycs/" + lensname + "_" + dataname + "/"
 figure_directory = "/Users/martin/Desktop/MCMC_pycs/" + lensname + "_" + dataname + "/figure/"
 report_directory = "/Users/martin/Desktop/MCMC_pycs/" + lensname + "_" + dataname + "/report/"

@@ -1,5 +1,7 @@
 import sys
 import numpy as np
+from inspect import getsource
+from textwrap import dedent
 
 def proquest(askquestions):
 	"""
@@ -32,3 +34,13 @@ def getdelays(lcs):
 	delay_name = np.asarray(delay_name)
 
 	return delay_pair,delay_name
+
+def write_func_append(fn, stream, **kwargs):
+	#function to write a function in a file, replacing the variable by their value
+    fn_as_string = getsource(fn)
+    for var in kwargs:
+        fn_as_string = fn_as_string.replace(var, kwargs[var])
+
+	fn_as_string = dedent(fn_as_string)
+
+    stream.write('\n' + fn_as_string)

@@ -20,6 +20,9 @@ def applyshifts(lcs,timeshifts,magshifts):
 		#lc.shiftmag(magshift)
 		lc.shifttime(timeshift)
 
+figure_directory = figure_directory + "spline_and_residuals_plots/"
+if not os.path.isdir(figure_directory):
+	os.mkdir(figure_directory)
 
 lcs = pycs.gen.util.readpickle(data)
 applyshifts(lcs, timeshifts, magshifts)
