@@ -19,7 +19,8 @@ if display :
 
 pycs.gen.util.writepickle(lcs,'pkl/'+lensname + "_" + dataname+'.pkl')
 
-if not os.exists(lens_directory + 'figure/')
+if not os.path.exists(lens_directory + 'figure/'):
+    os.mkdir(lens_directory + 'figure/')
 
-
+print "I have created a new config file for this object ! You probably want to edit it in %s"%(lens_directory + "config_" + lensname + "_" + dataname + ".py")
 

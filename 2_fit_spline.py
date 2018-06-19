@@ -36,17 +36,10 @@ for i,kn in enumerate(knotstep) :
 	for j, knml in enumerate(mlknotsteps):
 		if knml != 0 :
 			attachml(lcs, knml) # add microlensing
-		spline = optfct(lcs, kn)
-		# add the polyml shift as a magshift to the iniopt
-		if 0:  # FOR polyml only, put 0 if you use splml
-			for lc in lcs:
-				pass
-				print lc.ml.longinfo()
-				magshift = lc.ml.getfreeparams()[0]
-				lc.rmml()
-				lc.shiftmag(magshift)
 
+		spline = optfct(lcs, kn)
 		rls = pycs.gen.stat.subtract(lcs, spline)
+		pycs.gen.mrg.colourise(lcs)
 		if display :
 			pycs.gen.lc.display(lcs, [spline], showlegend=True, showdelays=True, filename="screen")
 			pycs.gen.stat.plotresiduals([rls])
