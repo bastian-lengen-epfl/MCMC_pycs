@@ -22,6 +22,7 @@ for i,kn in enumerate(knotstep) :
 
 f.write('------------------------------------------------\n')
 f.write('Measured time shift after fitting with regdiff : \n')
+f.write('\n')
 lcs = pycs.gen.util.readpickle(lens_directory + 'regdiff_fitting/initopt_regdiff.pkl', verbose = False)
 delay_pair, delay_name = ut.getdelays(lcs)
 f.write('Regdiff : ' +"     Delays are " + str(delay_pair) + " for pairs "  + str(delay_name) + '\n')

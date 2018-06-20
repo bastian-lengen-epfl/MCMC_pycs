@@ -27,32 +27,27 @@ target = pycs.gen.stat.mapresistats(rls)[0]
 B_vec = np.linspace(0.1,2,2)
 pycs.sim.draw.saveresiduals(lcs, spline)
 
+fit_vector = mcmc.get_fit_vector(lcs[0], spline)
+print "I will try to find the parameter for lightcurve :", lcs[0].object
 
-success, B_min, [zruns,sigma], [zruns_std,sigma_std], chi2,min_ind = grid.grid_search_PS(lcs[curve],
-                                                                                         spline,B_vec, target,  max_core=8, n_curve_stat=16, verbose = True,
-                                                                                         shotnoise = None, knotstep= kntstp)
+grid_opt = mcmc.Grid_Optimiser(lcs[0], fit_vector, spline, knotstep=kntstp,
+                               savedirectory="./", recompute_spline=True, max_core=8,
+                               n_curve_stat=2, shotnoise=None, tweakml_type='PS_from_residuals',
+                               tweakml_name='test',
+                               display=False, verbose=True, grid=B_vec)
 
-#
+grid_opt.optimise()
+
+chi2, B_min = grid_opt.get_best_param()
+
 mocklc_besdt_B = pycs.sim.draw.draw([lcs[curve]], spline, tweakml=lambda x: twk.tweakml_PS(x, spline, B_min, f_min=1 / 300.0,
                                                                            psplot=False, save_figure_folder=None,
                                                                            verbose=False,
                                                                            interpolation='linear')
                             , shotnoise=None, keeptweakedml=False)
 
-
-plt.figure(1)
-plt.errorbar(B_vec,zruns, yerr= zruns_std)
-plt.hlines(target['zruns'], B_vec[0], B_vec[-1], colors='r', linestyles='solid', label='target')
-plt.xlabel('B in unit of Nymquist frequency)')
-plt.legend()
-plt.ylabel('zruns')
-plt.figure(2)
-plt.errorbar(B_vec,sigma, yerr= sigma_std)
-plt.hlines(target['std'], B_vec[0], B_vec[-1], colors='r', linestyles='solid', label='target')
-plt.xlabel('B in unit of Nymquist frequency)')
-plt.legend()
-plt.ylabel('sigma')
-plt.show()
+grid_opt.display = True
+grid_opt.analyse_plot_results()
 
 
 #for comparison, plot the mock curves and the real one.

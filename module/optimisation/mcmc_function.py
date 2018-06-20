@@ -1,20 +1,22 @@
 import numpy as np
 import pycs
 import pycs.regdiff
-import copy
+import copy, os
 import time
-import multiprocess as multiprocessing
+import multiprocess
 from module import tweakml_PS_from_data as twk
 from module.plots import plot_functions as pltfct
 from cosmoHammer import MpiParticleSwarmOptimizer
 from cosmoHammer import ParticleSwarmOptimizer
 import matplotlib.pyplot as plt
 import pickle
+# import dill #this is important for multiprocessing
 
 class Optimiser(object):
     def __init__(self, lc, fit_vector, spline, knotstep=None,
                      savedirectory="./", recompute_spline=True, max_core = 16, theta_init = [-2.0 ,0.1],
-                    n_curve_stat = 32, shotnoise = "magerrs", tweakml_type = 'colored_noise', display = False, verbose = False):
+                    n_curve_stat = 32, shotnoise = "magerrs", tweakml_type = 'colored_noise', display = False, verbose = False,
+                 tweakml_name = ''):
 
         self.lc = lc
         self.fit_vector = fit_vector
@@ -28,12 +30,16 @@ class Optimiser(object):
         self.sigma_mini = None #std of zruns and sigma computed with the best parameters
         self.chi2_mini = None
         self.rel_error_mini= None #relative error in term of zruns and sigmas
+        self.best_param = None
 
+        if recompute_spline == True and knotstep == None :
+            print "Error : I can't recompute spline if you don't give me the knotstep ! "
+            exit()
 
         if max_core != None :
             self.max_core = max_core
         else :
-            self.max_core = multiprocessing.cpu_count()
+            self.max_core = multiprocess.cpu_count()
             print "You will run on %i cores."%self.max_core
 
         if self.max_core > 1 :
@@ -45,6 +51,7 @@ class Optimiser(object):
         self.n_curve_stat = n_curve_stat
         self.shotnoise = shotnoise
         self.tweakml_type =tweakml_type
+        self.tweakml_name = tweakml_name
         self.display = display
         self.verbose = verbose
 
@@ -54,7 +61,7 @@ class Optimiser(object):
         sigmas = []
         nruns = []
 
-        pool = multiprocessing.Pool(processes=self.max_core)
+        pool = multiprocess.Pool(processes=self.max_core)
 
         job_args = [(theta) for j in range(self.n_curve_stat)]
 
@@ -149,7 +156,7 @@ class Optimiser(object):
                                        shotnoise=self.shotnoise, keeptweakedml=False))
 
             elif self.tweakml_type == 'PS_from_residuals':
-                mocklc.append(pycs.sim.draw.draw([self.lc], self.spline, tweakml=lambda x: twk.tweakml_PS(x, spline, theta[0],
+                mocklc.append(pycs.sim.draw.draw([self.lc], self.spline, tweakml=lambda x: twk.tweakml_PS(x, self.spline, theta[0],
                                                                                                 f_min=1 / 300.0,
                                                                                                 psplot=False,
                                                                                                 save_figure_folder=None,
@@ -187,25 +194,63 @@ class Optimiser(object):
             print "Error you should run analyse_plot_results() first !"
             exit()
         else :
-            if self.rel_error_mini[0] <0.75 and self.rel_error_mini[1] < 0.75 :
+            if self.rel_error_mini[0] <0.5 and self.rel_error_mini[1] < 0.5 :
                 return True
             else :
                 return False
+
+    def report(self):
+        #TODO : finish this
+        if self.best_param == None :
+            print "Error : you should run optimise() first !"
+            exit()
+
+        if os.path.isfile(self.savedirectory + 'report_tweakml_optimisation.txt') :
+            f = open(self.savedirectory + 'report_tweakml_optimisation.txt', 'a')
+            f.write('Best parameters for %s : \n'%self.tweakml_name)
+            f.write('------------------------------------------------\n')
+        else :
+            f = open(self.savedirectory + 'report_tweakml_optimisation.txt', 'a')
+
+        f.write('Lightcurves %s : \n'%self.lc.object)
+        f.write('\n')
+        if self.success == True:
+            f.write('I succeeded in finding a set of parameters that match the statistical properties of the real lightcurve within 0.5sigma. \n')
+
+        else :
+            f.write('I did not succeed in finding a set of parameters that match the statistical properties of the real lightcurve within 0.5sigma. \n')
+
+        f.write('Best parameters are : %s \n'%str(self.best_param) )
+        f.write("Corresponding Chi2 : %2.2f \n"%self.chi2_mini)
+        f.write("Target zruns, sigma : %2.2f, %2.2f \n"%(self.fit_vector[0],self.fit_vector[1]))
+        f.write("At minimum zruns, sigma : %2.2f, %2.2f \n"%(self.mean_mini[0], self.mean_mini[1]))
+        f.write("For minimum Chi2, we are standing at " + str(self.rel_error_mini[0]) + " sigma [zruns] \n")
+        f.write("For minimum Chi2, we are standing at " + str(self.rel_error_mini[1])+ " sigma [sigma] \n")
+        f.write('------------------------------------------------\n')
+        f.close()
+
+    def reset_report(self):
+        open(self.savedirectory + 'report_tweakml_optimisation.txt', 'w').close()
+
+
+
 
 
 class Metropolis_Hasting_Optimiser(Optimiser):
     def __init__(self, lc, fit_vector, spline, knotstep=None, niter=1000,
                     burntime=100, savedirectory="./", recompute_spline=True, rdm_walk='gaussian', max_core = 16,
-                    n_curve_stat = 32, stopping_condition = True, shotnoise = "magerrs", theta_init = [-2.0, 0.2], gaussian_step = [0.1, 0.01]):
+                    n_curve_stat = 32, stopping_condition = True, shotnoise = "magerrs", theta_init = [-2.0, 0.2], gaussian_step = [0.1, 0.01],
+                 tweakml_type = 'coloired_noise' ,tweakml_name = ''):
 
         Optimiser.__init__(self,lc, fit_vector,spline, knotstep = knotstep, savedirectory= savedirectory, recompute_spline=recompute_spline,
-                                   max_core =max_core, n_curve_stat = n_curve_stat, shotnoise = shotnoise, theta_init= theta_init)
+                                   max_core =max_core, n_curve_stat = n_curve_stat, shotnoise = shotnoise, theta_init= theta_init,
+                           tweakml_type= tweakml_type, tweakml_name= tweakml_name)
         self.niter = niter
         self.burntime = burntime
         self.rdm_walk = rdm_walk
         self.stopping_condition = stopping_condition
         self.gaussian_step = gaussian_step
-        self.savefile = self.savedirectory + 'MCMC_outfile_i' + str(niter)+"_"+rdm_walk +"_"+self.lc.object+'.txt'
+        self.savefile = self.savedirectory + self.tweakml_name + '_MCMC_outfile_i' + str(niter)+"_"+rdm_walk +"_"+self.lc.object+'.txt'
         self.hundred_last = 100
         self.chain_list = None
 
@@ -261,6 +306,7 @@ class Metropolis_Hasting_Optimiser(Optimiser):
                     break
 
         self.chain_list = [theta_save, chi2_save, sz_save, errorsz_save]
+        self.chi2_mini, self.best_param = self.get_best_param()  # to save the best params
         return theta_save, chi2_save, sz_save, errorsz_save
 
 
@@ -309,23 +355,24 @@ class Metropolis_Hasting_Optimiser(Optimiser):
             return False
 
     def get_best_param(self):
-        if self.chain == None :
+        if self.chain_list == None :
             print "Error you should run optimise() first !"
             exit()
         else:
-            ind_min = np.argmin(self.chain_list[1,:])
-            self.mean_mini = (self.chain_list[2,ind_min])
-            self.sigma_mini = (self.chain_list[3,ind_min])
-            self.chi2_mini = (self.chain_list[1,ind_min])
-            return self.chi2_mini, self.chain_list[0,ind_min]
+            print np.shape(self.chain_list),self.chain_list[1][:]
+            ind_min = np.argmin(self.chain_list[1][:])
+            self.mean_mini = (self.chain_list[2][ind_min])
+            self.sigma_mini = (self.chain_list[3][ind_min])
+            self.chi2_mini = (self.chain_list[1][ind_min])
+            return self.chi2_mini, self.chain_list[0][ind_min]
 
     def analyse_plot_results(self):
-        if self.chain == None :
+        if self.chain_list == None :
             print "Error you should run optimise() first !"
             exit()
         else :
-            print "Best position :" + self.get_best_param()[1]
-            print "Corresponding Chi2 : " + self.get_best_param()[0]
+            print "Best position : ", self.get_best_param()[1]
+            print "Corresponding Chi2 : ", self.get_best_param()[0]
             self.rel_error_mini =  np.abs(self.mean_mini - self.fit_vector) / self.sigma_mini
 
             print "Target sigma, zruns : " + str(self.fit_vector[1]) + ', ' + str(self.fit_vector[0])
@@ -338,10 +385,10 @@ class Metropolis_Hasting_Optimiser(Optimiser):
 
             toplot = self.chain_list[0,:]
             toplot[1,:] = np.log10(toplot[1,:])
-            fig1,fig2,fig3 = pltfct.plot_chain_MCMC(toplot, self.chain_list[1,:], ["$beta$", "log $\sigma$"])
-            fig1.savefig(self.savedirectory + "MCMC_corner_plot_" + self.lc.object + ".png")
-            fig2.savefig(self.savedirectory + "MCMC_chi2_" + self.lc.object + ".png")
-            fig3.savefig(self.savedirectory + "MCMC_chain_" + self.lc.object + ".png")
+            fig1,fig2,fig3 = pltfct.plot_chain_MCMC(toplot, self.chain_list[1][:], ["$beta$", "log $\sigma$"])
+            fig1.savefig(self.savedirectory +self.tweakml_name +  "_MCMC_corner_plot_" + self.lc.object + ".png")
+            fig2.savefig(self.savedirectory +self.tweakml_name + "_MCMC_chi2_" + self.lc.object + ".png")
+            fig3.savefig(self.savedirectory +self.tweakml_name +"_MCMC_chain_" + self.lc.object + ".png")
 
             if self.display:
                 plt.show()
@@ -351,9 +398,9 @@ class Metropolis_Hasting_Optimiser(Optimiser):
             print "Error you should run optimise() first !"
             exit()
         else :
-            pickle.dump(self.chain_list, open(self.savedirectory + "chain_list_MCMC_" + "_i"
+            pickle.dump(self.chain_list, open(self.savedirectory +  self.tweakml_name + "_chain_list_MCMC_" + "_i"
                                          + str(self.n_iter) + "_" + self.lc.object + ".pkl", "wb"))
-            pickle.dump(self, open(self.savedirectory + "MCMC_opt_" + "_i"
+            pickle.dump(self, open(self.savedirectory + self.tweakml_name + "_MCMC_opt_" + "_i"
                                       + str(self.n_iter) + "_" + self.lc.object + ".pkl", "wb"))
 
 
@@ -362,10 +409,11 @@ class PSO_Optimiser(Optimiser) :
 
     def __init__(self, lc, fit_vector, spline, savedirectory ="./", knotstep = None, max_core = 8, shotnoise = 'magerrs',
                  recompute_spline = True, n_curve_stat= 32, theta_init = None, n_particles = 30, n_iter = 50,
-                 lower_limit = [-8., 0.], upper_limit = [-1.0, 0.5], mpi = False):
+                 lower_limit = [-8., 0.], upper_limit = [-1.0, 0.5], mpi = False, tweakml_type = 'colored_noise', tweakml_name = ''):
 
         Optimiser.__init__(self,lc, fit_vector,spline, knotstep = knotstep, savedirectory= savedirectory, recompute_spline=recompute_spline,
-                                   max_core =1, n_curve_stat = n_curve_stat, shotnoise = shotnoise, theta_init= theta_init, verbose= False, display= False)
+                                   max_core =1, n_curve_stat = n_curve_stat, shotnoise = shotnoise, theta_init= theta_init,
+                           tweakml_type = tweakml_type, tweakml_name = tweakml_name, verbose= False, display= False)
 
 
         self.n_particles = n_particles
@@ -375,7 +423,7 @@ class PSO_Optimiser(Optimiser) :
         self.mpi = mpi
         self.max_thread = max_core * 2
         self.chain_list = None
-        self.savefile = self.savedirectory +  'PSO_file _' + "_i" + str(self.n_iter)+"_p"+str(self.n_particles)+ "_" +self.lc.object+".txt"
+        self.savefile = self.savedirectory + self.tweakml_name + '_PSO_file _' + "_i" + str(self.n_iter)+"_p"+str(self.n_particles)+ "_" +self.lc.object+".txt"
 
     def __call__(self, theta):
         return self.likelihood(theta)
@@ -409,6 +457,7 @@ class PSO_Optimiser(Optimiser) :
             num_iter += 1
 
         self.chain_list = [X2_list, pos_list, vel_list]
+        self.chi2_mini, self.best_param = self.get_best_param()
         return self.chain_list
 
     def get_best_param(self):
@@ -425,9 +474,9 @@ class PSO_Optimiser(Optimiser) :
             print "Error you should run optimise() first !"
             exit()
         else :
-            pickle.dump(self.chain_list, open(self.savedirectory + "chain_list_PSO_" + "_i"
+            pickle.dump(self.chain_list, open(self.savedirectory + self.tweakml_name +"_chain_list_PSO_" + "_i"
                                          + str(self.n_iter) + "_p" + str(self.n_particles) + "_" + self.lc.object + ".pkl", "wb"))
-            pickle.dump(self, open(self.savedirectory + "PSO_opt_" + "_i"
+            pickle.dump(self, open(self.savedirectory + self.tweakml_name +"_PSO_opt_" + "_i"
                                       + str(self.n_iter) + "_p" + str(self.n_particles) + "_" + self.lc.object + ".pkl", "wb"))
     def analyse_plot_results(self):
         if self.chain == None :
@@ -455,18 +504,114 @@ class PSO_Optimiser(Optimiser) :
             param_list = ['beta', 'sigma']
             f, axes = pltfct.plot_chain_PSO(self.chain, param_list)
 
-            f.savefig(self.savedirectory + "PSO_chain_" + self.lc.object + ".png")
+            f.savefig(self.savedirectory + self.tweakml_name + "_PSO_chain_" + self.lc.object + ".png")
 
             if self.display:
                 plt.show()
 
+class Grid_Optimiser(Optimiser):
+    def __init__(self, lc, fit_vector, spline, knotstep=None,
+                     savedirectory="./", recompute_spline=True, max_core = 16, theta_init = [-2.0 ,0.1],
+                    n_curve_stat = 32, shotnoise = "magerrs", tweakml_type = 'PS_from_residuals', tweakml_name = '',
+                 display = False, verbose = False, grid = np.linspace(0.5,2,10)):
 
+        Optimiser.__init__(self,lc, fit_vector,spline, knotstep = knotstep, savedirectory= savedirectory, recompute_spline=recompute_spline,
+                                   max_core =max_core, n_curve_stat = n_curve_stat, shotnoise = shotnoise, theta_init= theta_init,
+                           tweakml_type= tweakml_type, tweakml_name = tweakml_name, verbose=verbose, display= display)
+
+        self.grid = grid #should be only a 1D array for the moment
+        self.chain_list = None
+
+    def optimise(self):
+
+        sigma = []
+        zruns = []
+        sigma_std = []
+        zruns_std = []
+        chi2 = []
+        zruns_target = self.fit_vector[0]
+        sigma_target = self.fit_vector[1]
+
+        for i, B in enumerate(self.grid):
+            if self.para :
+                [[zruns_c, sigma_c], [zruns_std_c, sigma_std_c]] = self.make_mocks_para(theta=B) #for some reason do not work with multiprocessing !
+            else :
+                [[zruns_c,sigma_c],[zruns_std_c,sigma_std_c]] = self.make_mocks(theta=[B]) #to debug, remove multiprocessing
+            chi2.append(
+                (zruns_c - zruns_target) ** 2 / zruns_std_c ** 2 + (sigma_c - sigma_target) ** 2 / sigma_std_c ** 2)
+
+            sigma.append(sigma_c)
+            zruns.append(zruns_c)
+            sigma_std.append(sigma_std_c)
+            zruns_std.append(zruns_std_c)
+
+        min_ind = np.argmin(chi2)
+        self.chi2_mini = np.min(chi2)
+        self.mean_mini = [zruns[min_ind], sigma[min_ind]]
+        self.sigma_mini = [zruns_std[min_ind], sigma_std[min_ind]]
+        self.rel_error_mini = [np.abs(zruns[min_ind] - zruns_target) / zruns_std[min_ind],
+                               np.abs(sigma[min_ind] - sigma_target) / sigma_std[min_ind]]
+
+        self.chain_list = [self.grid, chi2, [zruns,sigma], [zruns_std,sigma_std]]
+        self.chi2_mini, self.best_param = self.get_best_param()
+
+
+        if self.verbose:
+            print "target :", self.fit_vector
+            print "Best parameter from grid search :", self.grid[min_ind]
+            print "Associated chi2 : ", chi2[min_ind]
+            print "Zruns : %2.6f +/- %2.6f (%2.4f sigma from target)" % (
+            zruns[min_ind], zruns_std[min_ind], self.rel_error_mini[0])
+            print "Sigma : %2.6f +/- %2.6f (%2.4f sigma from target)" % (sigma[min_ind], sigma_std[min_ind], self.rel_error_mini[1])
+
+        if self.rel_error_mini[0] < 0.5 and self.rel_error_mini[1] < 0.5:
+            self.success = True
+        else:
+            self.success = False
+
+        return self.chain_list
+
+    def get_best_param(self):
+        if self.chain_list == None :
+            print "Error you should run optimise() first !"
+            exit()
+        else:
+            ind_min = np.argmin(self.chain_list[1][:])
+            return self.chi2_mini, self.chain_list[0][ind_min]
+
+    def analyse_plot_results(self):
+        fig1 = plt.figure(1)
+        plt.errorbar(self.grid, self.chain_list[2][0], yerr=self.chain_list[3][0])
+        plt.hlines(self.fit_vector[0], self.grid[0], self.grid[-1], colors='r', linestyles='solid', label='target')
+        plt.xlabel('B in unit of Nymquist frequency)')
+        plt.ylabel('zruns')
+        plt.legend()
+
+        fig2 = plt.figure(2)
+        plt.errorbar(self.grid, self.chain_list[2][1], yerr=self.chain_list[3][1])
+        plt.hlines(self.fit_vector[1], self.grid[0], self.grid[-1], colors='r', linestyles='solid', label='target')
+        plt.xlabel('B in unit of Nymquist frequency)')
+        plt.ylabel('sigma')
+        plt.legend()
+
+        fig3 = plt.figure(3)
+        plt.plot(self.grid, self.chain_list[0])
+        plt.xlabel('B in unit of Nymquist frequency)')
+        plt.ylabel('$\chi^2$')
+
+        fig1.savefig(self.savedirectory + self.tweakml_name + '_zruns_' + self.lc.object + '.png')
+        fig2.savefig(self.savedirectory + self.tweakml_name + '_std_' + self.lc.object + '.png')
+        fig3.savefig(self.savedirectory + self.tweakml_name + '_chi2_' + self.lc.object + '.png')
+
+        if self.display:
+            plt.show()
+        plt.gcf().clear()
 
 def get_fit_vector(l,spline):
-    rls = pycs.gen.stat.subtract(l, spline)
+    rls = pycs.gen.stat.subtract([l], spline)
     print 'Residuals from the fit : '
-    print pycs.gen.stat.resistats(rls)
-    fit_sigma = pycs.gen.stat.mapresistats(rls)["std"]
-    fit_zruns = pycs.gen.stat.mapresistats(rls)["zruns"]
+    print pycs.gen.stat.resistats(rls[0])
+    fit_sigma = pycs.gen.stat.resistats(rls[0])["std"]
+    fit_zruns = pycs.gen.stat.resistats(rls[0])["zruns"]
     fit_vector = [fit_zruns, fit_sigma]
     return fit_vector

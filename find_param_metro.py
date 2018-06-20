@@ -22,11 +22,11 @@ if not os.path.exists(plot_path):
 
 
 picklename ="opt_spl_ml_"+str(kntstp)+"-"+str(ml_kntstep) + "knt.pkl"
-niter = 2
+niter = 3
 nburn = 0
 nlcs = 3 #numero de la courbe a traiter
 rdm_walk = 'log'
-n_curve_stat = 8 #number of curve to optimise to compute the statistic.
+n_curve_stat = 2 #number of curve to optimise to compute the statistic.
 max_process = 1
 stopping_condition =True
 
@@ -48,20 +48,25 @@ pycs.sim.draw.saveresiduals(lcs, spline)
 
 initial_position = [-1.9,0.1]
 MH_opt = mcmc.Metropolis_Hasting_Optimiser(lcs[nlcs], fit_vector,spline, gaussian_step = sigma_step,
-                                 niter = niter, burntime = nburn, savefile = rt_file, recompute_spline= True,
+                                 niter = niter, burntime = nburn, savedirectory = sim_path, recompute_spline= True,
                                 knotstep = kntstp, rdm_walk=rdm_walk, n_curve_stat=n_curve_stat,
                                 max_core = max_process, stopping_condition=stopping_condition, shotnoise = shotnoise,
-                                           tweak_ml_type = 'colored_noise',theta_init = initial_position)
+                                           tweakml_type = 'colored_noise',theta_init = initial_position)
 
 theta_walk, chi2_walk, sz_walk, errorsz_walk = MH_opt.optimise()
+best_chi2, best_param = MH_opt.get_best_param()
+MH_opt.analyse_plot_results()
+MH_opt.dump_results()
+MH_opt.reset_report()
+MH_opt.report()
 
 print("--- %s seconds ---" % (time.time() - start_time))
-
-pickle.dump(theta_walk, open(sim_path+"theta_walk_" + object +"_"+ picklename[:-4] + "_" + str(niter)+"_"+rdm_walk + "_"+str(nlcs)+".pkl", "wb" ))
-pickle.dump(chi2_walk, open(sim_path+"chi2_walk_" + object +"_"+ picklename[:-4] + "_" + str(niter) +"_"+rdm_walk + "_"+str(nlcs)+".pkl", "wb" ))
-pickle.dump(sz_walk, open(sim_path+"sz_walk_" + object +"_"+ picklename[:-4] + "_" + str(niter) +"_"+rdm_walk + "_"+str(nlcs)+".pkl", "wb" ))
-pickle.dump(errorsz_walk, open(sim_path+"errorsz_walk_" + object +"_"+ picklename[:-4] + "_" + str(niter) +"_"+rdm_walk + "_"+str(nlcs)+".pkl", "wb" ))
-
-
-
-
+#
+# pickle.dump(theta_walk, open(sim_path+"theta_walk_" + object +"_"+ picklename[:-4] + "_" + str(niter)+"_"+rdm_walk + "_"+str(nlcs)+".pkl", "wb" ))
+# pickle.dump(chi2_walk, open(sim_path+"chi2_walk_" + object +"_"+ picklename[:-4] + "_" + str(niter) +"_"+rdm_walk + "_"+str(nlcs)+".pkl", "wb" ))
+# pickle.dump(sz_walk, open(sim_path+"sz_walk_" + object +"_"+ picklename[:-4] + "_" + str(niter) +"_"+rdm_walk + "_"+str(nlcs)+".pkl", "wb" ))
+# pickle.dump(errorsz_walk, open(sim_path+"errorsz_walk_" + object +"_"+ picklename[:-4] + "_" + str(niter) +"_"+rdm_walk + "_"+str(nlcs)+".pkl", "wb" ))
+#
+#
+#
+#

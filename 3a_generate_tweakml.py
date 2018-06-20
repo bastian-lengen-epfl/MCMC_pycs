@@ -21,7 +21,7 @@ for i,kn in enumerate(knotstep):
         f.write('import pycs \n')
         f.write('from module import tweakml_PS_from_data as twk \n')
         lcs, spline = pycs.gen.util.readpickle(lens_directory + '%s/initopt_%s_ks%i_ksml%i.pkl' % (combkw[i, j], dataname, kn, knml))
-        optim_directory = lens_directory +  + '%s/optim_%s'%(combkw[i, j], optimiser)
+        optim_directory = lens_directory + '%s/twk_optim_%s_%s'%(combkw[i, j], optimiser, tweakml_name)
         if not os.path.isdir(optim_directory):
             os.mkdir(optim_directory)
         for k,l in enumerate(lcs):
@@ -40,12 +40,17 @@ for i,kn in enumerate(knotstep):
                                                      recompute_spline=True, n_curve_stat=n_curve_stat,
                                                      theta_init=None, savedirectory=optim_directory,
                                                      n_particles=n_particles, n_iter=n_iter,
-                                                        mpi=mpi, tweak_ml_type = tweak_ml_type)
+                                                        mpi=mpi, tweak_ml_type = tweak_ml_type, tweakml_name= tweakml_name)
 
                         chain_list = PSO_opt.optimise()
                         best_chi2, best_param = PSO_opt.get_best_param()
                         PSO_opt.analyse_plot_results()
                         PSO_opt.dump_results()
+                        if k == 0 :
+                            PSO_opt.reset_report()
+                            PSO_opt.report()
+                        else :
+                            PSO_opt.report()
 
                         #write the python file containing the function :
                         def tweakml_colored_NUMBER(lcs):
@@ -74,12 +79,17 @@ for i,kn in enumerate(knotstep):
                                                                    max_core=max_core,
                                                                    stopping_condition=stopping_condition,
                                                                    shotnoise=shotnoise,
-                                                                   tweak_ml_type=tweak_ml_type,
+                                                                   tweak_ml_type=tweak_ml_type, tweakml_name= tweakml_name,
                                                                    theta_init=initial_position)
                         theta_walk, chi2_walk, sz_walk, errorsz_walk = MH_opt.optimise()
                         best_chi2, best_param = MCMC_opt.get_best_param()
                         MH_opt.analyse_plot_results()
                         MH_opt.dump_results()
+                        if k == 0 :
+                            MH_opt.reset_report()
+                            MH_opt.report()
+                        else :
+                            MH_opt.report()
                         #write the python file containing the function :
                         def tweakml_colored_NUMBER(lcs):
                             return pycs.sim.twk.tweakml(lcs, beta=BETA, sigma=SIGMA, fmin=1.0 / 50.0, fmax=0.2,
@@ -117,41 +127,33 @@ for i,kn in enumerate(knotstep):
 
 
         elif tweakml_type == 'PS_from_residuals':
+            if shotnoise_type != None :
+                print 'If you use PS_from_residuals, the shotnoise should be set to None. I will do it for you !'
+                shotnoise_type = None
+
             if find_tweak_ml_param == True :
                 tweak_ml_list = []
-                rls = pycs.gen.stat.subtract(lcs, spline)
-                target = pycs.gen.stat.mapresistats(rls)
                 pycs.sim.draw.saveresiduals(lcs, spline)
 
-                for k in range(len(lcs)):
-                    print "I will try to find the parameter for lightcurve :", lcs[k].object
-                    print "Target is :", target[k]
-                    B_vec = np.linspace(0.1, 2, 5)
-                    success, B_best, [zruns, sigma], [zruns_std, sigma_std], chi2, min_ind = grid.grid_search_PS(lcs[k],spline,B_vec,
-                                                                                                                         target[k],  max_core=max_core,
-                                                                                                                         n_curve_stat=n_curve_stat, verbose = True,
-                                                                                                                         shotnoise = None, knotstep = knml)
+                for k, l in enumerate(lcs):
+                    fit_vector = mcmc.get_fit_vector(l, spline)
+                    print "I will try to find the parameter for lightcurve :", l.object
 
-                    fig1 = plt.figure(1)
-                    plt.errorbar(B_vec, zruns, yerr=zruns_std)
-                    plt.hlines(target[k]['zruns'], B_vec[0], B_vec[-1], colors='r', linestyles='solid', label='target')
-                    plt.xlabel('B in unit of Nymquist frequency)')
-                    plt.legend()
-                    plt.ylabel('zruns')
-                    fig2 = plt.figure(2)
-                    plt.errorbar(B_vec, sigma, yerr=sigma_std)
-                    plt.hlines(target[k]['std'], B_vec[0], B_vec[-1], colors='r', linestyles='solid', label='target')
-                    plt.xlabel('B in unit of Nymquist frequency)')
-                    plt.legend()
-                    plt.ylabel('sigma')
-                    fig1.savefig(tweakml_plot_dir + tweakml_name + '_zruns_' + lcs[k].object + '.png')
-                    fig2.savefig(tweakml_plot_dir + tweakml_name + '_std_' + lcs[k].object + '.png')
+                    grid_opt = mcmc.Grid_Optimiser(l, fit_vector, spline, knotstep=kn,
+                     savedirectory=optim_directory, recompute_spline=True, max_core = max_core,
+                    n_curve_stat = n_curve_stat, shotnoise = shotnoise_type, tweakml_type = tweakml_type, tweakml_name= tweakml_name,
+                 display = display, verbose = False, grid = grid)
 
-                    if display :
-                        plt.show()
-                    plt.close()
+                    chain = grid_opt.optimise()
+                    grid_opt.analyse_plot_results()
+                    chi2, B_best = grid_opt.get_best_param()
+                    if k == 0:
+                        grid_opt.reset_report()
+                        grid_opt.report()
+                    else:
+                        grid_opt.report()
 
-                    if success :
+                    if grid_opt.success :
                         print "I succeeded finding a parameter falling in the 0.5 sigma from the original lightcurve."
 
                     else :

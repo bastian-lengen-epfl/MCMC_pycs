@@ -48,17 +48,20 @@ initial_position = [-1.9,0.1]
 lowerLimit = [-8., 0.]
 upperLimit = [-1.0, 0.5]
 
-PSO_opt = mcmc.PSO_Optimiser(lcs[nlcs], fit_vector, spline, savefile = rt_file,
+PSO_opt = mcmc.PSO_Optimiser(lcs[nlcs], fit_vector, spline, savedirectory= sim_path,
                               knotstep=kntstp, max_core = max_process, shotnoise = shotnoise,
                               recompute_spline = True, n_curve_stat= n_curve_stat, theta_init= initial_position,
                              n_particles=n_particles, n_iter=n_iterations, lower_limit = lowerLimit, upper_limit = upperLimit, mpi = False)
 
 chain_list = PSO_opt.optimise()
+best_chi2, best_param = PSO_opt.get_best_param()
+PSO_opt.analyse_plot_results()
+PSO_opt.dump_results()
 
-pickle.dump(chain_list, open(sim_path+"chain_PSO_" + object +"_"+ picklename[:-4] + "_i"
-                             + str(n_iterations)+"_p"+str(n_particles)+ "_" +str(nlcs)+".pkl", "wb" ))
-pickle.dump(PSO_opt, open(sim_path+"PSO_opt_" + object +"_"+ picklename[:-4] + "_i"
-                             + str(n_iterations)+"_p"+str(n_particles)+ "_" +str(nlcs)+".pkl", "wb" ))
+# pickle.dump(chain_list, open(sim_path+"chain_PSO_" + object +"_"+ picklename[:-4] + "_i"
+#                              + str(n_iterations)+"_p"+str(n_particles)+ "_" +str(nlcs)+".pkl", "wb" ))
+# pickle.dump(PSO_opt, open(sim_path+"PSO_opt_" + object +"_"+ picklename[:-4] + "_i"
+#                              + str(n_iterations)+"_p"+str(n_particles)+ "_" +str(nlcs)+".pkl", "wb" ))
 
 
 print("--- %s seconds ---" % (time.time() - start_time))
