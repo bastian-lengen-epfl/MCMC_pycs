@@ -25,7 +25,7 @@ class Optimiser(object):
         self.knotstep = knotstep
         self.savedirectory = savedirectory
         self.recompute_spline = recompute_spline
-        self.sucess = False
+        self.success = False
         self.mean_mini = None #mean of zruns and sigma computed with the best parameters
         self.sigma_mini = None #std of zruns and sigma computed with the best parameters
         self.chi2_mini = None
@@ -98,7 +98,7 @@ class Optimiser(object):
         #     chi2 += (fit_vector[i] - out[i]) ** 2 / error[i] ** 2
 
         chi2 = (self.fit_vector[0] - out[0]) ** 2 / error[0] ** 2
-        chi2 += (self.fit_vector[1] - out[1]) ** 2 / (2 * error[1] ** 2)
+        chi2 += (self.fit_vector[1] - out[1]) ** 2 / (2 * error[1] ** 2) #TODO : attention here I have doubled the error on sigma not to drive the fit too much...
 
         return chi2, out, error
 
@@ -190,7 +190,7 @@ class Optimiser(object):
         return [np.mean(zruns), np.mean(sigmas)], [np.std(zruns), np.std(sigmas)]
 
     def check_success(self):
-        if self.rel_error_mini == None :
+        if np.any(self.rel_error_mini) == None :
             print "Error you should run analyse_plot_results() first !"
             exit()
         else :
@@ -200,44 +200,45 @@ class Optimiser(object):
                 return False
 
     def report(self):
-        #TODO : finish this
-        if self.best_param == None :
+        if np.any(self.best_param) == None :
             print "Error : you should run optimise() first !"
             exit()
 
         if os.path.isfile(self.savedirectory + 'report_tweakml_optimisation.txt') :
             f = open(self.savedirectory + 'report_tweakml_optimisation.txt', 'a')
-            f.write('Best parameters for %s : \n'%self.tweakml_name)
-            f.write('------------------------------------------------\n')
+
         else :
             f = open(self.savedirectory + 'report_tweakml_optimisation.txt', 'a')
+            f.write('Best parameters for %s : \n' %self.tweakml_name)
+            f.write('------------------------------------------------\n')
 
-        f.write('Lightcurves %s : \n'%self.lc.object)
+        f.write('Lightcurve %s : \n'%self.lc.object)
         f.write('\n')
         if self.success == True:
-            f.write('I succeeded in finding a set of parameters that match the statistical properties of the real lightcurve within 0.5sigma. \n')
+            f.write('I succeeded in finding a set of parameters that match the statistical properties of the real lightcurve within 0.5 sigma. \n')
 
         else :
-            f.write('I did not succeed in finding a set of parameters that match the statistical properties of the real lightcurve within 0.5sigma. \n')
+            f.write('I did not succeed in finding a set of parameters that match the statistical properties of the real lightcurve within 0.5 sigma. \n')
 
         f.write('Best parameters are : %s \n'%str(self.best_param) )
         f.write("Corresponding Chi2 : %2.2f \n"%self.chi2_mini)
-        f.write("Target zruns, sigma : %2.2f, %2.2f \n"%(self.fit_vector[0],self.fit_vector[1]))
-        f.write("At minimum zruns, sigma : %2.2f, %2.2f \n"%(self.mean_mini[0], self.mean_mini[1]))
+        f.write("Target zruns, sigma : %2.6f, %2.6f \n"%(self.fit_vector[0],self.fit_vector[1]))
+        f.write("At minimum zruns, sigma : %2.6f, %2.6f \n"%(self.mean_mini[0], self.mean_mini[1]))
         f.write("For minimum Chi2, we are standing at " + str(self.rel_error_mini[0]) + " sigma [zruns] \n")
         f.write("For minimum Chi2, we are standing at " + str(self.rel_error_mini[1])+ " sigma [sigma] \n")
         f.write('------------------------------------------------\n')
+        f.write('\n')
         f.close()
 
     def reset_report(self):
-        open(self.savedirectory + 'report_tweakml_optimisation.txt', 'w').close()
+        os.remove(self.savedirectory + 'report_tweakml_optimisation.txt')
 
 
 
 
 
 class Metropolis_Hasting_Optimiser(Optimiser):
-    def __init__(self, lc, fit_vector, spline, knotstep=None, niter=1000,
+    def __init__(self, lc, fit_vector, spline, knotstep=None, n_iter=1000,
                     burntime=100, savedirectory="./", recompute_spline=True, rdm_walk='gaussian', max_core = 16,
                     n_curve_stat = 32, stopping_condition = True, shotnoise = "magerrs", theta_init = [-2.0, 0.2], gaussian_step = [0.1, 0.01],
                  tweakml_type = 'coloired_noise' ,tweakml_name = ''):
@@ -245,12 +246,12 @@ class Metropolis_Hasting_Optimiser(Optimiser):
         Optimiser.__init__(self,lc, fit_vector,spline, knotstep = knotstep, savedirectory= savedirectory, recompute_spline=recompute_spline,
                                    max_core =max_core, n_curve_stat = n_curve_stat, shotnoise = shotnoise, theta_init= theta_init,
                            tweakml_type= tweakml_type, tweakml_name= tweakml_name)
-        self.niter = niter
+        self.n_iter = n_iter
         self.burntime = burntime
         self.rdm_walk = rdm_walk
         self.stopping_condition = stopping_condition
         self.gaussian_step = gaussian_step
-        self.savefile = self.savedirectory + self.tweakml_name + '_MCMC_outfile_i' + str(niter)+"_"+rdm_walk +"_"+self.lc.object+'.txt'
+        self.savefile = self.savedirectory + self.tweakml_name + '_MCMC_outfile_i' + str(n_iter)+"_"+rdm_walk +"_"+self.lc.object+'.txt'
         self.hundred_last = 100
         self.chain_list = None
 
@@ -266,7 +267,7 @@ class Metropolis_Hasting_Optimiser(Optimiser):
         chi2_current, sz_current, errorsz_current = self.compute_chi2(self.theta_init)
         t = time.time()
 
-        for i in range(self.niter):
+        for i in range(self.n_iter):
             t_now = time.time() - t
             print "time : ", t_now
 
@@ -373,7 +374,7 @@ class Metropolis_Hasting_Optimiser(Optimiser):
         else :
             print "Best position : ", self.get_best_param()[1]
             print "Corresponding Chi2 : ", self.get_best_param()[0]
-            self.rel_error_mini =  np.abs(self.mean_mini - self.fit_vector) / self.sigma_mini
+            self.rel_error_mini =  np.abs(np.asarray(self.mean_mini) - np.asarray(self.fit_vector)) / np.asarray(self.sigma_mini)
 
             print "Target sigma, zruns : " + str(self.fit_vector[1]) + ', ' + str(self.fit_vector[0])
             print "Minimum sigma, zruns : " + str(self.mean_mini[1]) + ', ' + str(self.mean_mini[0])
@@ -381,11 +382,11 @@ class Metropolis_Hasting_Optimiser(Optimiser):
             print "For minimum Chi2, we are standing at " + str(self.rel_error_mini[0]) + " sigma [zruns]"
             print "For minimum Chi2, we are standing at " + str(self.rel_error_mini[1])+ " sigma [sigma]"
 
-            self.sucess = self.check_success()
+            self.success = self.check_success()
 
-            toplot = self.chain_list[0,:]
-            toplot[1,:] = np.log10(toplot[1,:])
-            fig1,fig2,fig3 = pltfct.plot_chain_MCMC(toplot, self.chain_list[1][:], ["$beta$", "log $\sigma$"])
+            toplot = np.asarray(self.chain_list[0])
+            toplot[:,1] = np.log10(toplot[:,1])
+            fig1,fig2,fig3 = pltfct.plot_chain_MCMC(toplot, self.chain_list[1], ["$beta$", "log $\sigma$"])
             fig1.savefig(self.savedirectory +self.tweakml_name +  "_MCMC_corner_plot_" + self.lc.object + ".png")
             fig2.savefig(self.savedirectory +self.tweakml_name + "_MCMC_chi2_" + self.lc.object + ".png")
             fig3.savefig(self.savedirectory +self.tweakml_name +"_MCMC_chain_" + self.lc.object + ".png")
@@ -394,7 +395,7 @@ class Metropolis_Hasting_Optimiser(Optimiser):
                 plt.show()
 
     def dump_results(self):
-        if self.chain == None :
+        if self.chain_list == None :
             print "Error you should run optimise() first !"
             exit()
         else :
@@ -423,7 +424,7 @@ class PSO_Optimiser(Optimiser) :
         self.mpi = mpi
         self.max_thread = max_core * 2
         self.chain_list = None
-        self.savefile = self.savedirectory + self.tweakml_name + '_PSO_file _' + "_i" + str(self.n_iter)+"_p"+str(self.n_particles)+ "_" +self.lc.object+".txt"
+        self.savefile = self.savedirectory + self.tweakml_name + '_PSO_file' + "_i" + str(self.n_iter)+"_p"+str(self.n_particles)+ "_" +self.lc.object+".txt"
 
     def __call__(self, theta):
         return self.likelihood(theta)
@@ -448,7 +449,7 @@ class PSO_Optimiser(Optimiser) :
 
         for swarm in pso.sample(self.n_iter):
             print "iteration : ", num_iter
-            X2_list.append(pso.gbest.fitness * 2)
+            X2_list.append(pso.gbest.fitness * -2.0)
             vel_list.append(pso.gbest.velocity)
             pos_list.append(pso.gbest.position)
             data = np.asarray([X2_list[-1], vel_list[-1][0], vel_list[-1][1], pos_list[-1][0], pos_list[-1][1]])
@@ -461,16 +462,16 @@ class PSO_Optimiser(Optimiser) :
         return self.chain_list
 
     def get_best_param(self):
-        if self.chain == None :
+        if self.chain_list == None :
             print "Error you should run optimise() first !"
             exit()
         else :
-            best_chi2 = self.chain_list[-1:0]
-            best_param = self.chain_list[-1:1]
+            best_chi2 = self.chain_list[0][-1]
+            best_param = self.chain_list[1][-1][:]
             return best_chi2,best_param
 
     def dump_results(self):
-        if self.chain == None :
+        if self.chain_list == None :
             print "Error you should run optimise() first !"
             exit()
         else :
@@ -479,30 +480,27 @@ class PSO_Optimiser(Optimiser) :
             pickle.dump(self, open(self.savedirectory + self.tweakml_name +"_PSO_opt_" + "_i"
                                       + str(self.n_iter) + "_p" + str(self.n_particles) + "_" + self.lc.object + ".pkl", "wb"))
     def analyse_plot_results(self):
-        if self.chain == None :
+        if self.chain_list == None :
             print "Error you should run optimise() first !"
             exit()
         else :
-            print "Converged position :" + self.get_best_param()[1]
-            print "Converged Chi2 : " + self.get_best_param()[0]
-            n_curve_stat_save = copy.deepcopy(self.n_curve_stat)
-            self.n_curve_stat = 32
-            mean_mini, sigma_mini = self.make_mocks_para(self.get_best_param()[1])
+            print "Converged position :", self.best_param
+            print "Converged Chi2 : ", self.chi2_mini
+            mean_mini, sigma_mini = self.make_mocks(self.best_param) #TODO : set back to para here when it is repaired
             self.mean_mini = np.asarray(mean_mini)
             self.sigma_mini = np.asarray(sigma_mini)
-            self.chi2_mini = np.sum((mean_mini - self.fit_vector) ** 2 / (sigma_mini ** 2))
-            self.rel_error_mini =  np.abs(mean_mini - self.fit_vector) / sigma_mini
-            self.n_curve_stat = n_curve_stat_save
+            self.rel_error_mini = np.abs(np.asarray(self.mean_mini) - np.asarray(self.fit_vector)) / np.asarray(
+                self.sigma_mini)
 
             print "Target sigma, zruns : " + str(self.fit_vector[1]) + ', ' + str(self.fit_vector[0])
             print "Minimum sigma, zruns : " + str(mean_mini[1]) + ', ' + str(mean_mini[0])
             print "For minimum Chi2, we are standing at " + str(self.rel_error_mini[0]) + " sigma [zruns]"
             print "For minimum Chi2, we are standing at " + str(self.rel_error_mini[1])+ " sigma [sigma]"
 
-            self.sucess = self.check_success()
+            self.success = self.check_success()
 
             param_list = ['beta', 'sigma']
-            f, axes = pltfct.plot_chain_PSO(self.chain, param_list)
+            f, axes = pltfct.plot_chain_PSO(self.chain_list, param_list)
 
             f.savefig(self.savedirectory + self.tweakml_name + "_PSO_chain_" + self.lc.object + ".png")
 

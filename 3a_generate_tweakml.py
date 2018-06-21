@@ -72,7 +72,7 @@ for i,kn in enumerate(knotstep):
                         stopping_condition = True
                         initial_position = [-2.0, 0.1]
                         MH_opt = mcmc.Metropolis_Hasting_Optimiser(l, fit_vector, spline, gaussian_step=sigma_step,
-                                                                   niter=n_iter, burntime=n_burn, savedirectory=optim_directory,
+                                                                   n_iter=n_iter, burntime=n_burn, savedirectory=optim_directory,
                                                                    recompute_spline=True,
                                                                    knotstep=kn, rdm_walk=rdm_walk,
                                                                    n_curve_stat=n_curve_stat,
@@ -82,7 +82,7 @@ for i,kn in enumerate(knotstep):
                                                                    tweak_ml_type=tweak_ml_type, tweakml_name= tweakml_name,
                                                                    theta_init=initial_position)
                         theta_walk, chi2_walk, sz_walk, errorsz_walk = MH_opt.optimise()
-                        best_chi2, best_param = MCMC_opt.get_best_param()
+                        best_chi2, best_param = MH_opt.get_best_param()
                         MH_opt.analyse_plot_results()
                         MH_opt.dump_results()
                         if k == 0 :

@@ -28,10 +28,10 @@ B_vec = np.linspace(0.1,2,2)
 pycs.sim.draw.saveresiduals(lcs, spline)
 
 fit_vector = mcmc.get_fit_vector(lcs[0], spline)
-print "I will try to find the parameter for lightcurve :", lcs[0].object
+print "I will try to find the parameter for lightcurve :", lcs[curve].object
 
-grid_opt = mcmc.Grid_Optimiser(lcs[0], fit_vector, spline, knotstep=kntstp,
-                               savedirectory="./", recompute_spline=True, max_core=8,
+grid_opt = mcmc.Grid_Optimiser(lcs[curve], fit_vector, spline, knotstep=kntstp,
+                               savedirectory="./", recompute_spline=True, max_core=1,
                                n_curve_stat=2, shotnoise=None, tweakml_type='PS_from_residuals',
                                tweakml_name='test',
                                display=False, verbose=True, grid=B_vec)

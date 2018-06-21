@@ -56,6 +56,8 @@ PSO_opt = mcmc.PSO_Optimiser(lcs[nlcs], fit_vector, spline, savedirectory= sim_p
 chain_list = PSO_opt.optimise()
 best_chi2, best_param = PSO_opt.get_best_param()
 PSO_opt.analyse_plot_results()
+PSO_opt.reset_report()
+PSO_opt.report()
 PSO_opt.dump_results()
 
 # pickle.dump(chain_list, open(sim_path+"chain_PSO_" + object +"_"+ picklename[:-4] + "_i"
