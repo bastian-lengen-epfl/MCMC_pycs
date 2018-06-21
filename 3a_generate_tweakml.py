@@ -1,10 +1,7 @@
 
 import pycs
 from module import tweakml_PS_from_data as twk
-from module.optimisation import grid_search_PS as grid
-from module.optimisation import mcmc_function as mcmc
-import numpy as np
-import matplotlib.pyplot as plt
+from module.optimisation import Optimiser as mcmc
 import os
 import module.util_func as util
 import sys
@@ -21,7 +18,7 @@ for i,kn in enumerate(knotstep):
         f.write('import pycs \n')
         f.write('from module import tweakml_PS_from_data as twk \n')
         lcs, spline = pycs.gen.util.readpickle(lens_directory + '%s/initopt_%s_ks%i_ksml%i.pkl' % (combkw[i, j], dataname, kn, knml))
-        optim_directory = lens_directory + '%s/twk_optim_%s_%s'%(combkw[i, j], optimiser, tweakml_name)
+        optim_directory = lens_directory + '%s/twk_optim_%s_%s/'%(combkw[i, j], optimiser, tweakml_name)
         if not os.path.isdir(optim_directory):
             os.mkdir(optim_directory)
         for k,l in enumerate(lcs):
@@ -139,10 +136,11 @@ for i,kn in enumerate(knotstep):
                     fit_vector = mcmc.get_fit_vector(l, spline)
                     print "I will try to find the parameter for lightcurve :", l.object
 
-                    grid_opt = mcmc.Grid_Optimiser(l, fit_vector, spline, knotstep=kn,
-                     savedirectory=optim_directory, recompute_spline=True, max_core = max_core,
-                    n_curve_stat = n_curve_stat, shotnoise = shotnoise_type, tweakml_type = tweakml_type, tweakml_name= tweakml_name,
-                 display = display, verbose = False, grid = grid)
+                    grid_opt = mcmc.Grid_Optimiser(l, fit_vector, spline, knotstep=kn,savedirectory=optim_directory,
+                                                   recompute_spline=True, max_core = max_core,n_curve_stat = n_curve_stat,
+                                                   shotnoise = shotnoise_type, tweakml_type = tweakml_type,
+                                                   tweakml_name= tweakml_name, display = display, verbose = False,
+                                                   grid = grid, correction_PS_residuals= True)
 
                     chain = grid_opt.optimise()
                     grid_opt.analyse_plot_results()

@@ -1,9 +1,5 @@
 from module import tweakml_PS_from_data as twk
-from module.optimisation import grid_search_PS as grid
 import pycs
-import numpy as np
-from module.optimisation import mcmc_function as mcmc
-import matplotlib.pyplot as plt
 
 source ="pickle"
 object = "UM673_Euler"
@@ -38,4 +34,3 @@ print "before tweak :", pycs.gen.stat.resistats(rls[0])
 twk.tweakml_PS([lcs[curve]],spline, B,f_min = 1/300.0,save_figure_folder='./',  psplot=True, verbose =True, interpolation = 'linear')
 lcs[curve].ml.spline.display()
 print "Nb coefficient after tweak :", len(lcs[curve].ml.spline.c)
-

@@ -10,13 +10,13 @@ from cosmoHammer import MpiParticleSwarmOptimizer
 from cosmoHammer import ParticleSwarmOptimizer
 import matplotlib.pyplot as plt
 import pickle
-# import dill #this is important for multiprocessing
+import dill #this is important for multiprocessing
 
 class Optimiser(object):
     def __init__(self, lc, fit_vector, spline, knotstep=None,
                      savedirectory="./", recompute_spline=True, max_core = 16, theta_init = [-2.0 ,0.1],
                     n_curve_stat = 32, shotnoise = "magerrs", tweakml_type = 'colored_noise', display = False, verbose = False,
-                 tweakml_name = ''):
+                 tweakml_name = '', correction_PS_residuals = True):
 
         self.lc = lc
         self.fit_vector = fit_vector
@@ -46,14 +46,17 @@ class Optimiser(object):
             self.para = True
         else :
             self.para = False
-            print "I won't compute the mockcurve in parallel."
+            print "I won't compute the mock curves in parallel."
 
         self.n_curve_stat = n_curve_stat
         self.shotnoise = shotnoise
         self.tweakml_type =tweakml_type
         self.tweakml_name = tweakml_name
+        self.correction_PS_residuals = correction_PS_residuals #boolean to set if you want to use the correction, True by default
+        self.A_correction = 1.0 # this is the correction for the amplitude of the power spectrum of the risduals, this is use only for PS_from_residuals
         self.display = display
         self.verbose = verbose
+        self.grid = None
 
     def make_mocks_para(self, theta):
         stat = []
@@ -103,6 +106,7 @@ class Optimiser(object):
         return chi2, out, error
 
     def fct_para(self, theta):
+
         if self.tweakml_type == 'colored_noise':
             mocklc = pycs.sim.draw.draw([self.lc], self.spline, tweakml=lambda x: pycs.sim.twk.tweakml(x, beta=theta[0],
                                                                                              sigma=theta[1],
@@ -116,7 +120,8 @@ class Optimiser(object):
                                         tweakml=lambda x: twk.tweakml_PS(x, self.spline, theta[0], f_min=1 / 300.0,
                                                                          psplot=False, save_figure_folder=None,
                                                                          verbose=self.verbose,
-                                                                         interpolation='linear')
+                                                                         interpolation='linear',
+                                                                         A_correction=self.A_correction)
                                         , shotnoise=self.shotnoise, keeptweakedml=False)
 
         if self.recompute_spline:
@@ -161,7 +166,8 @@ class Optimiser(object):
                                                                                                 psplot=False,
                                                                                                 save_figure_folder=None,
                                                                                                 verbose=self.verbose,
-                                                                                                interpolation='linear')
+                                                                                                interpolation='linear',
+                                                                                                A_correction= self.A_correction)
                                                  , shotnoise=self.shotnoise, keeptweakedml=False))
 
             if self.recompute_spline:
@@ -223,7 +229,8 @@ class Optimiser(object):
         f.write('Best parameters are : %s \n'%str(self.best_param) )
         f.write("Corresponding Chi2 : %2.2f \n"%self.chi2_mini)
         f.write("Target zruns, sigma : %2.6f, %2.6f \n"%(self.fit_vector[0],self.fit_vector[1]))
-        f.write("At minimum zruns, sigma : %2.6f, %2.6f \n"%(self.mean_mini[0], self.mean_mini[1]))
+        f.write("At minimum zruns, sigma : %2.6f +/- %2.6f, %2.6f +/- %2.6f \n"%(self.mean_mini[0],self.sigma_mini[0],
+                                                                                 self.mean_mini[1], self.sigma_mini[1]))
         f.write("For minimum Chi2, we are standing at " + str(self.rel_error_mini[0]) + " sigma [zruns] \n")
         f.write("For minimum Chi2, we are standing at " + str(self.rel_error_mini[1])+ " sigma [sigma] \n")
         f.write('------------------------------------------------\n')
@@ -231,21 +238,36 @@ class Optimiser(object):
         f.close()
 
     def reset_report(self):
-        os.remove(self.savedirectory + 'report_tweakml_optimisation.txt')
+        if os.path.isfile(self.savedirectory + 'report_tweakml_optimisation.txt'):
+            os.remove(self.savedirectory + 'report_tweakml_optimisation.txt')
 
+    def compute_set_A_correction(self):
+        #this function compute the sigma obtained after optimisation in the middle of the grid and return the correction that will be used for the rest of the optimisation
+        self.A_correction = 1.0 #reset the A correction
+        # if np.any(self.grid) == None :
+        #     eval_pts = 1.0 # evaluate teh correction at the nymquist frequency
+        # else :
+        #     n = len(self.grid)
+        #     eval_pts = self.grid[n/2] # evaluate the correction in the middle of the grid
+        eval_pts = 1.0 # evaluate the correction at the Nymquist frequency
+        if self.para:
+            [[zruns_c, sigma_c], [zruns_std_c, sigma_std_c]] = self.make_mocks_para(theta=[eval_pts])
+        else:
+            [[zruns_c, sigma_c], [zruns_std_c, sigma_std_c]] = self.make_mocks(theta=[eval_pts])
 
-
+        self.A_correction = self.fit_vector[1] / sigma_c # set the A correction
+        return self.fit_vector[1] / sigma_c
 
 
 class Metropolis_Hasting_Optimiser(Optimiser):
     def __init__(self, lc, fit_vector, spline, knotstep=None, n_iter=1000,
                     burntime=100, savedirectory="./", recompute_spline=True, rdm_walk='gaussian', max_core = 16,
                     n_curve_stat = 32, stopping_condition = True, shotnoise = "magerrs", theta_init = [-2.0, 0.2], gaussian_step = [0.1, 0.01],
-                 tweakml_type = 'coloired_noise' ,tweakml_name = ''):
+                 tweakml_type = 'coloired_noise' ,tweakml_name = '',correction_PS_residuals = True):
 
         Optimiser.__init__(self,lc, fit_vector,spline, knotstep = knotstep, savedirectory= savedirectory, recompute_spline=recompute_spline,
                                    max_core =max_core, n_curve_stat = n_curve_stat, shotnoise = shotnoise, theta_init= theta_init,
-                           tweakml_type= tweakml_type, tweakml_name= tweakml_name)
+                           tweakml_type= tweakml_type, tweakml_name= tweakml_name, correction_PS_residuals = correction_PS_residuals)
         self.n_iter = n_iter
         self.burntime = burntime
         self.rdm_walk = rdm_walk
@@ -410,11 +432,13 @@ class PSO_Optimiser(Optimiser) :
 
     def __init__(self, lc, fit_vector, spline, savedirectory ="./", knotstep = None, max_core = 8, shotnoise = 'magerrs',
                  recompute_spline = True, n_curve_stat= 32, theta_init = None, n_particles = 30, n_iter = 50,
-                 lower_limit = [-8., 0.], upper_limit = [-1.0, 0.5], mpi = False, tweakml_type = 'colored_noise', tweakml_name = ''):
+                 lower_limit = [-8., 0.], upper_limit = [-1.0, 0.5], mpi = False, tweakml_type = 'colored_noise', tweakml_name = '',
+                 correction_PS_residuals = True):
 
         Optimiser.__init__(self,lc, fit_vector,spline, knotstep = knotstep, savedirectory= savedirectory, recompute_spline=recompute_spline,
                                    max_core =1, n_curve_stat = n_curve_stat, shotnoise = shotnoise, theta_init= theta_init,
-                           tweakml_type = tweakml_type, tweakml_name = tweakml_name, verbose= False, display= False)
+                           tweakml_type = tweakml_type, tweakml_name = tweakml_name, correction_PS_residuals= correction_PS_residuals,
+                           verbose= False, display= False)
 
 
         self.n_particles = n_particles
@@ -511,11 +535,12 @@ class Grid_Optimiser(Optimiser):
     def __init__(self, lc, fit_vector, spline, knotstep=None,
                      savedirectory="./", recompute_spline=True, max_core = 16, theta_init = [-2.0 ,0.1],
                     n_curve_stat = 32, shotnoise = "magerrs", tweakml_type = 'PS_from_residuals', tweakml_name = '',
-                 display = False, verbose = False, grid = np.linspace(0.5,2,10)):
+                 display = False, verbose = False, grid = np.linspace(0.5,2,10), correction_PS_residuals = True):
 
         Optimiser.__init__(self,lc, fit_vector,spline, knotstep = knotstep, savedirectory= savedirectory, recompute_spline=recompute_spline,
                                    max_core =max_core, n_curve_stat = n_curve_stat, shotnoise = shotnoise, theta_init= theta_init,
-                           tweakml_type= tweakml_type, tweakml_name = tweakml_name, verbose=verbose, display= display)
+                           tweakml_type= tweakml_type, tweakml_name = tweakml_name, correction_PS_residuals=correction_PS_residuals,
+                           verbose=verbose, display= display)
 
         self.grid = grid #should be only a 1D array for the moment
         self.chain_list = None
@@ -530,9 +555,13 @@ class Grid_Optimiser(Optimiser):
         zruns_target = self.fit_vector[0]
         sigma_target = self.fit_vector[1]
 
+        if self.correction_PS_residuals:
+            self.A_correction = self.compute_set_A_correction()
+            print "I will slightly correct the amplitude of the Power Spectrum by a factor :", self.A_correction
+
         for i, B in enumerate(self.grid):
             if self.para :
-                [[zruns_c, sigma_c], [zruns_std_c, sigma_std_c]] = self.make_mocks_para(theta=B) #for some reason do not work with multiprocessing !
+                [[zruns_c, sigma_c], [zruns_std_c, sigma_std_c]] = self.make_mocks_para(theta=[B]) # Careful here, theta is a list even if there is only 1 parameter
             else :
                 [[zruns_c,sigma_c],[zruns_std_c,sigma_std_c]] = self.make_mocks(theta=[B]) #to debug, remove multiprocessing
             chi2.append(
@@ -593,7 +622,7 @@ class Grid_Optimiser(Optimiser):
         plt.legend()
 
         fig3 = plt.figure(3)
-        plt.plot(self.grid, self.chain_list[0])
+        plt.plot(self.grid, self.chain_list[1])
         plt.xlabel('B in unit of Nymquist frequency)')
         plt.ylabel('$\chi^2$')
 
@@ -603,7 +632,25 @@ class Grid_Optimiser(Optimiser):
 
         if self.display:
             plt.show()
-        plt.gcf().clear()
+        plt.clf()
+        plt.close('all')
+
+
+class Dic_Optimiser(Grid_Optimiser):
+    def __init__(self, lc, fit_vector, spline, knotstep=None,
+                     savedirectory="./", recompute_spline=True, max_core = 16, theta_init = [-2.0 ,0.1],
+                    n_curve_stat = 32, shotnoise = "magerrs", tweakml_type = 'PS_from_residuals', tweakml_name = '',
+                 display = False, verbose = False, grid = np.linspace(0.5,2,10), correction_PS_residuals = True):
+
+        Optimiser.__init__(self,lc, fit_vector,spline, knotstep = knotstep, savedirectory= savedirectory, recompute_spline=recompute_spline,
+                                   max_core =max_core, n_curve_stat = n_curve_stat, shotnoise = shotnoise, theta_init= theta_init,
+                           tweakml_type= tweakml_type, tweakml_name = tweakml_name, correction_PS_residuals=correction_PS_residuals,
+                           verbose=verbose, display= display)
+
+        self.grid = grid #should be only a 1D array for the moment
+        self.chain_list = None
+
+
 
 def get_fit_vector(l,spline):
     rls = pycs.gen.stat.subtract([l], spline)

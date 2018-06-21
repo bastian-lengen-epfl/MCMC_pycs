@@ -3,7 +3,7 @@ import numpy as np
 import pycs
 import scipy.signal as sc
 
-def tweakml_PS(lcs, spline, B, f_min = 1/300.0,psplot=False, save_figure_folder = None,  verbose = False, interpolation = 'linear'):
+def tweakml_PS(lcs, spline, B, f_min = 1/300.0,psplot=False, save_figure_folder = None,  verbose = False, interpolation = 'linear', A_correction = 1.0):
     for l in lcs:
         if l.ml == None:
             print "WARNING, curve %s has no ML to tweak ! I won't tweak anything." % (str(l))
@@ -17,6 +17,7 @@ def tweakml_PS(lcs, spline, B, f_min = 1/300.0,psplot=False, save_figure_folder 
 
         name = "ML(%s)" % (l.object)
         ml_spline = l.ml.spline.copy()
+        np.random.seed() #this is to reset the seed when using multiprocessing
 
         rls = pycs.gen.stat.subtract([l], spline)[0]
         target_std = pycs.gen.stat.resistats(rls)['std']
@@ -59,8 +60,8 @@ def tweakml_PS(lcs, spline, B, f_min = 1/300.0,psplot=False, save_figure_folder 
         Amp = target_std / generated_std
         if verbose :
             print "required amplification :", Amp
-
-        band_noise_rescaled = band_limited_noise_withPS(freqs_data, len(freqs_data)* Amp * pgram, samples=samples, samplerate=samplerate)
+            print "Additionnal A correction :", A_correction
+        band_noise_rescaled = band_limited_noise_withPS(freqs_data, len(freqs_data)* Amp * pgram * A_correction, samples=samples, samplerate=samplerate)
         noise_lcs_rescaled = pycs.gen.lc.lightcurve()
         noise_lcs_rescaled.jds = x_sample
         noise_lcs_rescaled.mags = band_noise_rescaled
