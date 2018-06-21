@@ -607,40 +607,13 @@ class Grid_Optimiser(Optimiser):
             return self.chi2_mini, self.chain_list[0][ind_min]
 
     def analyse_plot_results(self):
-        fig1 = plt.figure(1)
-        plt.errorbar(self.grid, self.chain_list[2][0], yerr=self.chain_list[3][0])
-        plt.hlines(self.fit_vector[0], self.grid[0], self.grid[-1], colors='r', linestyles='solid', label='target')
-        plt.xlabel('B in unit of Nymquist frequency)')
-        plt.ylabel('zruns')
-        plt.legend()
+        pltfct.plot_chain_grid_dic(self)
 
-        fig2 = plt.figure(2)
-        plt.errorbar(self.grid, self.chain_list[2][1], yerr=self.chain_list[3][1])
-        plt.hlines(self.fit_vector[1], self.grid[0], self.grid[-1], colors='r', linestyles='solid', label='target')
-        plt.xlabel('B in unit of Nymquist frequency)')
-        plt.ylabel('sigma')
-        plt.legend()
-
-        fig3 = plt.figure(3)
-        plt.plot(self.grid, self.chain_list[1])
-        plt.xlabel('B in unit of Nymquist frequency)')
-        plt.ylabel('$\chi^2$')
-
-        fig1.savefig(self.savedirectory + self.tweakml_name + '_zruns_' + self.lc.object + '.png')
-        fig2.savefig(self.savedirectory + self.tweakml_name + '_std_' + self.lc.object + '.png')
-        fig3.savefig(self.savedirectory + self.tweakml_name + '_chi2_' + self.lc.object + '.png')
-
-        if self.display:
-            plt.show()
-        plt.clf()
-        plt.close('all')
-
-
-class Dic_Optimiser(Grid_Optimiser):
+class Dic_Optimiser(Optimiser):
     def __init__(self, lc, fit_vector, spline, knotstep=None,
                      savedirectory="./", recompute_spline=True, max_core = 16, theta_init = [-2.0 ,0.1],
                     n_curve_stat = 32, shotnoise = "magerrs", tweakml_type = 'PS_from_residuals', tweakml_name = '',
-                 display = False, verbose = False, grid = np.linspace(0.5,2,10), correction_PS_residuals = True):
+                 display = False, verbose = False, grid = np.linspace(0.5,2,10), correction_PS_residuals = True, max_iter = 10):
 
         Optimiser.__init__(self,lc, fit_vector,spline, knotstep = knotstep, savedirectory= savedirectory, recompute_spline=recompute_spline,
                                    max_core =max_core, n_curve_stat = n_curve_stat, shotnoise = shotnoise, theta_init= theta_init,
@@ -649,8 +622,87 @@ class Dic_Optimiser(Grid_Optimiser):
 
         self.grid = grid #should be only a 1D array for the moment
         self.chain_list = None
+        self.step = grid[1]-grid[0]
+        self.max_iter = max_iter
+        self.iteration = 0
+        self.turn_back = 0
+        self.explored_param = []
 
+    def optimise(self):
+        sigma = []
+        zruns = []
+        sigma_std = []
+        zruns_std = []
+        chi2 = []
+        zruns_target = self.fit_vector[0]
+        sigma_target = self.fit_vector[1]
 
+        if self.correction_PS_residuals:
+            self.A_correction = self.compute_set_A_correction()
+            print "I will slightly correct the amplitude of the Power Spectrum by a factor :", self.A_correction
+
+        B = self.grid[0]
+        while True:
+            self.iteration +=1
+            print "Iteration %i, B=%2.2f"%(self.iteration, B)
+            if self.para :
+                [[zruns_c, sigma_c], [zruns_std_c, sigma_std_c]] = self.make_mocks_para(theta=[B])
+            else :
+                [[zruns_c,sigma_c],[zruns_std_c,sigma_std_c]] = self.make_mocks(theta=[B]) #to debug, remove multiprocessing
+            chi2.append(
+                (zruns_c - zruns_target) ** 2 / zruns_std_c ** 2 + (sigma_c - sigma_target) ** 2 / sigma_std_c ** 2)
+
+            sigma.append(sigma_c)
+            zruns.append(zruns_c)
+            sigma_std.append(sigma_std_c)
+            zruns_std.append(zruns_std_c)
+            self.explored_param.append(B)
+            min_ind = np.argmin(chi2)
+            self.chi2_mini = np.min(chi2)
+            self.mean_mini = [zruns[min_ind], sigma[min_ind]]
+            self.sigma_mini = [zruns_std[min_ind], sigma_std[min_ind]]
+            self.rel_error_mini = [np.abs(zruns[min_ind] - zruns_target) / zruns_std[min_ind],
+                                   np.abs(sigma[min_ind] - sigma_target) / sigma_std[min_ind]]
+            if zruns_c > zruns_target:
+                self.turn_back +=1
+                if self.iteration != 1:
+                    self.step =  - self.step /2.0 # we go backward dividing the step by two
+                else :
+                    self.step =  - self.step
+                    B += self.step # we do two step backward if the first iteration was already too high.
+
+            B += self.step
+            if self.check_if_stop():
+                break
+
+        self.chain_list = [self.explored_param, chi2, [zruns, sigma], [zruns_std, sigma_std]]
+        self.chi2_mini, self.best_param = self.get_best_param()
+        return self.chain_list
+
+    def check_if_stop(self):
+        if self.iteration > self.max_iter:
+            print "I will stop because I reached the max number of iteration."
+            return True
+        if self.turn_back > 3 :
+            print "I will stop because I passed three times the optimal value."
+            return True
+        if self.check_success():
+            print "I will stop because I found a good set of parameters."
+            return True
+        else :
+            return False
+
+    def get_best_param(self):
+        if self.chain_list == None :
+            print "Error you should run optimise() first !"
+            exit()
+        else:
+            ind_min = np.argmin(self.chain_list[1][:])
+            self.chi2_mini = np.min(self.chain_list[1][:])
+            return self.chi2_mini, self.chain_list[0][ind_min]
+
+    def analyse_plot_results(self):
+        pltfct.plot_chain_grid_dic(self)
 
 def get_fit_vector(l,spline):
     rls = pycs.gen.stat.subtract([l], spline)
