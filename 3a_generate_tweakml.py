@@ -129,42 +129,87 @@ for i,kn in enumerate(knotstep):
                 shotnoise_type = None
 
             if find_tweak_ml_param == True :
-                tweak_ml_list = []
-                pycs.sim.draw.saveresiduals(lcs, spline)
+                if optimiser =='GRID' :
+                    tweak_ml_list = []
+                    pycs.sim.draw.saveresiduals(lcs, spline)
 
-                for k, l in enumerate(lcs):
-                    fit_vector = mcmc.get_fit_vector(l, spline)
-                    print "I will try to find the parameter for lightcurve :", l.object
+                    for k, l in enumerate(lcs):
+                        fit_vector = mcmc.get_fit_vector(l, spline)
+                        print "I will try to find the parameter for lightcurve :", l.object
 
-                    grid_opt = mcmc.Grid_Optimiser(l, fit_vector, spline, knotstep=kn,savedirectory=optim_directory,
-                                                   recompute_spline=True, max_core = max_core,n_curve_stat = n_curve_stat,
-                                                   shotnoise = shotnoise_type, tweakml_type = tweakml_type,
-                                                   tweakml_name= tweakml_name, display = display, verbose = False,
-                                                   grid = grid, correction_PS_residuals= True)
+                        grid_opt = mcmc.Grid_Optimiser(l, fit_vector, spline, knotstep=kn,savedirectory=optim_directory,
+                                                       recompute_spline=True, max_core = max_core,n_curve_stat = n_curve_stat,
+                                                       shotnoise = shotnoise_type, tweakml_type = tweakml_type,
+                                                       tweakml_name= tweakml_name, display = display, verbose = False,
+                                                       grid = grid, correction_PS_residuals= True)
 
-                    chain = grid_opt.optimise()
-                    grid_opt.analyse_plot_results()
-                    chi2, B_best = grid_opt.get_best_param()
-                    if k == 0:
-                        grid_opt.reset_report()
-                        grid_opt.report()
-                    else:
-                        grid_opt.report()
+                        chain = grid_opt.optimise()
+                        grid_opt.analyse_plot_results()
+                        chi2, B_best = grid_opt.get_best_param()
+                        if k == 0:
+                            grid_opt.reset_report()
+                            grid_opt.report()
+                        else:
+                            grid_opt.report()
 
-                    if grid_opt.success :
-                        print "I succeeded finding a parameter falling in the 0.5 sigma from the original lightcurve."
+                        if grid_opt.success :
+                            print "I succeeded finding a parameter falling in the 0.5 sigma from the original lightcurve."
 
-                    else :
-                        print "I didn't find a parameter that falls in the 0.5 sigma from the original lightcurve."
-                        print "I then choose the best one... but be carefull ! "
+                        else :
+                            print "I didn't find a parameter that falls in the 0.5 sigma from the original lightcurve."
+                            print "I then choose the best one... but be carefull ! "
 
-                    def tweakml_PS_NUMBER(lcs):
-                        return twk.tweakml_PS(lcs, spline, B_PARAM, f_min=1 / 300.0, psplot=False, verbose=False,
+                        def tweakml_PS_NUMBER(lcs):
+                            return twk.tweakml_PS(lcs, spline, B_PARAM, f_min=1 / 300.0, psplot=False, verbose=False,
+                                                      interpolation='linear')
+
+
+                        util.write_func_append(tweakml_PS_NUMBER, f,
+                                                   B_PARAM=str(B_best), NUMBER=str(k + 1))
+                elif optimiser == 'DIC':
+                    tweak_ml_list = []
+                    pycs.sim.draw.saveresiduals(lcs, spline)
+
+                    for k, l in enumerate(lcs):
+                        fit_vector = mcmc.get_fit_vector(l, spline)
+                        print "I will try to find the parameter for lightcurve :", l.object
+
+                        grid_opt = mcmc.Dic_Optimiser(l, fit_vector, spline, knotstep=kn,
+                                                       savedirectory=optim_directory,
+                                                       recompute_spline=True, max_core=max_core,
+                                                       n_curve_stat=n_curve_stat,
+                                                       shotnoise=shotnoise_type, tweakml_type=tweakml_type,
+                                                       tweakml_name=tweakml_name, display=display, verbose=False,
+                                                       grid=grid, correction_PS_residuals=True, max_iter= max_iter)
+
+                        chain = grid_opt.optimise()
+                        grid_opt.analyse_plot_results()
+                        chi2, B_best = grid_opt.get_best_param()
+                        if k == 0:
+                            grid_opt.reset_report()
+                            grid_opt.report()
+                        else:
+                            grid_opt.report()
+
+                        if grid_opt.success:
+                            print "I succeeded finding a parameter falling in the 0.5 sigma from the original lightcurve."
+
+                        else:
+                            print "I didn't find a parameter that falls in the 0.5 sigma from the original lightcurve."
+                            print "I then choose the best one... but be carefull ! "
+
+
+                        def tweakml_PS_NUMBER(lcs):
+                            return twk.tweakml_PS(lcs, spline, B_PARAM, f_min=1 / 300.0, psplot=False, verbose=False,
                                                   interpolation='linear')
 
 
-                    util.write_func_append(tweakml_PS_NUMBER, f,
+                        util.write_func_append(tweakml_PS_NUMBER, f,
                                                B_PARAM=str(B_best), NUMBER=str(k + 1))
+
+                else :
+                    print 'I do not recognise your optimiser, please use GRID or DIC with PS_from_residuals'
+
 
 
             else :

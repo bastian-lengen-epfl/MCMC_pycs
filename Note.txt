@@ -10,6 +10,7 @@ squeue - u millon pour voir les jobs
 
 CHANGE TO PYCS :
 sim.run.py l23 : change in applyopt, add kn kwargs
+gen.stat.anaoptdrawn : l434 : remove hard bound of the plot
 
 
 RESTE

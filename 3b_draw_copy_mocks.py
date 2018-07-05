@@ -10,7 +10,7 @@ execfile("config.py")
 
 for i,kn in enumerate(knotstep) :
     for j, knml in enumerate(mlknotsteps):
-
+        print "I am drawing curves for ks%i, ksml%i" %(kn,knml)
         os.chdir(lens_directory+combkw[i,j])
         lcs, spline = pycs.gen.util.readpickle('initopt_%s_ks%i_ksml%i.pkl' % (dataname, kn,knml))
 

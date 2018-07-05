@@ -57,6 +57,7 @@ class Optimiser(object):
         self.display = display
         self.verbose = verbose
         self.grid = None
+        self.message = '\n'
 
     def make_mocks_para(self, theta):
         stat = []
@@ -226,6 +227,7 @@ class Optimiser(object):
         else :
             f.write('I did not succeed in finding a set of parameters that match the statistical properties of the real lightcurve within 0.5 sigma. \n')
 
+        f.write(self.message)
         f.write('Best parameters are : %s \n'%str(self.best_param) )
         f.write("Corresponding Chi2 : %2.2f \n"%self.chi2_mini)
         f.write("Target zruns, sigma : %2.6f, %2.6f \n"%(self.fit_vector[0],self.fit_vector[1]))
@@ -644,7 +646,7 @@ class Dic_Optimiser(Optimiser):
         B = self.grid[0]
         while True:
             self.iteration +=1
-            print "Iteration %i, B=%2.2f"%(self.iteration, B)
+            print "Iteration %i, B=%2.4f"%(self.iteration, B)
             if self.para :
                 [[zruns_c, sigma_c], [zruns_std_c, sigma_std_c]] = self.make_mocks_para(theta=[B])
             else :
@@ -663,7 +665,7 @@ class Dic_Optimiser(Optimiser):
             self.sigma_mini = [zruns_std[min_ind], sigma_std[min_ind]]
             self.rel_error_mini = [np.abs(zruns[min_ind] - zruns_target) / zruns_std[min_ind],
                                    np.abs(sigma[min_ind] - sigma_target) / sigma_std[min_ind]]
-            if zruns_c > zruns_target:
+            if self.step > 0 and zruns_c > zruns_target:
                 self.turn_back +=1
                 if self.iteration != 1:
                     self.step =  - self.step /2.0 # we go backward dividing the step by two
@@ -671,23 +673,34 @@ class Dic_Optimiser(Optimiser):
                     self.step =  - self.step
                     B += self.step # we do two step backward if the first iteration was already too high.
 
+            elif self.step < 0 and zruns_c < zruns_target:
+                self.turn_back += 1
+                self.step = - self.step / 2.0  # we go backward dividing the step by two
+
+            if self.iteration%4 == 0 and self.turn_back == 0:
+                self.step = self.step*2 #we double the step every 4 iterations we didn't pass the optimum
+
             B += self.step
             if self.check_if_stop():
                 break
 
         self.chain_list = [self.explored_param, chi2, [zruns, sigma], [zruns_std, sigma_std]]
         self.chi2_mini, self.best_param = self.get_best_param()
+        self.success = self.check_success()
         return self.chain_list
 
     def check_if_stop(self):
         if self.iteration > self.max_iter:
-            print "I will stop because I reached the max number of iteration."
+            self.message = "I stopped because I reached the max number of iteration.\n"
+            print self.message[:-2]
             return True
-        if self.turn_back > 3 :
-            print "I will stop because I passed three times the optimal value."
+        if self.turn_back > 4 :
+            self.message = "I stopped because I passed four times the optimal value.\n"
+            print self.message[:-2]
             return True
         if self.check_success():
-            print "I will stop because I found a good set of parameters."
+            self.message = "I stopped because I found a good set of parameters. \n"
+            print self.message[:-2]
             return True
         else :
             return False
@@ -699,6 +712,9 @@ class Dic_Optimiser(Optimiser):
         else:
             ind_min = np.argmin(self.chain_list[1][:])
             self.chi2_mini = np.min(self.chain_list[1][:])
+            self.mean_mini = np.asarray(self.chain_list[2])[:,ind_min]
+            self.sigma_mini = np.asarray(self.chain_list[3])[:,ind_min]
+            self.rel_error_mini = np.abs(np.asarray(self.mean_mini) - np.asarray(self.fit_vector)) / np.asarray(self.sigma_mini)
             return self.chi2_mini, self.chain_list[0][ind_min]
 
     def analyse_plot_results(self):

@@ -75,7 +75,8 @@ def tweakml_PS(lcs, spline, B, f_min = 1/300.0,psplot=False, save_figure_folder 
 
         source = pycs.sim.src.Source(ml_spline, name=name, sampling=span/float(samples))
         if len(noise_lcs_rescaled) != len(source.imags): #weird error can happen for some curves due to round error...
-            print "Warning : round error somewhere, I will need to change a little bit the sampling of your source, but don't worry, I can deal with that."
+            if verbose :
+                print "Warning : round error somewhere, I will need to change a little bit the sampling of your source, but don't worry, I can deal with that."
             source.sampling = float(source.jdmax - source.jdmin) / float(len(noise_lcs_rescaled))
             source.ijds = np.linspace(source.jdmin, source.jdmax, float(len(noise_lcs_rescaled)))
             source.imags = source.inispline.eval(jds=source.ijds)

@@ -56,7 +56,7 @@ def plot_chain_grid_dic(optimiser):
 
     fig2 = plt.figure(2)
     plt.errorbar(x_param, optimiser.chain_list[2][1], yerr=optimiser.chain_list[3][1])
-    plt.hlines(optimiser.fit_vector[1], optimiser.grid[0], optimiser.grid[-1], colors='r', linestyles='solid', label='target')
+    plt.hlines(optimiser.fit_vector[1], np.min(x_param), np.max(x_param), colors='r', linestyles='solid', label='target')
     plt.xlabel('B in unit of Nymquist frequency)')
     plt.ylabel('sigma')
     plt.legend()
