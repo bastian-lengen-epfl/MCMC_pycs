@@ -2,7 +2,7 @@
 import sys
 import pycs
 import time
-from multiprocessing import Pool, Lock, cpu_count
+from multiprocess import Pool, Lock, cpu_count
 import os
 
 execfile("config.py")
@@ -31,26 +31,40 @@ for a,kn in enumerate(knotstep) :
         attachml(lcs,knml)
         nworkers = int(cpu_count()*2)
 
-        if run_on_copies:
-            def exec_worker(i):
-                print "worker %i starting..." %i
-                time.sleep(i)
-                pycs.sim.run.multirun(simset_copy, lcs, simoptfct,kn = kn, optset=optset, tsrand=tsrand)
-
-            p = Pool(nworkers)
+        for c, opts in enumerate(optset):
             if simoptfctkw == "spl1":
-                p.map(exec_worker, np.arange(nworkers))
+                kwargs = {'kn' : kn}
             elif simoptfctkw == "regdiff":
-                exec_worker(0)  # because for some reason, regdiff does not like multiproc.
+                kwargs = kwargs_optimiser_simoptfct[c]
+            else :
+                print "Error : simoptfctkw mus be spl1 or regdiff"
 
-        if run_on_sims:
-            def exec_worker(i):
-                print "worker %i starting..." %i
-                time.sleep(i)
-                pycs.sim.run.multirun(simset_mock, lcs, simoptfct, kn = kn, optset=optset, tsrand=tsrand, keepopt=True)
+            if run_on_copies:
+                print "I will run the optimiser on the copies with the parameters :", kwargs
+                def exec_worker(i):
+                    print "worker %i starting..." %i
+                    time.sleep(i)
+                    pycs.sim.run.multirun(simset_copy, lcs, simoptfct, kwargs_optim=kwargs,
+                                          optset=opts, tsrand=tsrand)
 
-            p = Pool(nworkers)
-            if simoptfctkw == "spl1":
-                p.map(exec_worker, np.arange(nworkers))
-            elif simoptfctkw == "regdiff":
-                exec_worker(0)  # because for some reason, regdiff does not like multiproc.
+                p = Pool(nworkers)
+                if simoptfctkw == "spl1":
+                    p.map(exec_worker, np.arange(nworkers))
+                elif simoptfctkw == "regdiff":
+                    exec_worker(0)
+                    # p.map(exec_worker, np.arange(nworkers))# because for some reason, regdiff does not like multiproc.
+
+            if run_on_sims:
+                print "I will run the optimiser on the simulated lcs with the parameters :", kwargs
+                def exec_worker(i):
+                    print "worker %i starting..." %i
+                    time.sleep(i)
+                    pycs.sim.run.multirun(simset_mock, lcs, simoptfct, kwargs_optim=kwargs,
+                                          optset=opts, tsrand=tsrand, keepopt=True)
+
+                p = Pool(nworkers)
+                if simoptfctkw == "spl1":
+                    p.map(exec_worker, np.arange(nworkers))
+                elif simoptfctkw == "regdiff":
+                    exec_worker(0)  # because for some reason, regdiff does not like multiproc.
+                    # p.map(exec_worker, np.arange(nworkers))

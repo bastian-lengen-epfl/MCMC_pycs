@@ -10,12 +10,16 @@ squeue - u millon pour voir les jobs
 
 CHANGE TO PYCS :
 sim.run.py l23 : change in applyopt, add kn kwargs
+l : 403 : change the call to applyopt
+l : 207 add kwargs_optim as a mandatory parameter
+l 390
 gen.stat.anaoptdrawn : l434 : remove hard bound of the plot
+
 
 
 RESTE
 TODO : coder la marginalisation
-TODO : ameliorer le grid search
-TODO : permetrre de runner plusieurs parametres en meme temps pour regdiff
 
 TODO : maybe add a visualization code for the png after the fitting
+
+TODO : checker le chi2 des fits pour trouver le bon nombre de neouds

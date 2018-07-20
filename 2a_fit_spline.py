@@ -37,7 +37,7 @@ for i,kn in enumerate(knotstep) :
 		if knml != 0 :
 			attachml(lcs, knml) # add microlensing
 
-		spline = optfct(lcs, kn)
+		spline = spl1(lcs, kn = kn)
 		rls = pycs.gen.stat.subtract(lcs, spline)
 		pycs.gen.mrg.colourise(lcs)
 		if display :
@@ -58,12 +58,13 @@ for i,kn in enumerate(knotstep) :
 
 
 
-#DO the optimisation with regdiff as well !
+#DO the optimisation with regdiff as well, just to have an idea, this the first point of the grid !
 import pycs.regdiff
 for ind, l in enumerate(lcs):
 	l.shiftmag(ind*0.1)
 
-myrslcs = [pycs.regdiff.rslc.factory(l, pd=pointdensity, covkernel=covkernel, pow=pow, amp=amp, scale=scale, errscale=errscale) for l in lcs]
+myrslcs = [pycs.regdiff.rslc.factory(l, pd=pointdensity[0], covkernel=covkernel[0],
+									 pow=pow[0], amp=amp[0], scale=scale[0], errscale=errscale[0]) for l in lcs]
 
 if display :
 	pycs.gen.lc.display(lcs, myrslcs)
@@ -72,7 +73,8 @@ pycs.gen.lc.display(lcs, myrslcs, showdelays=True, filename = figure_directory +
 for ind, l in enumerate(lcs):
 	l.shiftmag(-ind*0.1)
 
-map(regdiff, [lcs])
+# map(regdiff, [lcs], **kwargs_optimiser_simoptfct[0])
+regdiff(lcs, **kwargs_optimiser_simoptfct[0])
 
 if display :
 	pycs.gen.lc.display(lcs, showlegend=False, showdelays=True)

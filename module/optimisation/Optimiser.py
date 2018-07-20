@@ -229,6 +229,7 @@ class Optimiser(object):
 
         f.write(self.message)
         f.write('Best parameters are : %s \n'%str(self.best_param) )
+        f.write('A correction for PS_from_residuals : %2.2f \n'%self.A_correction)
         f.write("Corresponding Chi2 : %2.2f \n"%self.chi2_mini)
         f.write("Target zruns, sigma : %2.6f, %2.6f \n"%(self.fit_vector[0],self.fit_vector[1]))
         f.write("At minimum zruns, sigma : %2.6f +/- %2.6f, %2.6f +/- %2.6f \n"%(self.mean_mini[0],self.sigma_mini[0],

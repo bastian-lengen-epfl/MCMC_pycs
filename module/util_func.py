@@ -44,3 +44,32 @@ def write_func_append(fn, stream, **kwargs):
 	fn_as_string = dedent(fn_as_string)
 
     stream.write('\n' + fn_as_string)
+
+def generate_regdiff_regdiffparamskw(pointdensity, covkernel, pow, amp, scale, errscale):
+	out_kw = []
+	for c in covkernel :
+		for pts in pointdensity:
+			for p in pow :
+				for a in amp :
+					for s in scale :
+						for e in errscale :
+							if covkernel == 'gaussian':  # no pow parameter
+								out_kw.append("_pd%i_ck%s_amp%.1f_sc%i_errsc%i_" % (pts, c, a, s, e))
+							else:
+								out_kw.append("_pd%i_ck%s_pow%.1f_amp%.1f_sc%i_errsc%i_" % (
+								pts, c, p, a, s, e))
+	return out_kw
+
+def get_keyword_regdiff(pointdensity, covkernel, pow, amp, scale, errscale):
+    kw_list = []
+    for c in covkernel:
+        for pts in pointdensity:
+            for p in pow:
+                for a in amp:
+                    for s in scale:
+                        for e in errscale:
+                            kw_list.append({'covkernel':c, 'pointdensity':pts, 'pow':p, 'amp':a, 'scale':s, 'errscale':e})
+    return kw_list
+
+def get_keyword_spline(kn):
+    return {'kn' : kn}

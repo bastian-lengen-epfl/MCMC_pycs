@@ -146,6 +146,7 @@ for i,kn in enumerate(knotstep):
                         chain = grid_opt.optimise()
                         grid_opt.analyse_plot_results()
                         chi2, B_best = grid_opt.get_best_param()
+                        A = grid_opt.A_correction
                         if k == 0:
                             grid_opt.reset_report()
                             grid_opt.report()
@@ -161,11 +162,11 @@ for i,kn in enumerate(knotstep):
 
                         def tweakml_PS_NUMBER(lcs):
                             return twk.tweakml_PS(lcs, spline, B_PARAM, f_min=1 / 300.0, psplot=False, verbose=False,
-                                                      interpolation='linear')
+                                                      interpolation='linear', A_correction= A_PARAM)
 
 
                         util.write_func_append(tweakml_PS_NUMBER, f,
-                                                   B_PARAM=str(B_best), NUMBER=str(k + 1))
+                                                   B_PARAM=str(B_best), NUMBER=str(k + 1), A_PARAM = str(A))
                 elif optimiser == 'DIC':
                     tweak_ml_list = []
                     pycs.sim.draw.saveresiduals(lcs, spline)
@@ -174,7 +175,7 @@ for i,kn in enumerate(knotstep):
                         fit_vector = mcmc.get_fit_vector(l, spline)
                         print "I will try to find the parameter for lightcurve :", l.object
 
-                        grid_opt = mcmc.Dic_Optimiser(l, fit_vector, spline, knotstep=kn,
+                        dic_opt = mcmc.Dic_Optimiser(l, fit_vector, spline, knotstep=kn,
                                                        savedirectory=optim_directory,
                                                        recompute_spline=True, max_core=max_core,
                                                        n_curve_stat=n_curve_stat,
@@ -182,16 +183,17 @@ for i,kn in enumerate(knotstep):
                                                        tweakml_name=tweakml_name, display=display, verbose=False,
                                                        grid=grid, correction_PS_residuals=True, max_iter= max_iter)
 
-                        chain = grid_opt.optimise()
-                        grid_opt.analyse_plot_results()
-                        chi2, B_best = grid_opt.get_best_param()
+                        chain = dic_opt.optimise()
+                        dic_opt.analyse_plot_results()
+                        chi2, B_best = dic_opt.get_best_param()
+                        A = dic_opt.A_correction
                         if k == 0:
-                            grid_opt.reset_report()
-                            grid_opt.report()
+                            dic_opt.reset_report()
+                            dic_opt.report()
                         else:
-                            grid_opt.report()
+                            dic_opt.report()
 
-                        if grid_opt.success:
+                        if dic_opt.success:
                             print "I succeeded finding a parameter falling in the 0.5 sigma from the original lightcurve."
 
                         else:
@@ -201,11 +203,11 @@ for i,kn in enumerate(knotstep):
 
                         def tweakml_PS_NUMBER(lcs):
                             return twk.tweakml_PS(lcs, spline, B_PARAM, f_min=1 / 300.0, psplot=False, verbose=False,
-                                                  interpolation='linear')
+                                                  interpolation='linear', A_correction= A_PARAM)
 
 
                         util.write_func_append(tweakml_PS_NUMBER, f,
-                                               B_PARAM=str(B_best), NUMBER=str(k + 1))
+                                               B_PARAM=str(B_best), NUMBER=str(k + 1), A_PARAM=str(A))
 
                 else :
                     print 'I do not recognise your optimiser, please use GRID or DIC with PS_from_residuals'
