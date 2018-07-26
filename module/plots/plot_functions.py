@@ -27,9 +27,12 @@ def plot_chain_PSO(chain, param_list):
     ax.legend()
     return f, axes
 
-def plot_chain_MCMC(theta, chi2, param_list):
+def corner_plot_MCMC(theta, param_list):
     fig1 = corner.corner(theta, labels=param_list)
+    return fig1
 
+
+def plot_chain_MCMC(theta, chi2, param_list):
     fig2 = plt.figure(2)
     x = np.arange(len(chi2))
     plt.xlabel('N', fontdict={"fontsize": 16})
@@ -43,7 +46,7 @@ def plot_chain_MCMC(theta, chi2, param_list):
     axe[0].set_ylabel(param_list[0], fontdict={"fontsize": 16})
     axe[1].set_ylabel(param_list[1], fontdict={"fontsize": 16})
 
-    return fig1,fig2,fig3
+    return fig2,fig3
 
 def plot_chain_grid_dic(optimiser):
     x_param = optimiser.chain_list[0]

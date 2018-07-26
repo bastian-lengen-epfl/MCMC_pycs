@@ -3,7 +3,7 @@
 import pycs.regdiff
 import pickle
 import time
-from module.optimisation import mcmc_function as mcmc
+from module.optimisation import Optimiser as mcmc
 import os
 
 start_time = time.time()
@@ -12,7 +12,7 @@ object = "HE0435"
 kntstp = 40
 ml_kntstep =360
 picklepath = "./"+object+"/save/"
-sim_path = "./"+object+"/simulation_log2/"
+sim_path = "./"+object+"/simulation_log2_multi/"
 plot_path = sim_path + "figure/"
 shotnoise = "mcres" #'magerrs' or "mcres"
 if not os.path.exists(sim_path):
@@ -22,16 +22,15 @@ if not os.path.exists(plot_path):
 
 
 picklename ="opt_spl_ml_"+str(kntstp)+"-"+str(ml_kntstep) + "knt.pkl"
-n_iter = 10
+n_iter = 2
 nburn = 0
-nlcs = 3 #numero de la courbe a traiter
 rdm_walk = 'log'
 n_curve_stat = 2 #number of curve to optimise to compute the statistic.
-max_process = 1
+max_process = 8
 stopping_condition =True
 
-open(sim_path + 'rt_file_' + object +"_"+ picklename[:-4] + "_" + str(n_iter)+"_"+rdm_walk +"_"+str(nlcs)+'.txt', 'w').close() # to clear the file
-rt_file = open(sim_path + 'rt_file_' + object +"_"+ picklename[:-4]  + "_" + str(n_iter)+"_"+rdm_walk +"_"+str(nlcs)+'.txt','a')
+open(sim_path + 'rt_file_' + object +"_"+ picklename[:-4] + "_" + str(n_iter)+"_"+rdm_walk +'.txt', 'w').close() # to clear the file
+rt_file = open(sim_path + 'rt_file_' + object +"_"+ picklename[:-4]  + "_" + str(n_iter)+"_"+rdm_walk + ".txt",'a')
 
 (lcs, spline) = pycs.gen.util.readpickle(picklepath + picklename)
 
@@ -39,24 +38,26 @@ rt_file = open(sim_path + 'rt_file_' + object +"_"+ picklename[:-4]  + "_" + str
 rls = pycs.gen.stat.subtract(lcs, spline)
 print 'Residuals from the fit : '
 print pycs.gen.stat.mapresistats(rls)
-fit_sigma = pycs.gen.stat.mapresistats(rls)[nlcs]["std"]
-fit_zruns = pycs.gen.stat.mapresistats(rls)[nlcs]["zruns"]
-fit_nruns = pycs.gen.stat.mapresistats(rls)[nlcs]["nruns"]
-fit_vector = [fit_zruns,fit_sigma]
+fit_sigma = [pycs.gen.stat.mapresistats(rls)[i]["std"] for i in range(len(rls))]
+fit_zruns = [pycs.gen.stat.mapresistats(rls)[i]["zruns"]for i in range(len(rls))]
+fit_nruns = [pycs.gen.stat.mapresistats(rls)[i]["nruns"]for i in range(len(rls))]
+fit_vector = [[fit_zruns[i],fit_sigma[i]]for i in range(len(rls))]
 sigma_step = [0.22,0.005] # standard deviation for gaussian step
 pycs.sim.draw.saveresiduals(lcs, spline)
 
-initial_position = [-1.9,0.1]
-MH_opt = mcmc.Metropolis_Hasting_Optimiser(lcs[nlcs], fit_vector,spline, gaussian_step = sigma_step,
+initial_position = [[-1.9,0.1],[-1.9,0.1],[-1.9,0.1],[-1.9,0.1]]
+MH_opt = mcmc.Metropolis_Hasting_Optimiser(lcs, fit_vector,spline, gaussian_step = sigma_step,
                                  n_iter = n_iter, burntime = nburn, savedirectory = sim_path, recompute_spline= True,
                                 knotstep = kntstp, rdm_walk=rdm_walk, n_curve_stat=n_curve_stat,
                                 max_core = max_process, stopping_condition=stopping_condition, shotnoise = shotnoise,
-                                           tweakml_type = 'colored_noise',theta_init = initial_position)
+                                           tweakml_type = 'colored_noise',theta_init = initial_position, tweakml_name='colored_noise')
 
-theta_walk, chi2_walk, sz_walk, errorsz_walk = MH_opt.optimise()
-best_chi2, best_param = MH_opt.get_best_param()
-MH_opt.analyse_plot_results()
+theta_save, chi2_save, z_save, s_save, errorz_save, errors_save = MH_opt.optimise()
+best_chi2, best_param = MH_opt.chi2_mini, MH_opt.best_param
+print "Best chi2", best_chi2
+print "Corresponding to :", best_param
 MH_opt.dump_results()
+MH_opt.analyse_plot_results()
 MH_opt.reset_report()
 MH_opt.report()
 

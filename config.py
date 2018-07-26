@@ -5,7 +5,7 @@ import os
 from shutil import copyfile
 from module import util_func as ut
 
-lensname = 'HE0435'
+lensname = 'HE0435b'
 full_lensname ='HE0435-1223'
 dataname = "Euler"
 # lcs_label = ['A','B']

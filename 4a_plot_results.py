@@ -13,25 +13,35 @@ if not os.path.isdir(figure_directory):
 for a,kn in enumerate(knotstep) :
     for  b, knml in enumerate(mlknotsteps):
         for o, opt in enumerate(optset):
-            if run_on_copies:
 
-                copiesres = [pycs.sim.run.collect(lens_directory + combkw[a, b] + '/sims_%s_opt_%s' %(simset_copy, opt), 'blue', dataname + "_" + combkw[a, b])]
-                pycs.sim.plot.hists(copiesres, r=50.0, nbins=100, dataout=True, filename=figure_directory+'delay_hist_%i-%i_sims_%s_opt_%s.png'%(kn,knml,simset_copy, opt),
-                                    outdir = lens_directory + combkw[a, b] + '/sims_%s_opt_%s/' %(simset_copy, opt))
-                if display:
-                    plt.show()
+            #Copies :
+            copiesres = [pycs.sim.run.collect(lens_directory + combkw[a, b] + '/sims_%s_opt_%s' %(simset_copy, opt), 'blue',
+                                              dataname + "_" + combkw[a, b])]
+            pycs.sim.plot.hists(copiesres, r=50.0, nbins=100, dataout=True,
+                                filename=figure_directory+'delay_hist_%i-%i_sims_%s_opt_%s.png'%(kn,knml,simset_copy, opt),
+                                outdir = lens_directory + combkw[a, b] + '/sims_%s_opt_%s/' %(simset_copy, opt))
+            if display:
+                plt.show()
 
-            if run_on_sims:
-                simres = [pycs.sim.run.collect(lens_directory + combkw[a, b] +'/sims_%s_opt_%s' % (simset_mock, opt), 'blue', dataname + "_" + combkw[a, b])]
-                pycs.sim.plot.measvstrue(simres, r=2*truetsr, nbins=10, plotpoints=True, ploterrorbars=True, sidebyside=True,
-                                         errorrange=20., binclip=True, binclipr=20.0, dataout=True, filename=figure_directory+'deviation_hist_%i-%i_sims_%s_opt_%s.png'%(kn,knml,simset_copy, opt),
-                                         outdir =lens_directory + combkw[a, b] + '/sims_%s_opt_%s/' %(simset_copy, opt) )
-                if display:
-                    plt.show()
+            #simulations
+            simres = [pycs.sim.run.collect(lens_directory + combkw[a, b] +'/sims_%s_opt_%s' % (simset_mock, opt),
+                                           'blue', dataname + "_" + combkw[a, b])]
+            pycs.sim.plot.measvstrue(simres, r=2*truetsr, nbins=10, plotpoints=True, ploterrorbars=True, sidebyside=True,
+                                     errorrange=5., binclip=True, binclipr=20.0, dataout=True, figsize = (12,8),
+                                     filename=figure_directory+'deviation_hist_%i-%i_sims_%s_opt_%s.png'%(kn,knml,simset_copy, opt),
+                                     outdir =lens_directory + combkw[a, b] + '/sims_%s_opt_%s/' %(simset_copy, opt))
+            if display:
+                plt.show()
+
+            # pycs.sim.plot.hists(simres,  r=2*truetsr, nbins=50, dataout=True,
+            #                     filename=figure_directory+'delay_hists_mocks_%i-%i_sims_%s_opt_%s.png'%(kn,knml,simset_mock, opt),
+            #                     outdir = lens_directory + combkw[a, b] + '/sims_%s_opt_%s/' %(simset_copy, opt))
 
             toplot = []
-            spl = (pycs.gen.util.readpickle(lens_directory + combkw[a, b] + '/sims_%s_opt_%s/' %(simset_copy, opt)+'sims_%s_opt_%s_delays.pkl' % (simset_copy, opt)),
-                   pycs.gen.util.readpickle(lens_directory + combkw[a, b] + '/sims_%s_opt_%s/' %(simset_copy, opt)+'sims_%s_opt_%s_errorbars.pkl' % (simset_mock, opt)))
+            spl = (pycs.gen.util.readpickle(lens_directory + combkw[a, b] +
+                                            '/sims_%s_opt_%s/' %(simset_copy, opt)+'sims_%s_opt_%s_delays.pkl' % (simset_copy, opt)),
+                   pycs.gen.util.readpickle(lens_directory + combkw[a, b] +
+                                            '/sims_%s_opt_%s/' %(simset_copy, opt)+'sims_%s_opt_%s_errorbars.pkl' % (simset_mock, opt)))
 
             toplot.append(spl)
 

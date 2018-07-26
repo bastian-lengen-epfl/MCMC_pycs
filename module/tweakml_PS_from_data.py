@@ -48,6 +48,7 @@ def tweakml_PS(lcs, spline, B, f_min = 1/300.0,psplot=False, save_figure_folder 
             print "min max, lenght frequency of data: ", np.min(freqs_data), np.max(freqs_data), len(freqs_data)
             print "NUmber of samples generated :",samples
 
+        #generate noise with not the good scaling
         band_noise = band_limited_noise_withPS(freqs_data, len(freqs_data)*pgram, samples=samples, samplerate=samplerate) #generate the noie with a PS from the data
         x_sample = np.linspace(start, stop, samples)
 
@@ -55,7 +56,7 @@ def tweakml_PS(lcs, spline, B, f_min = 1/300.0,psplot=False, save_figure_folder 
         noise_lcs_band.jds = x_sample
         noise_lcs_band.mags = band_noise
 
-        #Rescaling of the noise :
+        #Use the previous to have the correct rescaling of the noise :
         generated_std = pycs.gen.stat.resistats(noise_lcs_band)['std']
         Amp = target_std / generated_std
         if verbose :

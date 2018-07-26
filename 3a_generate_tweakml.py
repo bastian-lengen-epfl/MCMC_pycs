@@ -51,7 +51,7 @@ for i,kn in enumerate(knotstep):
 
                         #write the python file containing the function :
                         def tweakml_colored_NUMBER(lcs):
-                            return pycs.sim.twk.tweakml(lcs, beta=BETA, sigma=SIGMA, fmin=1.0 / 50.0, fmax=0.2,
+                            return pycs.sim.twk.tweakml(lcs, beta=BETA, sigma=SIGMA, fmin=1.0 / 500.0, fmax=0.2,
                                                         psplot=False)
 
 
@@ -89,7 +89,7 @@ for i,kn in enumerate(knotstep):
                             MH_opt.report()
                         #write the python file containing the function :
                         def tweakml_colored_NUMBER(lcs):
-                            return pycs.sim.twk.tweakml(lcs, beta=BETA, sigma=SIGMA, fmin=1.0 / 50.0, fmax=0.2,
+                            return pycs.sim.twk.tweakml(lcs, beta=BETA, sigma=SIGMA, fmin=1.0 / 500.0, fmax=0.2,
                                                         psplot=False)
 
 
@@ -108,7 +108,7 @@ for i,kn in enumerate(knotstep):
                 print "Colored noise : I will add the beta and sigma that you gave in input."
                 for k in range(len(lcs)):
                     def tweakml_colored_NUMBER(lcs):
-                        return pycs.sim.twk.tweakml(lcs, beta=BETA,sigma=SIGMA, fmin=1.0 / 50.0, fmax=0.2, psplot=False)
+                        return pycs.sim.twk.tweakml(lcs, beta=BETA,sigma=SIGMA, fmin=1.0 / 500.0, fmax=0.2, psplot=False)
 
 
                     util.write_func_append(tweakml_colored_NUMBER, f,

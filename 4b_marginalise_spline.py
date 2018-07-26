@@ -1,8 +1,6 @@
-import sys
 import pycs
-import os
+import os, copy
 import numpy as np
-import matplotlib.pyplot as plt
 import pickle as pkl
 
 execfile("config.py")
@@ -26,7 +24,7 @@ if testmode:
 else:
     nbins = 5000
 
-colors = ["royalblue", "crimson", "seagreen", "darkorchid", "darkorange", 'indianred', 'purple', 'brown', 'black', 'violet', 'paleturquoise', 'palevioletred', 'olive',
+colors = ["royalblue", "crimson", "seagreen", "darkorchid", "darkorange", 'indianred', 'purple', 'brown', 'violet', 'paleturquoise', 'palevioletred', 'olive',
           'indianred', 'salmon','lightcoral', 'chocolate', 'indigo', 'steelblue' , 'cyan', 'gold']
 color_id = 0
 
@@ -50,7 +48,7 @@ for a,kn in enumerate(knotstep_marg):
                 f.write('Error I cannot find the files %s or %s. \n' % (result_file_delay, result_file_errorbars))
                 continue
 
-            name = "%s_ks%i_%s_v%i" % (dataname,kn,knml, n+1)
+            name = "%s_ks%i_%s_%s" % (dataname,kn,knml, noise)
             group_list.append(pycs.mltd.comb.getresults(
                 pycs.mltd.comb.CScontainer(data=dataname, knots=kn, ml=knml, name=name,
                                            drawopt=optfctkw, runopt=opt, ncopy=ncopy*ncopypkls, nmocks=nsim*nsimpkls, truetsr=truetsr,
@@ -87,9 +85,10 @@ for g,group in enumerate(group_list):
         print "Warning : I don't have enough colors in my list, I'll restart from the beginning."
         color_id = 0  # reset the color form the beginning
 
-combined= pycs.mltd.comb.combine_estimates(group_list, sigmathresh=sigmathresh, testmode=testmode)
+combined = copy.deepcopy(pycs.mltd.comb.combine_estimates(group_list, sigmathresh=sigmathresh, testmode=testmode))
 combined.linearize(testmode=testmode)
 combined.name = 'combined $\sigma = %2.2f$'%sigmathresh
+combined.plotcolor = 'black'
 
 print "Final combination for marginalisation ", name_marg_spline
 combined.niceprint()

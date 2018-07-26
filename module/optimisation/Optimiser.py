@@ -10,31 +10,52 @@ from cosmoHammer import MpiParticleSwarmOptimizer
 from cosmoHammer import ParticleSwarmOptimizer
 import matplotlib.pyplot as plt
 import pickle
+from functools import partial
 import dill #this is important for multiprocessing
 
 class Optimiser(object):
-    def __init__(self, lc, fit_vector, spline, knotstep=None,
-                     savedirectory="./", recompute_spline=True, max_core = 16, theta_init = [-2.0 ,0.1],
+    def __init__(self, lcs, fit_vector, spline, knotstep=None,
+                     savedirectory="./", recompute_spline=True, max_core = 16, theta_init = None,
                     n_curve_stat = 32, shotnoise = "magerrs", tweakml_type = 'colored_noise', display = False, verbose = False,
                  tweakml_name = '', correction_PS_residuals = True):
 
-        self.lc = lc
-        self.fit_vector = fit_vector
+        if len(fit_vector) != len(lcs):
+            print "Error : Your target vector and list of light curves must have the same size !"
+            exit()
+        if recompute_spline == True and knotstep == None :
+            print "Error : I can't recompute spline if you don't give me the knotstep ! "
+            exit()
+        if tweakml_type != 'colored_noise' and tweakml_type != 'PS_from_residuals':
+            print "I don't recognize your tweakml type, choose either colored_noise or PS_from_residuals."
+            exit()
+
+        self.lcs = lcs
+        self.ncurve = len(lcs)
+        self.fit_vector = np.asarray(fit_vector)
         self.spline = spline
+        if theta_init == None :
+            if tweakml_type == 'colored_noise':
+                theta_init = [[-2.0,0.1] for i in range(self.ncurve)]
+            elif tweakml_type == 'PS_from_residuals':
+                theta_init = [[1.0] for i in range(self.ncurve)]
+        if len(theta_init) != len(lcs):
+            print "Error : Your init vector and list of light curves must have the same size !"
+            exit()
         self.theta_init = theta_init
         self.knotstep = knotstep
         self.savedirectory = savedirectory
         self.recompute_spline = recompute_spline
         self.success = False
-        self.mean_mini = None #mean of zruns and sigma computed with the best parameters
-        self.sigma_mini = None #std of zruns and sigma computed with the best parameters
+        self.mean_zruns_mini = None #mean zruns computed with the best parameters
+        self.mean_sigma_mini = None #mean sigma computed with the best parameters
+        self.std_zruns_mini = None #error on  sigma computed with the best parameters
+        self.std_sigma_mini = None #error of zruns and sigma computed with the best parameters
         self.chi2_mini = None
-        self.rel_error_mini= None #relative error in term of zruns and sigmas
+        self.rel_error_zruns_mini= None #relative error in term of zruns
+        self.rel_error_sigmas_mini= None #relative error in term of sigmas
         self.best_param = None
-
-        if recompute_spline == True and knotstep == None :
-            print "Error : I can't recompute spline if you don't give me the knotstep ! "
-            exit()
+        self.time_start = None
+        self.time_stop = None
 
         if max_core != None :
             self.max_core = max_core
@@ -53,11 +74,12 @@ class Optimiser(object):
         self.tweakml_type =tweakml_type
         self.tweakml_name = tweakml_name
         self.correction_PS_residuals = correction_PS_residuals #boolean to set if you want to use the correction, True by default
-        self.A_correction = 1.0 # this is the correction for the amplitude of the power spectrum of the risduals, this is use only for PS_from_residuals
+        self.A_correction = np.ones(self.ncurve) # this is the correction for the amplitude of the power spectrum of the risduals, this is use only for PS_from_residuals
         self.display = display
         self.verbose = verbose
         self.grid = None
         self.message = '\n'
+        self.tolerance = 0.75 # tolerance in unit of sigma for the fit
 
     def make_mocks_para(self, theta):
         stat = []
@@ -73,57 +95,60 @@ class Optimiser(object):
         pool.close()
         pool.join()
 
-        for i in range(len(stat_out)):
-            zruns.append(stat_out[i][0]['zruns'])
-            sigmas.append(stat_out[i][0]['std'])
-            nruns.append(stat_out[i][0]['nruns'])
+        stat_out = np.asarray(stat_out)
+        zruns = np.asarray([[stat_out[i,j]['zruns'] for j in range(self.ncurve)] for i in range(self.n_curve_stat)])
+        sigmas = np.asarray([[stat_out[i,j]['std'] for j in range(self.ncurve)] for i in range(self.n_curve_stat)])
+        nruns = np.asarray([[stat_out[i,j]['nruns'] for j in range(self.ncurve)] for i in range(self.n_curve_stat)])
 
-        if self.verbose:
-            print 'Mean zruns (simu): ', np.mean(zruns), '+/-', np.std(zruns)
-            print 'Mean sigmas (simu): ', np.mean(sigmas), '+/-', np.std(sigmas)
-            print 'Mean nruns (simu): ', np.mean(nruns), '+/-', np.std(nruns)
+        mean_zruns = []
+        std_zruns = []
+        mean_sigmas = []
+        std_sigmas = []
 
-        return [np.mean(zruns), np.mean(sigmas)], [np.std(zruns), np.std(sigmas)]
+        for i in range(self.ncurve):
+            mean_zruns.append(np.mean(zruns[:, i]))
+            std_zruns.append(np.std(zruns[:, i]))
+            mean_sigmas.append(np.mean(sigmas[:, i]))
+            std_sigmas.append(np.std(sigmas[:, i]))
+            if self.verbose :
+                print 'Curve %i :' % (i + 1)
+                print 'Mean zruns (simu): ', np.mean(zruns[:, i]), '+/-', np.std(zruns[:, i])
+                print 'Mean sigmas (simu): ', np.mean(sigmas[:, i]), '+/-', np.std(sigmas[:, i])
+                print 'Mean nruns (simu): ', np.mean(nruns[:, i]), '+/-', np.std(nruns[:, i])
+
+        return mean_zruns, mean_sigmas, std_zruns, std_sigmas, zruns, sigmas
+
 
     def compute_chi2(self, theta):
         #theta : proposed step
-        #fit vector : target vector to fit in terms of [zruns, sigma]
+        #fit vector : target vector to fit in terms of [zruns, sigma], zruns are a list of the target zruns
 
         chi2 = 0.0
+        count = 0.0
         if self.n_curve_stat == 1:
             print "Warning : I cannot compute statistics with one single curves !!"
 
         if self.para:
-            out, error = self.make_mocks_para(theta)
+            mean_zruns, mean_sigmas, std_zruns, std_sigmas, _ , _  = self.make_mocks_para(theta)
         else:
-            out, error = self.make_mocks(theta)
+            mean_zruns, mean_sigmas, std_zruns, std_sigmas, _ ,_  = self.make_mocks(theta)
 
         # for i in range(len(out)):
         #     chi2 += (fit_vector[i] - out[i]) ** 2 / error[i] ** 2
 
-        chi2 = (self.fit_vector[0] - out[0]) ** 2 / error[0] ** 2
-        chi2 += (self.fit_vector[1] - out[1]) ** 2 / (2 * error[1] ** 2) #TODO : attention here I have doubled the error on sigma not to drive the fit too much...
+        for i in range(self.ncurve):
+            chi2 += (self.fit_vector[i][0] - mean_zruns[i]) ** 2 / std_zruns[i] ** 2
+            chi2 += (self.fit_vector[i][1] - mean_sigmas[i]) ** 2 / (2 * std_sigmas[i] ** 2) #TODO : attention here I have doubled the error on sigma not to drive the fit too much...
+            count +=1.0
 
-        return chi2, out, error
+        chi2 = chi2 / count
+        return chi2, np.asarray(mean_zruns), np.asarray(mean_sigmas), np.asarray(std_zruns), np.asarray(std_sigmas)
 
     def fct_para(self, theta):
 
-        if self.tweakml_type == 'colored_noise':
-            mocklc = pycs.sim.draw.draw([self.lc], self.spline, tweakml=lambda x: pycs.sim.twk.tweakml(x, beta=theta[0],
-                                                                                             sigma=theta[1],
-                                                                                             fmin=1 / 300.0,
-                                                                                             fmax=None,
-                                                                                             psplot=False),
-                                        shotnoise=self.shotnoise, keeptweakedml=False)
-
-        elif self.tweakml_type == 'PS_from_residuals':
-            mocklc = pycs.sim.draw.draw([self.lc], self.spline,
-                                        tweakml=lambda x: twk.tweakml_PS(x, self.spline, theta[0], f_min=1 / 300.0,
-                                                                         psplot=False, save_figure_folder=None,
-                                                                         verbose=self.verbose,
-                                                                         interpolation='linear',
-                                                                         A_correction=self.A_correction)
-                                        , shotnoise=self.shotnoise, keeptweakedml=False)
+        tweak_list = self.get_tweakml_list(theta)
+        mocklc = pycs.sim.draw.draw(self.lcs, self.spline,
+                                    tweakml= tweak_list,shotnoise=self.shotnoise, keeptweakedml=False)
 
         if self.recompute_spline:
             if self.knotstep == None:
@@ -135,6 +160,24 @@ class Optimiser(object):
 
         stat = pycs.gen.stat.mapresistats(mockrls)
         return stat
+
+    def get_tweakml_list(self, theta):
+        tweak_list = []
+        if self.tweakml_type == 'colored_noise':
+            def tweakml_colored(lcs, beta, sigma):
+                return pycs.sim.twk.tweakml(lcs, beta=beta, sigma=sigma, fmin=1.0 / 500.0, fmax=0.2,
+                                            psplot=False)
+            for i in range(self.ncurve):
+                tweak_list.append(partial(tweakml_colored, beta=theta[i][0], sigma=theta[i][1]))
+
+        elif self.tweakml_type == 'PS_from_residuals':
+            def tweakml_PS(lcs, spline, B, A_correction):
+                return twk.tweakml_PS(lcs, spline, B, f_min=1 / 300.0,psplot=False, save_figure_folder=None,
+                                     verbose=self.verbose,interpolation='linear',A_correction=A_correction)
+            for i in range(self.ncurve):
+                tweak_list.append(partial(tweakml_PS,spline = self.spline, B = theta[i][0], A_correction = self.A_correction[i]))
+        return tweak_list
+
 
     def fct_para_aux(self,args):
         kwargs = args[-1]
@@ -152,24 +195,9 @@ class Optimiser(object):
         nruns = []
 
         for i in range(self.n_curve_stat):
-            if self.tweakml_type == 'colored_noise':
-                mocklc.append(
-                    pycs.sim.draw.draw([self.lc], self.spline, tweakml=lambda x: pycs.sim.twk.tweakml(x, beta=theta[0],
-                                                                                            sigma=theta[1],
-                                                                                            fmin=1 / 300.0,
-                                                                                            fmax=None,
-                                                                                            psplot=False),
-                                       shotnoise=self.shotnoise, keeptweakedml=False))
-
-            elif self.tweakml_type == 'PS_from_residuals':
-                mocklc.append(pycs.sim.draw.draw([self.lc], self.spline, tweakml=lambda x: twk.tweakml_PS(x, self.spline, theta[0],
-                                                                                                f_min=1 / 300.0,
-                                                                                                psplot=False,
-                                                                                                save_figure_folder=None,
-                                                                                                verbose=self.verbose,
-                                                                                                interpolation='linear',
-                                                                                                A_correction= self.A_correction)
-                                                 , shotnoise=self.shotnoise, keeptweakedml=False))
+            tweak_list = self.get_tweakml_list(theta)
+            mocklc.append(pycs.sim.draw.draw(self.lcs, self.spline,
+                                        tweakml=tweak_list, shotnoise=self.shotnoise, keeptweakedml=False))
 
             if self.recompute_spline:
                 if self.knotstep == None:
@@ -181,63 +209,77 @@ class Optimiser(object):
 
 
             if self.recompute_spline and self.display:
-                    pycs.gen.lc.display([self.lc], [spline_on_mock], showdelays=True)
+                    pycs.gen.lc.display([self.lcs], [spline_on_mock], showdelays=True)
                     pycs.gen.stat.plotresiduals([mockrls[i]])
 
             stat.append(pycs.gen.stat.mapresistats(mockrls[i]))
-            zruns.append(stat[i][0]['zruns'])
-            sigmas.append(stat[i][0]['std'])
-            nruns.append(stat[i][0]['nruns'])
+            zruns.append([stat[i][j]['zruns'] for j in range(self.ncurve)])
+            sigmas.append([stat[i][j]['std'] for j in range(self.ncurve)])
+            nruns.append([stat[i][j]['nruns'] for j in range(self.ncurve)])
 
-        if self.verbose:
-            print 'Mean zruns (simu): ', np.mean(zruns), '+/-', np.std(zruns)
-            print 'Mean sigmas (simu): ', np.mean(sigmas), '+/-', np.std(sigmas)
-            print 'Mean nruns (simu): ', np.mean(nruns), '+/-', np.std(nruns)
+        zruns = np.asarray(zruns)
+        sigmas = np.asarray(sigmas)
+        nruns = np.asarray(nruns)
+        mean_zruns = []
+        std_zruns = []
+        mean_sigmas = []
+        std_sigmas = []
+        for i in range(self.ncurve):
+            mean_zruns.append(np.mean(zruns[:, i]))
+            std_zruns.append(np.std(zruns[:, i]))
+            mean_sigmas.append(np.mean(sigmas[:, i]))
+            std_sigmas.append(np.std(sigmas[:, i]))
+            if self.verbose :
+                print 'Curve %i :' % (i + 1)
+                print 'Mean zruns (simu): ', np.mean(zruns[:, i]), '+/-', np.std(zruns[:, i])
+                print 'Mean sigmas (simu): ', np.mean(sigmas[:, i]), '+/-', np.std(sigmas[:, i])
+                print 'Mean nruns (simu): ', np.mean(nruns[:, i]), '+/-', np.std(nruns[:, i])
 
-        return [np.mean(zruns), np.mean(sigmas)], [np.std(zruns), np.std(sigmas)]
+        return mean_zruns, mean_sigmas, std_zruns, std_sigmas, zruns, sigmas
 
     def check_success(self):
-        if np.any(self.rel_error_mini) == None :
+        if any(self.rel_error_zruns_mini[i] == None for i in range(self.ncurve)) :
             print "Error you should run analyse_plot_results() first !"
             exit()
         else :
-            if self.rel_error_mini[0] <0.5 and self.rel_error_mini[1] < 0.5 :
+            if all(self.rel_error_zruns_mini[i] < self.tolerance for i in range(self.ncurve)) \
+                    and all(self.rel_error_sigmas_mini[i] < self.tolerance for i in range(self.ncurve)):
                 return True
             else :
                 return False
 
     def report(self):
-        if np.any(self.best_param) == None :
+        if self.chain_list == None:
             print "Error : you should run optimise() first !"
+            print "I can't write the report"
             exit()
 
-        if os.path.isfile(self.savedirectory + 'report_tweakml_optimisation.txt') :
-            f = open(self.savedirectory + 'report_tweakml_optimisation.txt', 'a')
+        f = open(self.savedirectory + 'report_tweakml_optimisation.txt', 'a')
+        for i in range(self.ncurve):
 
-        else :
-            f = open(self.savedirectory + 'report_tweakml_optimisation.txt', 'a')
-            f.write('Best parameters for %s : \n' %self.tweakml_name)
+            f.write('Lightcurve %s : \n'%self.lcs[i].object)
+            f.write('\n')
+            if self.rel_error_zruns_mini[i] < self.tolerance and self.rel_error_sigmas_mini[i] < self.tolerance:
+                f.write('I succeeded in finding a set of parameters that match the '
+                        'statistical properties of the real lightcurve within %2.2f sigma. \n'%self.tolerance)
+
+            else :
+                f.write('I did not succeed in finding a set of parameters that '
+                        'match the statistical properties of the real lightcurve within %2.2f sigma. \n'%self.tolerance)
+
+            f.write(self.message)
+            f.write('Best parameters are : %s \n'%str(self.best_param[i]) )
+            if self.tweakml_type == 'PS_from_residuals':
+                f.write('A correction for PS_from_residuals : %2.2f \n'%self.A_correction[i])
+            f.write("Corresponding Chi2 : %2.2f \n" %self.chi2_mini)
+            f.write("Target zruns, sigma : %2.6f, %2.6f \n"%(self.fit_vector[i,0],self.fit_vector[i,1]))
+            f.write("At minimum zruns, sigma : %2.6f +/- %2.6f, %2.6f +/- %2.6f \n"%(self.mean_zruns_mini[i],self.std_zruns_mini[i],
+                                                                                     self.mean_sigma_mini[i], self.std_sigma_mini[i]))
+            f.write("For minimum Chi2, we are standing at " + str(self.rel_error_zruns_mini[i]) + " sigma [zruns] \n")
+            f.write("For minimum Chi2, we are standing at " + str(self.rel_error_sigmas_mini[i])+ " sigma [sigma] \n")
             f.write('------------------------------------------------\n')
-
-        f.write('Lightcurve %s : \n'%self.lc.object)
-        f.write('\n')
-        if self.success == True:
-            f.write('I succeeded in finding a set of parameters that match the statistical properties of the real lightcurve within 0.5 sigma. \n')
-
-        else :
-            f.write('I did not succeed in finding a set of parameters that match the statistical properties of the real lightcurve within 0.5 sigma. \n')
-
-        f.write(self.message)
-        f.write('Best parameters are : %s \n'%str(self.best_param) )
-        f.write('A correction for PS_from_residuals : %2.2f \n'%self.A_correction)
-        f.write("Corresponding Chi2 : %2.2f \n"%self.chi2_mini)
-        f.write("Target zruns, sigma : %2.6f, %2.6f \n"%(self.fit_vector[0],self.fit_vector[1]))
-        f.write("At minimum zruns, sigma : %2.6f +/- %2.6f, %2.6f +/- %2.6f \n"%(self.mean_mini[0],self.sigma_mini[0],
-                                                                                 self.mean_mini[1], self.sigma_mini[1]))
-        f.write("For minimum Chi2, we are standing at " + str(self.rel_error_mini[0]) + " sigma [zruns] \n")
-        f.write("For minimum Chi2, we are standing at " + str(self.rel_error_mini[1])+ " sigma [sigma] \n")
-        f.write('------------------------------------------------\n')
-        f.write('\n')
+            f.write('\n')
+        f.write('Optimisation done in %4.4f seconds on %i cores'%((self.time_stop - self.time_start),self.max_core))
         f.close()
 
     def reset_report(self):
@@ -246,29 +288,26 @@ class Optimiser(object):
 
     def compute_set_A_correction(self):
         #this function compute the sigma obtained after optimisation in the middle of the grid and return the correction that will be used for the rest of the optimisation
-        self.A_correction = 1.0 #reset the A correction
-        # if np.any(self.grid) == None :
-        #     eval_pts = 1.0 # evaluate teh correction at the nymquist frequency
-        # else :
-        #     n = len(self.grid)
-        #     eval_pts = self.grid[n/2] # evaluate the correction in the middle of the grid
-        eval_pts = 1.0 # evaluate the correction at the Nymquist frequency
-        if self.para:
-            [[zruns_c, sigma_c], [zruns_std_c, sigma_std_c]] = self.make_mocks_para(theta=[eval_pts])
-        else:
-            [[zruns_c, sigma_c], [zruns_std_c, sigma_std_c]] = self.make_mocks(theta=[eval_pts])
+        self.A_correction = [1.0 for i in range(self.ncurve)] #reset the A correction
+        eval_pts = [1.0 for i in range(self.ncurve)] # evaluate the correction at the Nymquist frequency
 
-        self.A_correction = self.fit_vector[1] / sigma_c # set the A correction
-        return self.fit_vector[1] / sigma_c
+        if self.para:
+            mean_zruns, mean_sigmas, std_zruns, std_sigmas, _, _ = self.make_mocks_para(eval_pts)
+        else:
+            mean_zruns, mean_sigmas, std_zruns, std_sigmas, _, _ = self.make_mocks(eval_pts)
+
+        self.A_correction = self.fit_vector[:][1] / std_sigmas # set the A correction
+        return self.A_correction
 
 
 class Metropolis_Hasting_Optimiser(Optimiser):
-    def __init__(self, lc, fit_vector, spline, knotstep=None, n_iter=1000,
+    def __init__(self, lcs, fit_vector, spline, knotstep=None, n_iter=1000,
                     burntime=100, savedirectory="./", recompute_spline=True, rdm_walk='gaussian', max_core = 16,
-                    n_curve_stat = 32, stopping_condition = True, shotnoise = "magerrs", theta_init = [-2.0, 0.2], gaussian_step = [0.1, 0.01],
+                    n_curve_stat = 32, stopping_condition = True, shotnoise = "magerrs", theta_init = [[-2.0, 0.2],[-2.0, 0.2],[-2.0, 0.2],[-2.0, 0.2]]
+                 , gaussian_step = [0.1, 0.01],
                  tweakml_type = 'coloired_noise' ,tweakml_name = '',correction_PS_residuals = True):
 
-        Optimiser.__init__(self,lc, fit_vector,spline, knotstep = knotstep, savedirectory= savedirectory, recompute_spline=recompute_spline,
+        Optimiser.__init__(self,lcs, fit_vector,spline, knotstep = knotstep, savedirectory= savedirectory, recompute_spline=recompute_spline,
                                    max_core =max_core, n_curve_stat = n_curve_stat, shotnoise = shotnoise, theta_init= theta_init,
                            tweakml_type= tweakml_type, tweakml_name= tweakml_name, correction_PS_residuals = correction_PS_residuals)
         self.n_iter = n_iter
@@ -276,7 +315,7 @@ class Metropolis_Hasting_Optimiser(Optimiser):
         self.rdm_walk = rdm_walk
         self.stopping_condition = stopping_condition
         self.gaussian_step = gaussian_step
-        self.savefile = self.savedirectory + self.tweakml_name + '_MCMC_outfile_i' + str(n_iter)+"_"+rdm_walk +"_"+self.lc.object+'.txt'
+        self.savefile = self.savedirectory + self.tweakml_name + '_MCMC_outfile_i' + str(n_iter)+"_"+rdm_walk +".txt"
         self.hundred_last = 100
         self.chain_list = None
 
@@ -285,93 +324,101 @@ class Metropolis_Hasting_Optimiser(Optimiser):
 
         theta_save = []
         chi2_save = []
-        sz_save = []
-        errorsz_save = []
+        z_save = []
+        s_save = []
+        errorz_save = []
+        errors_save = []
         self.hundred_last = 100
         theta = copy.deepcopy(self.theta_init)
-        chi2_current, sz_current, errorsz_current = self.compute_chi2(self.theta_init)
-        t = time.time()
+        chi2_current, mean_zruns_current, mean_sigmas_current, std_zruns_current, std_sigmas_current = self.compute_chi2(self.theta_init)
+        self.time_start = time.time()
 
         for i in range(self.n_iter):
-            t_now = time.time() - t
+            t_now = time.time() - self.time_start
             print "time : ", t_now
 
             if self.rdm_walk == 'gaussian':
-                theta_new = self.make_random_step_gaussian(theta, self.gaussian_step)
-            elif self.rdm_walk == 'exp':
-                theta_new = self.make_random_step_exp(theta, self.gaussian_step)
+                theta_new = np.asarray(self.make_random_step_gaussian(theta, self.gaussian_step))
             elif self.rdm_walk == 'log':
-                theta_new = self.make_random_step_log(theta, self.gaussian_step)
+                theta_new = np.asarray(self.make_random_step_log(theta, self.gaussian_step))
 
             if not self.prior(theta_new):
-                continue
-
-            chi2_new, sz_new, errorsz_new = self.compute_chi2(theta_new)
-            ratio = np.exp((-chi2_new + chi2_current) / 2.0);
-            print "Iteration, Theta, Chi2, sz, errorsz :", i, theta_new, chi2_new, sz_new, errorsz_new
-
-            if np.random.rand() < ratio:
-                theta = copy.deepcopy(theta_new)
-                chi2_current = copy.deepcopy(chi2_new)
-                sz_current = copy.deepcopy(sz_new)
-                errorsz_current = copy.deepcopy(errorsz_new)
-
-
+                print "Rejected sample (outside the hard bound) :", theta_new
                 theta_save.append(theta)
                 chi2_save.append(chi2_current)
-                sz_save.append(sz_current)
-                errorsz_save.append(errorsz_current)
+                z_save.append(mean_zruns_current)
+                s_save.append(mean_sigmas_current)
+                errorz_save.append(std_zruns_current)
+                errors_save.append(std_sigmas_current)
+                continue
 
-                if self.savefile != None:
-                    data = np.asarray([theta[0], theta[1], chi2_current, sz_current[0],sz_current[1], errorsz_current[0], errorsz_current[1]])
-                    data = np.reshape(data, (1, 7))
-                    np.savetxt(self.savefile, data, delimiter=',')
+            chi2_new, mean_zruns_new, mean_sigmas_new, std_zruns_new, std_sigmas_new = self.compute_chi2(theta_new)
+            ratio = np.exp((-chi2_new + chi2_current) / 2.0);
+            if self.verbose :
+                print "Iteration, Theta, Chi2, mean zruns, mean sigmas, std zruns, std sigmas :", i, theta_new, chi2_new, mean_zruns_current, \
+                mean_sigmas_current, std_zruns_current, std_sigmas_current
+
+            if np.random.rand() < ratio:
+                print "step %i accepted with ratio :"%i, ratio
+                theta = copy.deepcopy(theta_new)
+                chi2_current = copy.deepcopy(chi2_new)
+                mean_zruns_current = copy.deepcopy(mean_zruns_new)
+                mean_sigmas_current = copy.deepcopy(mean_sigmas_new)
+                std_zruns_current = copy.deepcopy(std_zruns_new)
+                std_sigmas_current = copy.deepcopy(std_sigmas_new)
+            else:
+                print "step %i rejected with ratio :" %i , ratio
+
+            theta_save.append(theta)
+            chi2_save.append(chi2_current)
+            z_save.append(mean_zruns_current)
+            s_save.append(mean_sigmas_current)
+            errorz_save.append(std_zruns_current)
+            errors_save.append(std_sigmas_current)
+
+            # if self.savefile != None:
+                # data = np.asarray([theta, chi2_current, mean_zruns_current,mean_sigmas_current, std_zruns_current, std_sigmas_current])
+                # data = np.reshape(data, (1, self.ncurve*5 + 1))
+                # np.savetxt(self.savefile, data, delimiter=',') #TODO : repair this
 
             if self.stopping_condition == True:
-                if self.check_if_stop(self.fit_vector, sz_current, errorsz_current):
+                if self.check_if_stop(self.fit_vector, mean_zruns_current,mean_sigmas_current, std_zruns_current, std_sigmas_current):
                     break
 
-        self.chain_list = [theta_save, chi2_save, sz_save, errorsz_save]
-        self.chi2_mini, self.best_param = self.get_best_param()  # to save the best params
-        return theta_save, chi2_save, sz_save, errorsz_save
+        self.chain_list = [theta_save, chi2_save, z_save, s_save, errorz_save, errors_save] #theta_save has dimension(n_iter,ncurve,2)
+        self.save_best_param()  # to save the best params
+        self.time_stop = time.time()
+        return theta_save, chi2_save, z_save, s_save, errorz_save, errors_save
 
 
     def prior(self,theta):
-        if -8.0 < theta[0] < -1.0 and 0 < theta[1] < 0.5:
+        if all(-8.0< theta[i,0] < 0.0 for i in range(self.ncurve)) and all(0 < theta[i,1] < 0.5 for i in range(self.ncurve)):
             return True
         else:
             return False
 
 
     def make_random_step_gaussian(self,theta, sigma_step):
-        return theta + sigma_step * np.random.randn(2)
+        theta_new = [theta[i][:] + sigma_step * np.random.randn(2) for i in range(self.ncurve)]
+        print theta_new
+        return theta_new
 
     def make_random_step_log(self,theta, sigma_step):
-        s = theta[1]
-        s = np.log10(s) + sigma_step[1] * np.random.randn()
+        s = np.asarray(theta)[:,1]
+        s = np.log10(s) + sigma_step[1] * np.random.randn(self.ncurve)
         s = 10.0**s
-        return [theta[0] + sigma_step[0] * np.random.randn(), s]
+        return [[theta[i][0] + sigma_step[0] * np.random.randn(),s[i]] for i in range(self.ncurve)]
 
 
-    def make_random_step_exp(self,theta, sigma_step):
-        sign = np.random.random()
-        print sign
-        if sign > 0.5:
-            print "step proposed : ", np.asarray(theta) - [theta[0] + sigma_step[0] * np.random.randn(),theta[1] + np.random.exponential(scale=sigma_step[1])]
-            return [theta[0] + sigma_step[0] * np.random.randn(), theta[1] + np.random.exponential(scale=sigma_step[1])]
-        else:
-            print "step proposed : ",np.asarray(theta) - [theta[0] + sigma_step[0] * np.random.randn(), theta[1] - np.random.exponential(scale=sigma_step[1])]
-            return [theta[0] + sigma_step[0] * np.random.randn(), theta[1] - np.random.exponential(scale=sigma_step[1])]
-
-
-    def check_if_stop(self,fitvector, sz, sz_error):
+    def check_if_stop(self,fitvector, mean_zruns, mean_sigmas, std_zruns, std_sigmas):
         if self.hundred_last != 100 :
             self.hundred_last -= 1# check if we already reached the condition once
-            print "I have already matched the stopping condition, I will do %i more steps." %hundred_last
+            print "I have already matched the stopping condition, I will do %i more steps." %self.hundred_last
 
-        elif np.abs(fitvector[0] - sz[0]) < 0.75*sz_error[0] and np.abs(fitvector[1] - sz[1]) < 0.75*sz_error[1]:
+        elif all(np.abs(fitvector[i,0] - mean_zruns[i]) < self.tolerance*std_zruns[i] for i in range(self.ncurve)) \
+                and all(np.abs(fitvector[i,1] - mean_sigmas[i]) < self.tolerance*std_sigmas[i] for i in range(self.ncurve)):
             self.hundred_last -= 1
-            print "I'm matching the stopping condition at this iteration, I will do %i more steps."%hundred_last
+            print "I'm matching the stopping condition at this iteration, I will do %i more steps."%self.hundred_last
         else :
             print "Stopping condition not reached."
 
@@ -380,65 +427,74 @@ class Metropolis_Hasting_Optimiser(Optimiser):
         else :
             return False
 
-    def get_best_param(self):
+    def save_best_param(self):
         if self.chain_list == None :
             print "Error you should run optimise() first !"
             exit()
         else:
-            print np.shape(self.chain_list),self.chain_list[1][:]
+            print self.chain_list[1][:]
             ind_min = np.argmin(self.chain_list[1][:])
-            self.mean_mini = (self.chain_list[2][ind_min])
-            self.sigma_mini = (self.chain_list[3][ind_min])
-            self.chi2_mini = (self.chain_list[1][ind_min])
-            return self.chi2_mini, self.chain_list[0][ind_min]
+            self.mean_zruns_mini = self.chain_list[2][:][ind_min]
+            self.mean_sigma_mini = self.chain_list[3][:][ind_min]
+            self.std_zruns_mini = self.chain_list[4][:][ind_min]
+            self.std_sigma_mini = self.chain_list[5][:][ind_min]
+            self.chi2_mini = self.chain_list[1][ind_min]
+            self.best_param = self.chain_list[0][:][ind_min]
+            self.rel_error_zruns_mini = np.abs(self.mean_zruns_mini - self.fit_vector[:,0]) / self.std_zruns_mini
+            self.rel_error_sigmas_mini = np.abs(self.mean_sigma_mini - self.fit_vector[:,1]) / self.std_sigma_mini
 
     def analyse_plot_results(self):
         if self.chain_list == None :
             print "Error you should run optimise() first !"
             exit()
         else :
-            print "Best position : ", self.get_best_param()[1]
-            print "Corresponding Chi2 : ", self.get_best_param()[0]
-            self.rel_error_mini =  np.abs(np.asarray(self.mean_mini) - np.asarray(self.fit_vector)) / np.asarray(self.sigma_mini)
+            self.save_best_param()
+            print "Best position : ", self.best_param
+            print "Corresponding Chi2 : ", self.chi2_mini
 
-            print "Target sigma, zruns : " + str(self.fit_vector[1]) + ', ' + str(self.fit_vector[0])
-            print "Minimum sigma, zruns : " + str(self.mean_mini[1]) + ', ' + str(self.mean_mini[0])
+            print "Target sigma, zruns : ", self.fit_vector
+            print "Minimum sigma, zruns : ", [self.mean_zruns_mini, self.mean_sigma_mini]
             print "Minimum chi2 : ", self.chi2_mini
-            print "For minimum Chi2, we are standing at " + str(self.rel_error_mini[0]) + " sigma [zruns]"
-            print "For minimum Chi2, we are standing at " + str(self.rel_error_mini[1])+ " sigma [sigma]"
+            print "For minimum Chi2, we are standing at " + str(self.rel_error_zruns_mini) + " sigma [zruns]"
+            print "For minimum Chi2, we are standing at " + str(self.rel_error_sigmas_mini)+ " sigma [sigma]"
 
             self.success = self.check_success()
 
-            toplot = np.asarray(self.chain_list[0])
-            toplot[:,1] = np.log10(toplot[:,1])
-            fig1,fig2,fig3 = pltfct.plot_chain_MCMC(toplot, self.chain_list[1], ["$beta$", "log $\sigma$"])
-            fig1.savefig(self.savedirectory +self.tweakml_name +  "_MCMC_corner_plot_" + self.lc.object + ".png")
-            fig2.savefig(self.savedirectory +self.tweakml_name + "_MCMC_chi2_" + self.lc.object + ".png")
-            fig3.savefig(self.savedirectory +self.tweakml_name +"_MCMC_chain_" + self.lc.object + ".png")
+            for i in range(self.ncurve):
+                theta_chain = np.asarray(self.chain_list[0])
+                theta_chain[:,i,1] = np.log10(theta_chain[:,i,1])
+                fig2,fig3 = pltfct.plot_chain_MCMC(theta_chain[:,i,:], self.chain_list[1], ["$beta$", "log $\sigma$"])
+                fig2.savefig(self.savedirectory +self.tweakml_name + "_MCMC_chi2_" + self.lcs[i].object + ".png")
+                fig3.savefig(self.savedirectory +self.tweakml_name +"_MCMC_chain_" + self.lcs[i].object + ".png")
 
-            if self.display:
-                plt.show()
-
+                if self.display:
+                    plt.show()
+            param_name = [["$beta_%i$"%(i+1),"$sigma_%i$"%(i+1)] for i in range(self.ncurve)]
+            param_name = np.reshape(param_name,2 * self.ncurve )
+            if self.n_iter > 4 * self.ncurve : #to be sure to have enough points
+                fig1 = pltfct.corner_plot_MCMC(np.reshape(theta_chain, (self.n_iter, 2 * self.ncurve)), param_name)
+                fig1.savefig(self.savedirectory + self.tweakml_name + "_MCMC_corner_plot.png")
+#TODO : implement the burnin in the plot !!
     def dump_results(self):
         if self.chain_list == None :
             print "Error you should run optimise() first !"
             exit()
         else :
-            pickle.dump(self.chain_list, open(self.savedirectory +  self.tweakml_name + "_chain_list_MCMC_" + "_i"
-                                         + str(self.n_iter) + "_" + self.lc.object + ".pkl", "wb"))
-            pickle.dump(self, open(self.savedirectory + self.tweakml_name + "_MCMC_opt_" + "_i"
-                                      + str(self.n_iter) + "_" + self.lc.object + ".pkl", "wb"))
+            pickle.dump(self.chain_list, open(self.savedirectory +  self.tweakml_name + "_chain_list_MCMC" + "_i"
+                                         + str(self.n_iter) + ".pkl", "wb"))
+            pickle.dump(self, open(self.savedirectory + self.tweakml_name + "_MCMC_opt" + "_i"
+                                      + str(self.n_iter) + ".pkl", "wb"))
 
 
 class PSO_Optimiser(Optimiser) :
     #Attention here : You cannot use the parrallel computing of the mock curves because PSO, already launch the particles on several thread !
 
-    def __init__(self, lc, fit_vector, spline, savedirectory ="./", knotstep = None, max_core = 8, shotnoise = 'magerrs',
+    def __init__(self, lcs, fit_vector, spline, savedirectory ="./", knotstep = None, max_core = 8, shotnoise = 'magerrs',
                  recompute_spline = True, n_curve_stat= 32, theta_init = None, n_particles = 30, n_iter = 50,
                  lower_limit = [-8., 0.], upper_limit = [-1.0, 0.5], mpi = False, tweakml_type = 'colored_noise', tweakml_name = '',
                  correction_PS_residuals = True):
 
-        Optimiser.__init__(self,lc, fit_vector,spline, knotstep = knotstep, savedirectory= savedirectory, recompute_spline=recompute_spline,
+        Optimiser.__init__(self,lcs, fit_vector,spline, knotstep = knotstep, savedirectory= savedirectory, recompute_spline=recompute_spline,
                                    max_core =1, n_curve_stat = n_curve_stat, shotnoise = shotnoise, theta_init= theta_init,
                            tweakml_type = tweakml_type, tweakml_name = tweakml_name, correction_PS_residuals= correction_PS_residuals,
                            verbose= False, display= False)
@@ -451,7 +507,7 @@ class PSO_Optimiser(Optimiser) :
         self.mpi = mpi
         self.max_thread = max_core * 2
         self.chain_list = None
-        self.savefile = self.savedirectory + self.tweakml_name + '_PSO_file' + "_i" + str(self.n_iter)+"_p"+str(self.n_particles)+ "_" +self.lc.object+".txt"
+        self.savefile = self.savedirectory + self.tweakml_name + '_PSO_file' + "_i" + str(self.n_iter)+"_p"+str(self.n_particles)+ "_" +self.lcs.object+".txt"
 
     def __call__(self, theta):
         return self.likelihood(theta)
@@ -503,9 +559,9 @@ class PSO_Optimiser(Optimiser) :
             exit()
         else :
             pickle.dump(self.chain_list, open(self.savedirectory + self.tweakml_name +"_chain_list_PSO_" + "_i"
-                                         + str(self.n_iter) + "_p" + str(self.n_particles) + "_" + self.lc.object + ".pkl", "wb"))
+                                         + str(self.n_iter) + "_p" + str(self.n_particles) + "_" + self.lcs.object + ".pkl", "wb"))
             pickle.dump(self, open(self.savedirectory + self.tweakml_name +"_PSO_opt_" + "_i"
-                                      + str(self.n_iter) + "_p" + str(self.n_particles) + "_" + self.lc.object + ".pkl", "wb"))
+                                      + str(self.n_iter) + "_p" + str(self.n_particles) + "_" + self.lcs.object + ".pkl", "wb"))
     def analyse_plot_results(self):
         if self.chain_list == None :
             print "Error you should run optimise() first !"
@@ -513,7 +569,7 @@ class PSO_Optimiser(Optimiser) :
         else :
             print "Converged position :", self.best_param
             print "Converged Chi2 : ", self.chi2_mini
-            mean_mini, sigma_mini = self.make_mocks(self.best_param) #TODO : set back to para here when it is repaired
+            mean_zruns_mini, mean_sigmas_mini, std_zruns_mini, std_sigmas_mini, _, _ = self.make_mocks_para(self.best_param)
             self.mean_mini = np.asarray(mean_mini)
             self.sigma_mini = np.asarray(sigma_mini)
             self.rel_error_mini = np.abs(np.asarray(self.mean_mini) - np.asarray(self.fit_vector)) / np.asarray(
@@ -529,18 +585,18 @@ class PSO_Optimiser(Optimiser) :
             param_list = ['beta', 'sigma']
             f, axes = pltfct.plot_chain_PSO(self.chain_list, param_list)
 
-            f.savefig(self.savedirectory + self.tweakml_name + "_PSO_chain_" + self.lc.object + ".png")
+            f.savefig(self.savedirectory + self.tweakml_name + "_PSO_chain_" + self.lcs.object + ".png")
 
             if self.display:
                 plt.show()
 
 class Grid_Optimiser(Optimiser):
-    def __init__(self, lc, fit_vector, spline, knotstep=None,
+    def __init__(self, lcs, fit_vector, spline, knotstep=None,
                      savedirectory="./", recompute_spline=True, max_core = 16, theta_init = [-2.0 ,0.1],
                     n_curve_stat = 32, shotnoise = "magerrs", tweakml_type = 'PS_from_residuals', tweakml_name = '',
                  display = False, verbose = False, grid = np.linspace(0.5,2,10), correction_PS_residuals = True):
 
-        Optimiser.__init__(self,lc, fit_vector,spline, knotstep = knotstep, savedirectory= savedirectory, recompute_spline=recompute_spline,
+        Optimiser.__init__(self,lcs, fit_vector,spline, knotstep = knotstep, savedirectory= savedirectory, recompute_spline=recompute_spline,
                                    max_core =max_core, n_curve_stat = n_curve_stat, shotnoise = shotnoise, theta_init= theta_init,
                            tweakml_type= tweakml_type, tweakml_name = tweakml_name, correction_PS_residuals=correction_PS_residuals,
                            verbose=verbose, display= display)
@@ -564,9 +620,9 @@ class Grid_Optimiser(Optimiser):
 
         for i, B in enumerate(self.grid):
             if self.para :
-                [[zruns_c, sigma_c], [zruns_std_c, sigma_std_c]] = self.make_mocks_para(theta=[B]) # Careful here, theta is a list even if there is only 1 parameter
+                [[zruns_c, sigma_c], [zruns_std_c, sigma_std_c]], _, _ = self.make_mocks_para(theta=[B]) # Careful here, theta is a list even if there is only 1 parameter
             else :
-                [[zruns_c,sigma_c],[zruns_std_c,sigma_std_c]] = self.make_mocks(theta=[B]) #to debug, remove multiprocessing
+                [[zruns_c,sigma_c],[zruns_std_c,sigma_std_c]], _, _ = self.make_mocks(theta=[B]) #to debug, remove multiprocessing
             chi2.append(
                 (zruns_c - zruns_target) ** 2 / zruns_std_c ** 2 + (sigma_c - sigma_target) ** 2 / sigma_std_c ** 2)
 
@@ -594,7 +650,7 @@ class Grid_Optimiser(Optimiser):
             zruns[min_ind], zruns_std[min_ind], self.rel_error_mini[0])
             print "Sigma : %2.6f +/- %2.6f (%2.4f sigma from target)" % (sigma[min_ind], sigma_std[min_ind], self.rel_error_mini[1])
 
-        if self.rel_error_mini[0] < 0.5 and self.rel_error_mini[1] < 0.5:
+        if self.rel_error_mini[0] < self.tolerance and self.rel_error_mini[1] < self.tolerance:
             self.success = True
         else:
             self.success = False
@@ -613,12 +669,12 @@ class Grid_Optimiser(Optimiser):
         pltfct.plot_chain_grid_dic(self)
 
 class Dic_Optimiser(Optimiser):
-    def __init__(self, lc, fit_vector, spline, knotstep=None,
+    def __init__(self, lcs, fit_vector, spline, knotstep=None,
                      savedirectory="./", recompute_spline=True, max_core = 16, theta_init = [-2.0 ,0.1],
                     n_curve_stat = 32, shotnoise = "magerrs", tweakml_type = 'PS_from_residuals', tweakml_name = '',
                  display = False, verbose = False, grid = np.linspace(0.5,2,10), correction_PS_residuals = True, max_iter = 10):
 
-        Optimiser.__init__(self,lc, fit_vector,spline, knotstep = knotstep, savedirectory= savedirectory, recompute_spline=recompute_spline,
+        Optimiser.__init__(self,lcs, fit_vector,spline, knotstep = knotstep, savedirectory= savedirectory, recompute_spline=recompute_spline,
                                    max_core =max_core, n_curve_stat = n_curve_stat, shotnoise = shotnoise, theta_init= theta_init,
                            tweakml_type= tweakml_type, tweakml_name = tweakml_name, correction_PS_residuals=correction_PS_residuals,
                            verbose=verbose, display= display)
@@ -649,9 +705,9 @@ class Dic_Optimiser(Optimiser):
             self.iteration +=1
             print "Iteration %i, B=%2.4f"%(self.iteration, B)
             if self.para :
-                [[zruns_c, sigma_c], [zruns_std_c, sigma_std_c]] = self.make_mocks_para(theta=[B])
+                [[zruns_c, sigma_c], [zruns_std_c, sigma_std_c]], _, _ = self.make_mocks_para(theta=[B])
             else :
-                [[zruns_c,sigma_c],[zruns_std_c,sigma_std_c]] = self.make_mocks(theta=[B]) #to debug, remove multiprocessing
+                [[zruns_c,sigma_c],[zruns_std_c,sigma_std_c]], _ , _  = self.make_mocks(theta=[B]) #to debug, remove multiprocessing
             chi2.append(
                 (zruns_c - zruns_target) ** 2 / zruns_std_c ** 2 + (sigma_c - sigma_target) ** 2 / sigma_std_c ** 2)
 

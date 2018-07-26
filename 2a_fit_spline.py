@@ -3,7 +3,7 @@
 import pycs
 import os,sys
 import numpy as np
-
+from module import util_func as ut
 
 execfile("config.py")
 
@@ -63,22 +63,26 @@ import pycs.regdiff
 for ind, l in enumerate(lcs):
 	l.shiftmag(ind*0.1)
 
-myrslcs = [pycs.regdiff.rslc.factory(l, pd=pointdensity[0], covkernel=covkernel[0],
-									 pow=pow[0], amp=amp[0], scale=scale[0], errscale=errscale[0]) for l in lcs]
+kwargs_optimiser_simoptfct = ut.get_keyword_regdiff(pointdensity, covkernel, pow, amp, scale, errscale)
+regdiff_param_kw = ut.generate_regdiff_regdiffparamskw(pointdensity, covkernel, pow, amp, scale, errscale)
+for i,k in enumerate(kwargs_optimiser_simoptfct):
 
-if display :
-	pycs.gen.lc.display(lcs, myrslcs)
-pycs.gen.lc.display(lcs, myrslcs, showdelays=True, filename = figure_directory + "regdiff_fit.png")
+	myrslcs = [pycs.regdiff.rslc.factory(l, pd=k['pointdensity'], covkernel=k['covkernel'],
+										 pow=k['pow'], amp=k['amp'], scale=k['scale'], errscale=k['errscale']) for l in lcs]
 
-for ind, l in enumerate(lcs):
-	l.shiftmag(-ind*0.1)
+	if display :
+		pycs.gen.lc.display(lcs, myrslcs)
+	pycs.gen.lc.display(lcs, myrslcs, showdelays=True, filename = figure_directory + "regdiff_fit%s.png"%regdiff_param_kw[i])
 
-# map(regdiff, [lcs], **kwargs_optimiser_simoptfct[0])
-regdiff(lcs, **kwargs_optimiser_simoptfct[0])
+	for ind, l in enumerate(lcs):
+		l.shiftmag(-ind*0.1)
 
-if display :
-	pycs.gen.lc.display(lcs, showlegend=False, showdelays=True)
-pycs.gen.lc.display(lcs, showlegend=False, showdelays=True, filename = figure_directory + "regdiff_optimized_fit.png")
-if not os.path.isdir(lens_directory + 'regdiff_fitting'):
-	os.mkdir(lens_directory + 'regdiff_fitting')
-pycs.gen.util.writepickle(lcs, lens_directory + 'regdiff_fitting/initopt_regdiff.pkl')
+	# map(regdiff, [lcs], **kwargs_optimiser_simoptfct[0])
+	regdiff(lcs, **kwargs_optimiser_simoptfct[i])
+
+	if display :
+		pycs.gen.lc.display(lcs, showlegend=False, showdelays=True)
+	pycs.gen.lc.display(lcs, showlegend=False, showdelays=True, filename = figure_directory + "regdiff_optimized_fit%s.png"%regdiff_param_kw[i])
+	if not os.path.isdir(lens_directory + 'regdiff_fitting'):
+		os.mkdir(lens_directory + 'regdiff_fitting')
+	pycs.gen.util.writepickle(lcs, lens_directory + 'regdiff_fitting/initopt_regdiff%s.pkl'%regdiff_param_kw[i])

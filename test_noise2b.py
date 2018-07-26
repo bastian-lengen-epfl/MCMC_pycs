@@ -2,19 +2,20 @@
 
 from module import tweakml_PS_from_data as twk
 import pycs
-from module.optimisation import mcmc_function as mcmc
+from module.optimisation import Optimiser as mcmc
 import matplotlib.pyplot as plt
 
 source ="pickle"
-object = "UM673_Euler"
+object = "HE0435b_Euler"
 
-picklepath = "./"+object+"/save/"
 
-kntstp = 60
+
+kntstp = 35
 # kntstp = 40
-ml_kntstep =500
+ml_kntstep =150
 # ml_kntstep =360
-picklename ="opt_spl_ml_"+str(kntstp)+"-"+str(ml_kntstep) + "knt.pkl"
+picklepath = "./"+ object +"/spl1_ks"+str(kntstp)+"_splml_ksml_"+str(ml_kntstep) + "/"
+picklename = "initopt_Euler_ks%i_ksml%i.pkl"%(kntstp, ml_kntstep)
 curve =1
 
 (lcs, spline) = pycs.gen.util.readpickle(picklepath + picklename)
