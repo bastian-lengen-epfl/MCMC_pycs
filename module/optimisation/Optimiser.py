@@ -329,7 +329,7 @@ class Metropolis_Hasting_Optimiser(Optimiser):
         errorz_save = []
         errors_save = []
         self.hundred_last = 100
-        theta = copy.deepcopy(self.theta_init)
+        theta = np.asarray(copy.deepcopy(self.theta_init))
         chi2_current, mean_zruns_current, mean_sigmas_current, std_zruns_current, std_sigmas_current = self.compute_chi2(self.theta_init)
         self.time_start = time.time()
 
@@ -376,10 +376,18 @@ class Metropolis_Hasting_Optimiser(Optimiser):
             errorz_save.append(std_zruns_current)
             errors_save.append(std_sigmas_current)
 
-            # if self.savefile != None:
-                # data = np.asarray([theta, chi2_current, mean_zruns_current,mean_sigmas_current, std_zruns_current, std_sigmas_current])
-                # data = np.reshape(data, (1, self.ncurve*5 + 1))
-                # np.savetxt(self.savefile, data, delimiter=',') #TODO : repair this
+            #write in file :
+            data = []
+            for i in range(self.ncurve):
+                for j in range(len(theta[0,:])):
+                    data.append(np.asarray(theta)[i,j])
+            data.append(chi2_current)
+            [data.append(mean_zruns_current[i]) for i in range(self.ncurve)]
+            [data.append(mean_sigmas_current[i]) for i in range(self.ncurve)]
+            [data.append(std_zruns_current[i]) for i in range(self.ncurve)]
+            [data.append(std_sigmas_current[i]) for i in range(self.ncurve)]
+            data = np.asarray(data)
+            np.savetxt(self.savefile, data, newline=' ', delimiter=',')
 
             if self.stopping_condition == True:
                 if self.check_if_stop(self.fit_vector, mean_zruns_current,mean_sigmas_current, std_zruns_current, std_sigmas_current):

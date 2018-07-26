@@ -9,12 +9,12 @@ import os
 start_time = time.time()
 
 object = "HE0435"
-kntstp = 40
-ml_kntstep =360
+kntstp = 35
+ml_kntstep =150
 picklepath = "./"+object+"/save/"
 sim_path = "./"+object+"/simulation_log2_multi/"
 plot_path = sim_path + "figure/"
-shotnoise = "mcres" #'magerrs' or "mcres"
+shotnoise = "magerrs" #'magerrs' or "mcres"
 if not os.path.exists(sim_path):
     os.mkdir(sim_path)
 if not os.path.exists(plot_path):
@@ -24,7 +24,7 @@ if not os.path.exists(plot_path):
 picklename ="opt_spl_ml_"+str(kntstp)+"-"+str(ml_kntstep) + "knt.pkl"
 n_iter = 2
 nburn = 0
-rdm_walk = 'log'
+rdm_walk = 'gaussian'
 n_curve_stat = 2 #number of curve to optimise to compute the statistic.
 max_process = 8
 stopping_condition =True
