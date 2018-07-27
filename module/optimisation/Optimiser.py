@@ -303,7 +303,7 @@ class Optimiser(object):
 class Metropolis_Hasting_Optimiser(Optimiser):
     def __init__(self, lcs, fit_vector, spline, knotstep=None, n_iter=1000,
                     burntime=100, savedirectory="./", recompute_spline=True, rdm_walk='gaussian', max_core = 16,
-                    n_curve_stat = 32, stopping_condition = True, shotnoise = "magerrs", theta_init = [[-2.0, 0.2],[-2.0, 0.2],[-2.0, 0.2],[-2.0, 0.2]]
+                    n_curve_stat = 32, stopping_condition = True, shotnoise = "magerrs", theta_init = None
                  , gaussian_step = [0.1, 0.01],
                  tweakml_type = 'coloired_noise' ,tweakml_name = '',correction_PS_residuals = True):
 
@@ -315,7 +315,9 @@ class Metropolis_Hasting_Optimiser(Optimiser):
         self.rdm_walk = rdm_walk
         self.stopping_condition = stopping_condition
         self.gaussian_step = gaussian_step
-        self.savefile = self.savedirectory + self.tweakml_name + '_MCMC_outfile_i' + str(n_iter)+"_"+rdm_walk +".txt"
+        open(self.savedirectory + self.tweakml_name + '_MCMC_outfile_i' + str(n_iter) + "_" + rdm_walk + ".txt",
+             'w').close()  # to clear the file
+        self.savefile =open(self.savedirectory + self.tweakml_name + '_MCMC_outfile_i' + str(n_iter) + "_" + rdm_walk + ".txt",'a')
         self.hundred_last = 100
         self.chain_list = None
 
@@ -395,6 +397,7 @@ class Metropolis_Hasting_Optimiser(Optimiser):
 
         self.chain_list = [theta_save, chi2_save, z_save, s_save, errorz_save, errors_save] #theta_save has dimension(n_iter,ncurve,2)
         self.save_best_param()  # to save the best params
+        self.success = self.check_success()
         self.time_stop = time.time()
         return theta_save, chi2_save, z_save, s_save, errorz_save, errors_save
 
@@ -600,7 +603,7 @@ class PSO_Optimiser(Optimiser) :
 
 class Grid_Optimiser(Optimiser):
     def __init__(self, lcs, fit_vector, spline, knotstep=None,
-                     savedirectory="./", recompute_spline=True, max_core = 16, theta_init = [-2.0 ,0.1],
+                     savedirectory="./", recompute_spline=True, max_core = 16, theta_init = None,
                     n_curve_stat = 32, shotnoise = "magerrs", tweakml_type = 'PS_from_residuals', tweakml_name = '',
                  display = False, verbose = False, grid = np.linspace(0.5,2,10), correction_PS_residuals = True):
 
@@ -678,72 +681,67 @@ class Grid_Optimiser(Optimiser):
 
 class Dic_Optimiser(Optimiser):
     def __init__(self, lcs, fit_vector, spline, knotstep=None,
-                     savedirectory="./", recompute_spline=True, max_core = 16, theta_init = [-2.0 ,0.1],
+                     savedirectory="./", recompute_spline=True, max_core = 16, theta_init = None,
                     n_curve_stat = 32, shotnoise = "magerrs", tweakml_type = 'PS_from_residuals', tweakml_name = '',
-                 display = False, verbose = False, grid = np.linspace(0.5,2,10), correction_PS_residuals = True, max_iter = 10):
+                 display = False, verbose = False, step = 0.1, correction_PS_residuals = True, max_iter = 10):
 
         Optimiser.__init__(self,lcs, fit_vector,spline, knotstep = knotstep, savedirectory= savedirectory, recompute_spline=recompute_spline,
                                    max_core =max_core, n_curve_stat = n_curve_stat, shotnoise = shotnoise, theta_init= theta_init,
                            tweakml_type= tweakml_type, tweakml_name = tweakml_name, correction_PS_residuals=correction_PS_residuals,
                            verbose=verbose, display= display)
 
-        self.grid = grid #should be only a 1D array for the moment
         self.chain_list = None
-        self.step = grid[1]-grid[0]
+        self.step = [step for i in range(self.ncurve)]
         self.max_iter = max_iter
         self.iteration = 0
-        self.turn_back = 0
+        self.turn_back = [0 for i in range(self.ncurve)]
         self.explored_param = []
 
     def optimise(self):
+        self.time_start = time.time()
         sigma = []
         zruns = []
         sigma_std = []
         zruns_std = []
         chi2 = []
-        zruns_target = self.fit_vector[0]
-        sigma_target = self.fit_vector[1]
+        zruns_target = self.fit_vector[:,0]
+        sigma_target = self.fit_vector[:,1]
 
         if self.correction_PS_residuals:
             self.A_correction = self.compute_set_A_correction()
             print "I will slightly correct the amplitude of the Power Spectrum by a factor :", self.A_correction
 
-        B = self.grid[0]
+        B = self.theta_init
         while True:
             self.iteration +=1
             print "Iteration %i, B=%2.4f"%(self.iteration, B)
-            if self.para :
-                [[zruns_c, sigma_c], [zruns_std_c, sigma_std_c]], _, _ = self.make_mocks_para(theta=[B])
-            else :
-                [[zruns_c,sigma_c],[zruns_std_c,sigma_std_c]], _ , _  = self.make_mocks(theta=[B]) #to debug, remove multiprocessing
-            chi2.append(
-                (zruns_c - zruns_target) ** 2 / zruns_std_c ** 2 + (sigma_c - sigma_target) ** 2 / sigma_std_c ** 2)
+            chi2_c, zruns_c, sigma_c, zruns_std_c, sigma_std_c = self.compute_chi2(B)
 
+            chi2.append(chi2_c)
             sigma.append(sigma_c)
             zruns.append(zruns_c)
             sigma_std.append(sigma_std_c)
             zruns_std.append(zruns_std_c)
             self.explored_param.append(B)
-            min_ind = np.argmin(chi2)
-            self.chi2_mini = np.min(chi2)
-            self.mean_mini = [zruns[min_ind], sigma[min_ind]]
-            self.sigma_mini = [zruns_std[min_ind], sigma_std[min_ind]]
-            self.rel_error_mini = [np.abs(zruns[min_ind] - zruns_target) / zruns_std[min_ind],
-                                   np.abs(sigma[min_ind] - sigma_target) / sigma_std[min_ind]]
-            if self.step > 0 and zruns_c > zruns_target:
-                self.turn_back +=1
-                if self.iteration != 1:
-                    self.step =  - self.step /2.0 # we go backward dividing the step by two
-                else :
-                    self.step =  - self.step
-                    B += self.step # we do two step backward if the first iteration was already too high.
 
-            elif self.step < 0 and zruns_c < zruns_target:
-                self.turn_back += 1
-                self.step = - self.step / 2.0  # we go backward dividing the step by two
+            self.rel_error_zruns_mini = np.abs(zruns_c - self.fit_vector[:, 0]) / zruns_std_c #used to store the current relative error
+            self.rel_error_sigmas_mini = np.abs(sigma_c - self.fit_vector[:, 1]) / sigma_std_c
 
-            if self.iteration%4 == 0 and self.turn_back == 0:
-                self.step = self.step*2 #we double the step every 4 iterations we didn't pass the optimum
+            for i in range(self.ncurve):
+                if self.step[i] > 0 and zruns_c[i] > zruns_target[i]:
+                    self.turn_back[i] +=1
+                    if self.iteration != 1:
+                        self.step[i] =  - self.step[i] /2.0 # we go backward dividing the step by two
+                    else :
+                        self.step[i] =  - self.step[i]
+                        B += self.step # we do two step backward if the first iteration was already too high.
+
+                elif self.step[i] < 0 and zruns_c[i] < zruns_target[i]:
+                    self.turn_back[i] += 1
+                    self.step[i] = - self.step[i] / 2.0  # we go backward dividing the step by two
+
+                if self.iteration%4 == 0 and self.turn_back[i] == 0:
+                    self.step[i] = self.step[i]*2 #we double the step every 4 iterations we didn't pass the optimum
 
             B += self.step
             if self.check_if_stop():
@@ -752,6 +750,7 @@ class Dic_Optimiser(Optimiser):
         self.chain_list = [self.explored_param, chi2, [zruns, sigma], [zruns_std, sigma_std]]
         self.chi2_mini, self.best_param = self.get_best_param()
         self.success = self.check_success()
+        self.time_stop = time.time()
         return self.chain_list
 
     def check_if_stop(self):
@@ -759,7 +758,7 @@ class Dic_Optimiser(Optimiser):
             self.message = "I stopped because I reached the max number of iteration.\n"
             print self.message[:-2]
             return True
-        if self.turn_back > 4 :
+        if all(self.turn_back[i] > 4 for i in range(self.ncurve)):
             self.message = "I stopped because I passed four times the optimal value.\n"
             print self.message[:-2]
             return True
@@ -785,11 +784,9 @@ class Dic_Optimiser(Optimiser):
     def analyse_plot_results(self):
         pltfct.plot_chain_grid_dic(self)
 
-def get_fit_vector(l,spline):
-    rls = pycs.gen.stat.subtract([l], spline)
-    print 'Residuals from the fit : '
-    print pycs.gen.stat.resistats(rls[0])
-    fit_sigma = pycs.gen.stat.resistats(rls[0])["std"]
-    fit_zruns = pycs.gen.stat.resistats(rls[0])["zruns"]
-    fit_vector = [fit_zruns, fit_sigma]
+def get_fit_vector(lcs,spline):
+    rls = pycs.gen.stat.subtract(lcs, spline)
+    fit_sigma = [pycs.gen.stat.mapresistats(rls)[i]["std"] for i in range(len(rls))]
+    fit_zruns = [pycs.gen.stat.mapresistats(rls)[i]["zruns"] for i in range(len(rls))]
+    fit_vector = [[fit_zruns[i], fit_sigma[i]] for i in range(len(rls))]
     return fit_vector
