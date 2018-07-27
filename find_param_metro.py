@@ -22,15 +22,12 @@ if not os.path.exists(plot_path):
 
 
 picklename ="opt_spl_ml_"+str(kntstp)+"-"+str(ml_kntstep) + "knt.pkl"
-n_iter = 2
+n_iter = 3
 nburn = 0
 rdm_walk = 'gaussian'
 n_curve_stat = 2 #number of curve to optimise to compute the statistic.
 max_process = 8
 stopping_condition =True
-
-open(sim_path + 'rt_file_' + object +"_"+ picklename[:-4] + "_" + str(n_iter)+"_"+rdm_walk +'.txt', 'w').close() # to clear the file
-rt_file = open(sim_path + 'rt_file_' + object +"_"+ picklename[:-4]  + "_" + str(n_iter)+"_"+rdm_walk + ".txt",'a')
 
 (lcs, spline) = pycs.gen.util.readpickle(picklepath + picklename)
 
