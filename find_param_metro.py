@@ -12,7 +12,7 @@ object = "HE0435"
 kntstp = 35
 ml_kntstep =150
 picklepath = "./"+object+"/save/"
-sim_path = "./"+object+"/simulation_log2_multi/"
+sim_path = "./"+object+"/simulation_log2_multi2000/"
 plot_path = sim_path + "figure/"
 shotnoise = "magerrs" #'magerrs' or "mcres"
 if not os.path.exists(sim_path):
@@ -22,11 +22,11 @@ if not os.path.exists(plot_path):
 
 
 picklename ="opt_spl_ml_"+str(kntstp)+"-"+str(ml_kntstep) + "knt.pkl"
-n_iter = 2
+n_iter = 2000
 nburn = 0
 rdm_walk = 'gaussian'
-n_curve_stat = 2 #number of curve to optimise to compute the statistic.
-max_process = 8
+n_curve_stat = 16 #number of curve to optimise to compute the statistic.
+max_process = 16
 stopping_condition =True
 
 open(sim_path + 'rt_file_' + object +"_"+ picklename[:-4] + "_" + str(n_iter)+"_"+rdm_walk +'.txt', 'w').close() # to clear the file
@@ -57,9 +57,10 @@ best_chi2, best_param = MH_opt.chi2_mini, MH_opt.best_param
 print "Best chi2", best_chi2
 print "Corresponding to :", best_param
 MH_opt.dump_results()
-MH_opt.analyse_plot_results()
 MH_opt.reset_report()
 MH_opt.report()
+MH_opt.analyse_plot_results()
+
 
 print("--- %s seconds ---" % (time.time() - start_time))
 #
