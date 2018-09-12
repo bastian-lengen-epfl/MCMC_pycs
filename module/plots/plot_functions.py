@@ -49,31 +49,38 @@ def plot_chain_MCMC(theta, chi2, param_list):
     return fig2,fig3
 
 def plot_chain_grid_dic(optimiser):
-    x_param = optimiser.chain_list[0]
-    fig1 = plt.figure(1)
-    plt.errorbar(x_param, optimiser.chain_list[2][0], yerr=optimiser.chain_list[3][0])
-    plt.hlines(optimiser.fit_vector[0], np.min(x_param), np.max(x_param), colors='r', linestyles='solid', label='target')
-    plt.xlabel('B in unit of Nymquist frequency)')
-    plt.ylabel('zruns')
-    plt.legend()
+    for i,l in enumerate(optimiser.lcs) :
+        x_param = np.asarray(optimiser.explored_param)[:,i]
+        z_runs = np.asarray( optimiser.chain_list[2])[:,i]
+        z_runs_err = np.asarray(optimiser.chain_list[4])[:,i]
+        sigmas = np.asarray(optimiser.chain_list[3])[:,i]
+        sigmas_err = np.asarray(optimiser.chain_list[5])[:,i]
 
-    fig2 = plt.figure(2)
-    plt.errorbar(x_param, optimiser.chain_list[2][1], yerr=optimiser.chain_list[3][1])
-    plt.hlines(optimiser.fit_vector[1], np.min(x_param), np.max(x_param), colors='r', linestyles='solid', label='target')
-    plt.xlabel('B in unit of Nymquist frequency)')
-    plt.ylabel('sigma')
-    plt.legend()
+        fig1 = plt.figure(1)
+        plt.errorbar(x_param[:,0], z_runs, yerr=z_runs_err)
+        plt.hlines(optimiser.fit_vector[i,0], np.min(x_param[:,0]), np.max(x_param[:,0]), colors='r', linestyles='solid', label='target')
+        plt.xlabel('B in unit of Nymquist frequency)')
+        plt.ylabel('zruns')
+        plt.legend()
+
+        fig2 = plt.figure(2)
+        plt.errorbar(x_param[:,0], sigmas, yerr=sigmas_err)
+        plt.hlines(optimiser.fit_vector[i,1], np.min(x_param[:,0]), np.max(x_param[:,0]), colors='r', linestyles='solid', label='target')
+        plt.xlabel('B in unit of Nymquist frequency)')
+        plt.ylabel('sigma')
+        plt.legend()
+
+        fig1.savefig(optimiser.savedirectory + optimiser.tweakml_name + '_zruns_' + l.object + '.png')
+        fig2.savefig(optimiser.savedirectory + optimiser.tweakml_name + '_std_' + l.object + '.png')
+
+        if optimiser.display:
+            plt.show()
+        plt.clf()
+        plt.close('all')
 
     fig3 = plt.figure(3)
-    plt.plot(x_param, optimiser.chain_list[1])
-    plt.xlabel('B in unit of Nymquist frequency)')
+    x = np.arange(1,len(optimiser.chain_list[1])+1,1)
+    plt.plot(x, optimiser.chain_list[1])
+    plt.xlabel('Iteration')
     plt.ylabel('$\chi^2$')
-
-    fig1.savefig(optimiser.savedirectory + optimiser.tweakml_name + '_zruns_' + optimiser.lc.object + '.png')
-    fig2.savefig(optimiser.savedirectory + optimiser.tweakml_name + '_std_' + optimiser.lc.object + '.png')
-    fig3.savefig(optimiser.savedirectory + optimiser.tweakml_name + '_chi2_' + optimiser.lc.object + '.png')
-
-    if optimiser.display:
-        plt.show()
-    plt.clf()
-    plt.close('all')
+    fig3.savefig(optimiser.savedirectory + optimiser.tweakml_name + '_chi2.png')

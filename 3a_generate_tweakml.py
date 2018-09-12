@@ -29,39 +29,36 @@ for i,kn in enumerate(knotstep):
         #Starting to write tweakml function depending on tweak_ml_type :
         if tweakml_type == 'colored_noise':
             if shotnoise_type == None :
-                print 'Warning you are using no shotnoise with the colored noise ! That will probably not work.'
+                print 'WARNING : you are using no shotnoise with the colored noise ! That will probably not work.'
 
             if find_tweak_ml_param == True :
                 if optimiser == 'PSO':
-                    for k,l in enumerate(lcs):
-                        fit_vector = mcmc.get_fit_vector(l,spline)
-                        pycs.sim.draw.saveresiduals(l, spline)
-                        PSO_opt = mcmc.PSO_Optimiser(l, fit_vector, spline, savefile=None,
-                                                     knotstep=kn, max_core=max_core, shotnoise=shotnoise_type,
-                                                     recompute_spline=True, n_curve_stat=n_curve_stat,
-                                                     theta_init=None, savedirectory=optim_directory,
-                                                     n_particles=n_particles, n_iter=n_iter,
-                                                        mpi=mpi, tweak_ml_type = tweak_ml_type, tweakml_name= tweakml_name)
+                    fit_vector = mcmc.get_fit_vector(lcs,spline)
+                    pycs.sim.draw.saveresiduals(lcs, spline)
+                    PSO_opt = mcmc.PSO_Optimiser(lcs, fit_vector, spline,
+                                                 knotstep=kn, max_core=max_core, shotnoise=shotnoise_type,
+                                                 recompute_spline=True, n_curve_stat=n_curve_stat,
+                                                 theta_init=None, savedirectory=optim_directory,
+                                                 n_particles=n_particles, n_iter=n_iter, verbose = False,
+                                                    mpi=mpi, tweakml_type = tweakml_type, tweakml_name= tweakml_name)
 
-                        chain_list = PSO_opt.optimise()
-                        best_chi2, best_param = PSO_opt.get_best_param()
-                        PSO_opt.analyse_plot_results()
-                        PSO_opt.dump_results()
-                        if k == 0 :
-                            PSO_opt.reset_report()
-                            PSO_opt.report()
-                        else :
-                            PSO_opt.report()
+                    chain_list = PSO_opt.optimise()
+                    best_chi2, best_param = PSO_opt.get_best_param()
+                    PSO_opt.analyse_plot_results()
+                    PSO_opt.dump_results()
+                    PSO_opt.reset_report()
+                    PSO_opt.report()
 
-                        #write the python file containing the function :
+                    #write the python file containing the function :
+                    for k in range(len(lcs)):
                         def tweakml_colored_NUMBER(lcs):
                             return pycs.sim.twk.tweakml(lcs, beta=BETA, sigma=SIGMA, fmin=1.0 / 500.0, fmax=0.2,
                                                         psplot=False)
 
 
                         util.write_func_append(tweakml_colored_NUMBER, f,
-                                               BETA=str(best_param[0]),
-                                               SIGMA=str(best_param[1]), NUMBER=str(k + 1))
+                                               BETA=str(best_param[k,0]),
+                                               SIGMA=str(best_param[k,1]), NUMBER=str(k + 1))
 
                 elif optimiser == 'MCMC' :
                     fit_vector = mcmc.get_fit_vector(lcs, spline)
@@ -171,15 +168,15 @@ for i,kn in enumerate(knotstep):
                                                    B_PARAM=str(B_best), NUMBER=str(k + 1), A_PARAM = str(A))
                 elif optimiser == 'DIC':
                     pycs.sim.draw.saveresiduals(lcs, spline)
-                    fit_vector = mcmc.get_fit_vector(l, spline)
-
+                    fit_vector = mcmc.get_fit_vector(lcs, spline)
+                    print "I'll try to recover these parameters :", fit_vector
                     dic_opt = mcmc.Dic_Optimiser(lcs, fit_vector, spline, knotstep=kn,
                                                    savedirectory=optim_directory,
                                                    recompute_spline=True, max_core=max_core,
                                                    n_curve_stat=n_curve_stat,
                                                    shotnoise=shotnoise_type, tweakml_type=tweakml_type,
                                                    tweakml_name=tweakml_name, display=display, verbose=False,
-                                                   grid=grid, correction_PS_residuals=True, max_iter= max_iter)
+                                                   correction_PS_residuals=True, max_iter= max_iter)
 
                     chain = dic_opt.optimise()
                     dic_opt.analyse_plot_results()
