@@ -175,7 +175,7 @@ class Optimiser(object):
                 return twk.tweakml_PS(lcs, spline, B, f_min=1 / 300.0,psplot=False, save_figure_folder=None,
                                      verbose=self.verbose,interpolation='linear',A_correction=A_correction)
             for i in range(self.ncurve):
-                tweak_list.append(partial(tweakml_PS,spline = self.spline, B = theta[i][0], A_correction = self.A_correction[i]))
+                tweak_list.append(partial(tweakml_PS, spline = self.spline, B = theta[i][0], A_correction = self.A_correction[i]))
         return tweak_list
 
 
@@ -286,18 +286,17 @@ class Optimiser(object):
         if os.path.isfile(self.savedirectory + 'report_tweakml_optimisation.txt'):
             os.remove(self.savedirectory + 'report_tweakml_optimisation.txt')
 
-    def compute_set_A_correction(self):
+    def compute_set_A_correction(self, eval_pts):
         #this function compute the sigma obtained after optimisation in the middle of the grid and return the correction that will be used for the rest of the optimisation
         self.A_correction = [1.0 for i in range(self.ncurve)] #reset the A correction
-        eval_pts = [1.0 for i in range(self.ncurve)] # evaluate the correction at the Nymquist frequency
 
         if self.para:
             mean_zruns, mean_sigmas, std_zruns, std_sigmas, _, _ = self.make_mocks_para(eval_pts)
         else:
             mean_zruns, mean_sigmas, std_zruns, std_sigmas, _, _ = self.make_mocks(eval_pts)
 
-        self.A_correction = self.fit_vector[:][1] / std_sigmas # set the A correction
-        return self.A_correction
+        self.A_correction = self.fit_vector[:,1] / mean_sigmas # set the A correction
+        return self.A_correction, mean_zruns, mean_sigmas, std_zruns, std_sigmas
 
 
 class Metropolis_Hasting_Optimiser(Optimiser):
@@ -501,36 +500,51 @@ class PSO_Optimiser(Optimiser) :
     #Attention here : You cannot use the parrallel computing of the mock curves because PSO, already launch the particles on several thread !
 
     def __init__(self, lcs, fit_vector, spline, savedirectory ="./", knotstep = None, max_core = 8, shotnoise = 'magerrs',
-                 recompute_spline = True, n_curve_stat= 32, theta_init = None, n_particles = 30, n_iter = 50,
+                 recompute_spline = True, n_curve_stat= 32, theta_init = None, n_particles = 30, n_iter = 50, verbose = False,
                  lower_limit = [-8., 0.], upper_limit = [-1.0, 0.5], mpi = False, tweakml_type = 'colored_noise', tweakml_name = '',
                  correction_PS_residuals = True):
 
         Optimiser.__init__(self,lcs, fit_vector,spline, knotstep = knotstep, savedirectory= savedirectory, recompute_spline=recompute_spline,
                                    max_core =1, n_curve_stat = n_curve_stat, shotnoise = shotnoise, theta_init= theta_init,
                            tweakml_type = tweakml_type, tweakml_name = tweakml_name, correction_PS_residuals= correction_PS_residuals,
-                           verbose= False, display= False)
+                           verbose= verbose, display= False)
 
 
         self.n_particles = n_particles
         self.n_iter = n_iter
-        self.lower_limit = lower_limit
-        self.upper_limit = upper_limit
+        self.lower_limit = [lower_limit[0] for i in range(self.ncurve)] + [lower_limit[1] for i in range(self.ncurve)] #PSO needs another format of the parameter to fit
+        self.upper_limit = [upper_limit[0] for i in range(self.ncurve)] + [upper_limit[1] for i in range(self.ncurve)]
         self.mpi = mpi
-        self.max_thread = max_core * 2
+        self.max_thread = max_core
         self.chain_list = None
-        self.savefile = self.savedirectory + self.tweakml_name + '_PSO_file' + "_i" + str(self.n_iter)+"_p"+str(self.n_particles)+ "_" +self.lcs.object+".txt"
+        self.savefile = self.savedirectory + self.tweakml_name + '_PSO_file' + "_i" + str(self.n_iter)+"_p"+str(self.n_particles)+ ".txt"
 
     def __call__(self, theta):
         return self.likelihood(theta)
 
     def likelihood(self, theta):
-        chi2, out ,error  = self.compute_chi2(theta)
+        #reformat theta to macth the other optimiser :
+        theta = self.reformat(theta)
+        chi2, zruns , sigmas , zruns_std , sigmas_std = self.compute_chi2(theta)
+        print zruns , sigmas , zruns_std , sigmas_std
         return [-0.5*chi2]
 
+    def reformat(self,theta):
+        if self.tweakml_type == "colored_noise":
+            theta_ref = [[theta[i],theta[i+self.ncurve]] for i in range(self.ncurve)]
+
+        elif self.tweakml_type == "PS_from_residuals":
+            theta_ref = [[theta[i]] for i in range(self.ncurve)]
+        return theta_ref
+
+
     def optimise(self):
+        self.time_start = time.time()
+        if self.tweakml_type == "PS_from_residuals":
+            self.A_correction, _ , _, _, _  = self.compute_set_A_correction(self.theta_init)
 
         if self.mpi is True:
-            pso = MpiParticleSwarmOptimizer(self, self.lower_limit, self.upper_limit, self.n_particles, threads=self.max_thread)
+            pso = MpiParticleSwarmOptimizer(self, self.lower_limit, self.upper_limit, self.n_particles)
         else:
             pso = ParticleSwarmOptimizer(self, self.lower_limit, self.upper_limit, self.n_particles, threads=self.max_thread)
 
@@ -546,13 +560,14 @@ class PSO_Optimiser(Optimiser) :
             X2_list.append(pso.gbest.fitness * -2.0)
             vel_list.append(pso.gbest.velocity)
             pos_list.append(pso.gbest.position)
-            data = np.asarray([X2_list[-1], vel_list[-1][0], vel_list[-1][1], pos_list[-1][0], pos_list[-1][1]])
-            data = np.reshape(data, (1, 5))
+            data = np.asarray(X2_list[-1] + vel_list[-1] + pos_list[-1]) #TODO : repair this
+            print data
             np.savetxt(f, data, delimiter=',')
             num_iter += 1
 
         self.chain_list = [X2_list, pos_list, vel_list]
         self.chi2_mini, self.best_param = self.get_best_param()
+        self.time_stop = time.time()
         return self.chain_list
 
     def get_best_param(self):
@@ -561,7 +576,7 @@ class PSO_Optimiser(Optimiser) :
             exit()
         else :
             best_chi2 = self.chain_list[0][-1]
-            best_param = self.chain_list[1][-1][:]
+            best_param = np.asarray(self.reformat(self.chain_list[1][-1][:]))
             return best_chi2,best_param
 
     def dump_results(self):
@@ -570,9 +585,9 @@ class PSO_Optimiser(Optimiser) :
             exit()
         else :
             pickle.dump(self.chain_list, open(self.savedirectory + self.tweakml_name +"_chain_list_PSO_" + "_i"
-                                         + str(self.n_iter) + "_p" + str(self.n_particles) + "_" + self.lcs.object + ".pkl", "wb"))
+                                         + str(self.n_iter) + "_p" + str(self.n_particles) + ".pkl", "wb"))
             pickle.dump(self, open(self.savedirectory + self.tweakml_name +"_PSO_opt_" + "_i"
-                                      + str(self.n_iter) + "_p" + str(self.n_particles) + "_" + self.lcs.object + ".pkl", "wb"))
+                                      + str(self.n_iter) + "_p" + str(self.n_particles) + ".pkl", "wb"))
     def analyse_plot_results(self):
         if self.chain_list == None :
             print "Error you should run optimise() first !"
@@ -581,22 +596,27 @@ class PSO_Optimiser(Optimiser) :
             print "Converged position :", self.best_param
             print "Converged Chi2 : ", self.chi2_mini
             mean_zruns_mini, mean_sigmas_mini, std_zruns_mini, std_sigmas_mini, _, _ = self.make_mocks_para(self.best_param)
-            self.mean_mini = np.asarray(mean_mini)
-            self.sigma_mini = np.asarray(sigma_mini)
-            self.rel_error_mini = np.abs(np.asarray(self.mean_mini) - np.asarray(self.fit_vector)) / np.asarray(
-                self.sigma_mini)
+            self.mean_zruns_mini= np.asarray(mean_zruns_mini)
+            self.mean_sigma_mini= np.asarray(mean_sigmas_mini)
+            self.std_zruns_mini = np.asarray(std_zruns_mini)
+            self.std_sigma_mini = np.asarray(std_zruns_mini)
+            self.rel_error_zruns_mini = np.abs(self.mean_zruns_mini - self.fit_vector[:, 0]) / self.std_zruns_mini
+            self.rel_error_sigmas_mini = np.abs(self.mean_sigma_mini - self.fit_vector[:, 1]) / self.std_sigma_mini
 
-            print "Target sigma, zruns : " + str(self.fit_vector[1]) + ', ' + str(self.fit_vector[0])
-            print "Minimum sigma, zruns : " + str(mean_mini[1]) + ', ' + str(mean_mini[0])
-            print "For minimum Chi2, we are standing at " + str(self.rel_error_mini[0]) + " sigma [zruns]"
-            print "For minimum Chi2, we are standing at " + str(self.rel_error_mini[1])+ " sigma [sigma]"
+            print "Target sigma, zruns : " + str(self.fit_vector[:,1]) + ', ' + str(self.fit_vector[:,0])
+            print "Minimum sigma, zruns : " + str(self.mean_sigma_mini) + ', ' + str(mean_zruns_mini)
+            print "For minimum Chi2, we are standing at " + str(self.rel_error_zruns_mini[0]) + " sigma [zruns]"
+            print "For minimum Chi2, we are standing at " + str(self.rel_error_sigmas_mini[1])+ " sigma [sigma]"
 
             self.success = self.check_success()
 
-            param_list = ['beta', 'sigma']
+            if self.tweakml_type == 'PS_from_residuals':
+                param_list = ['$B_%i$' %i for i in range(self.ncurve)]
+            elif self.tweakml_type == 'colored_noise':
+                param_list = ['$beta_%i$'%i for i in range(self.ncurve)] + ['$\sigma_%i$'%i for i in range(self.ncurve)]
             f, axes = pltfct.plot_chain_PSO(self.chain_list, param_list)
 
-            f.savefig(self.savedirectory + self.tweakml_name + "_PSO_chain_" + self.lcs.object + ".png")
+            f.savefig(self.savedirectory + self.tweakml_name + "_PSO_chain.png")
 
             if self.display:
                 plt.show()
@@ -683,7 +703,7 @@ class Dic_Optimiser(Optimiser):
     def __init__(self, lcs, fit_vector, spline, knotstep=None,
                      savedirectory="./", recompute_spline=True, max_core = 16, theta_init = None,
                     n_curve_stat = 32, shotnoise = "magerrs", tweakml_type = 'PS_from_residuals', tweakml_name = '',
-                 display = False, verbose = False, step = 0.1, correction_PS_residuals = True, max_iter = 10):
+                 display = False, verbose = False, step = 0.2, correction_PS_residuals = True, max_iter = 10):
 
         Optimiser.__init__(self,lcs, fit_vector,spline, knotstep = knotstep, savedirectory= savedirectory, recompute_spline=recompute_spline,
                                    max_core =max_core, n_curve_stat = n_curve_stat, shotnoise = shotnoise, theta_init= theta_init,
@@ -706,15 +726,15 @@ class Dic_Optimiser(Optimiser):
         chi2 = []
         zruns_target = self.fit_vector[:,0]
         sigma_target = self.fit_vector[:,1]
+        B = copy.deepcopy(self.theta_init)
 
         if self.correction_PS_residuals:
-            self.A_correction = self.compute_set_A_correction()
+            self.A_correction = self.compute_set_A_correction(B)
             print "I will slightly correct the amplitude of the Power Spectrum by a factor :", self.A_correction
 
-        B = self.theta_init
         while True:
             self.iteration +=1
-            print "Iteration %i, B=%2.4f"%(self.iteration, B)
+            print "Iteration %i, B vector : "%self.iteration, B
             chi2_c, zruns_c, sigma_c, zruns_std_c, sigma_std_c = self.compute_chi2(B)
 
             chi2.append(chi2_c)
@@ -722,7 +742,7 @@ class Dic_Optimiser(Optimiser):
             zruns.append(zruns_c)
             sigma_std.append(sigma_std_c)
             zruns_std.append(zruns_std_c)
-            self.explored_param.append(B)
+            self.explored_param.append(copy.deepcopy(B))
 
             self.rel_error_zruns_mini = np.abs(zruns_c - self.fit_vector[:, 0]) / zruns_std_c #used to store the current relative error
             self.rel_error_sigmas_mini = np.abs(sigma_c - self.fit_vector[:, 1]) / sigma_std_c
@@ -733,22 +753,39 @@ class Dic_Optimiser(Optimiser):
                     if self.iteration != 1:
                         self.step[i] =  - self.step[i] /2.0 # we go backward dividing the step by two
                     else :
-                        self.step[i] =  - self.step[i]
-                        B += self.step # we do two step backward if the first iteration was already too high.
+                        self.step[i] =  - self.step[i]# we do two step backward if the first iteration was already too high.
 
                 elif self.step[i] < 0 and zruns_c[i] < zruns_target[i]:
                     self.turn_back[i] += 1
                     self.step[i] = - self.step[i] / 2.0  # we go backward dividing the step by two
 
-                if self.iteration%4 == 0 and self.turn_back[i] == 0:
+                if self.iteration%3 == 0 and self.turn_back[i] == 0:
                     self.step[i] = self.step[i]*2 #we double the step every 4 iterations we didn't pass the optimum
 
-            B += self.step
             if self.check_if_stop():
                 break
 
-        self.chain_list = [self.explored_param, chi2, [zruns, sigma], [zruns_std, sigma_std]]
-        self.chi2_mini, self.best_param = self.get_best_param()
+            for i in range(self.ncurve): B[i][0] += self.step[i]
+
+        if self.correction_PS_residuals: # refine A correction, one last time
+            self.A_correction, zruns_c, sigma_c, zruns_std_c, sigma_std_c = self.compute_set_A_correction(B)
+            print "After fitting, the correction factor slightly changed :", self.A_correction
+            chi2.append(chi2_c)
+            sigma.append(sigma_c)
+            zruns.append(zruns_c)
+            sigma_std.append(sigma_std_c)
+            zruns_std.append(zruns_std_c)
+            self.explored_param.append(copy.deepcopy(B))
+            self.rel_error_zruns_mini = np.abs(zruns_c - self.fit_vector[:, 0]) / zruns_std_c #used to store the current relative error
+            self.rel_error_sigmas_mini = np.abs(sigma_c - self.fit_vector[:, 1]) / sigma_std_c
+
+
+        self.chain_list = [self.explored_param, chi2, zruns, sigma, zruns_std, sigma_std]#explored param has dimension(n_iter,ncurve,1)
+        self.chi2_mini, self.best_param = chi2[-1], self.explored_param[-1] # take the last iteration as the best estimate
+        self.mean_zruns_mini = zruns[-1]
+        self.std_zruns_mini = zruns_std[-1]
+        self.mean_sigma_mini = sigma[-1]
+        self.std_sigma_mini = sigma_std[-1]
         self.success = self.check_success()
         self.time_stop = time.time()
         return self.chain_list
@@ -776,9 +813,6 @@ class Dic_Optimiser(Optimiser):
         else:
             ind_min = np.argmin(self.chain_list[1][:])
             self.chi2_mini = np.min(self.chain_list[1][:])
-            self.mean_mini = np.asarray(self.chain_list[2])[:,ind_min]
-            self.sigma_mini = np.asarray(self.chain_list[3])[:,ind_min]
-            self.rel_error_mini = np.abs(np.asarray(self.mean_mini) - np.asarray(self.fit_vector)) / np.asarray(self.sigma_mini)
             return self.chi2_mini, self.chain_list[0][ind_min]
 
     def analyse_plot_results(self):
