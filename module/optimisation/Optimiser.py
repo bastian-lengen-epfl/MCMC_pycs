@@ -526,7 +526,6 @@ class PSO_Optimiser(Optimiser) :
         #reformat theta to macth the other optimiser :
         theta = self.reformat(theta)
         chi2, zruns , sigmas , zruns_std , sigmas_std = self.compute_chi2(theta)
-        print zruns , sigmas , zruns_std , sigmas_std
         return [-0.5*chi2]
 
     def reformat(self,theta):
@@ -557,14 +556,21 @@ class PSO_Optimiser(Optimiser) :
 
         for swarm in pso.sample(self.n_iter):
             print "iteration : ", num_iter
-            X2_list.append(pso.gbest.fitness * -2.0)
-            vel_list.append(pso.gbest.velocity)
-            pos_list.append(pso.gbest.position)
-            data = np.asarray(X2_list[-1] + vel_list[-1] + pos_list[-1]) #TODO : repair this
-            print data
-            np.savetxt(f, data, delimiter=',')
+            X2_list_c = np.asarray(pso.gbest.fitness)* -2.0
+            X2_list.append(X2_list_c)
+            vel_list_c = np.asarray(pso.gbest.velocity)
+            vel_list.append(vel_list_c.tolist())
+            pos_list_c = np.asarray(pso.gbest.position)
+            pos_list.append(pos_list_c.tolist())
+            print X2_list_c, vel_list_c, pos_list_c
+            data = np.concatenate(([X2_list_c],vel_list_c,pos_list_c))
+            data = [str(d) for d in data.tolist()]
+            f.write(" ".join(data))
+            f.write("\n")
+            # np.savetxt(f, data.transpose(), delimiter=',', newline='\n')
             num_iter += 1
 
+        f.close()
         self.chain_list = [X2_list, pos_list, vel_list]
         self.chi2_mini, self.best_param = self.get_best_param()
         self.time_stop = time.time()
@@ -621,83 +627,83 @@ class PSO_Optimiser(Optimiser) :
             if self.display:
                 plt.show()
 
-class Grid_Optimiser(Optimiser):
-    def __init__(self, lcs, fit_vector, spline, knotstep=None,
-                     savedirectory="./", recompute_spline=True, max_core = 16, theta_init = None,
-                    n_curve_stat = 32, shotnoise = "magerrs", tweakml_type = 'PS_from_residuals', tweakml_name = '',
-                 display = False, verbose = False, grid = np.linspace(0.5,2,10), correction_PS_residuals = True):
-
-        Optimiser.__init__(self,lcs, fit_vector,spline, knotstep = knotstep, savedirectory= savedirectory, recompute_spline=recompute_spline,
-                                   max_core =max_core, n_curve_stat = n_curve_stat, shotnoise = shotnoise, theta_init= theta_init,
-                           tweakml_type= tweakml_type, tweakml_name = tweakml_name, correction_PS_residuals=correction_PS_residuals,
-                           verbose=verbose, display= display)
-
-        self.grid = grid #should be only a 1D array for the moment
-        self.chain_list = None
-
-    def optimise(self):
-
-        sigma = []
-        zruns = []
-        sigma_std = []
-        zruns_std = []
-        chi2 = []
-        zruns_target = self.fit_vector[0]
-        sigma_target = self.fit_vector[1]
-
-        if self.correction_PS_residuals:
-            self.A_correction = self.compute_set_A_correction()
-            print "I will slightly correct the amplitude of the Power Spectrum by a factor :", self.A_correction
-
-        for i, B in enumerate(self.grid):
-            if self.para :
-                [[zruns_c, sigma_c], [zruns_std_c, sigma_std_c]], _, _ = self.make_mocks_para(theta=[B]) # Careful here, theta is a list even if there is only 1 parameter
-            else :
-                [[zruns_c,sigma_c],[zruns_std_c,sigma_std_c]], _, _ = self.make_mocks(theta=[B]) #to debug, remove multiprocessing
-            chi2.append(
-                (zruns_c - zruns_target) ** 2 / zruns_std_c ** 2 + (sigma_c - sigma_target) ** 2 / sigma_std_c ** 2)
-
-            sigma.append(sigma_c)
-            zruns.append(zruns_c)
-            sigma_std.append(sigma_std_c)
-            zruns_std.append(zruns_std_c)
-
-        min_ind = np.argmin(chi2)
-        self.chi2_mini = np.min(chi2)
-        self.mean_mini = [zruns[min_ind], sigma[min_ind]]
-        self.sigma_mini = [zruns_std[min_ind], sigma_std[min_ind]]
-        self.rel_error_mini = [np.abs(zruns[min_ind] - zruns_target) / zruns_std[min_ind],
-                               np.abs(sigma[min_ind] - sigma_target) / sigma_std[min_ind]]
-
-        self.chain_list = [self.grid, chi2, [zruns,sigma], [zruns_std,sigma_std]]
-        self.chi2_mini, self.best_param = self.get_best_param()
-
-
-        if self.verbose:
-            print "target :", self.fit_vector
-            print "Best parameter from grid search :", self.grid[min_ind]
-            print "Associated chi2 : ", chi2[min_ind]
-            print "Zruns : %2.6f +/- %2.6f (%2.4f sigma from target)" % (
-            zruns[min_ind], zruns_std[min_ind], self.rel_error_mini[0])
-            print "Sigma : %2.6f +/- %2.6f (%2.4f sigma from target)" % (sigma[min_ind], sigma_std[min_ind], self.rel_error_mini[1])
-
-        if self.rel_error_mini[0] < self.tolerance and self.rel_error_mini[1] < self.tolerance:
-            self.success = True
-        else:
-            self.success = False
-
-        return self.chain_list
-
-    def get_best_param(self):
-        if self.chain_list == None :
-            print "Error you should run optimise() first !"
-            exit()
-        else:
-            ind_min = np.argmin(self.chain_list[1][:])
-            return self.chi2_mini, self.chain_list[0][ind_min]
-
-    def analyse_plot_results(self):
-        pltfct.plot_chain_grid_dic(self)
+# class Grid_Optimiser(Optimiser): DEPRECATED !!!
+#     def __init__(self, lcs, fit_vector, spline, knotstep=None,
+#                      savedirectory="./", recompute_spline=True, max_core = 16, theta_init = None,
+#                     n_curve_stat = 32, shotnoise = "magerrs", tweakml_type = 'PS_from_residuals', tweakml_name = '',
+#                  display = False, verbose = False, grid = np.linspace(0.5,2,10), correction_PS_residuals = True):
+#
+#         Optimiser.__init__(self,lcs, fit_vector,spline, knotstep = knotstep, savedirectory= savedirectory, recompute_spline=recompute_spline,
+#                                    max_core =max_core, n_curve_stat = n_curve_stat, shotnoise = shotnoise, theta_init= theta_init,
+#                            tweakml_type= tweakml_type, tweakml_name = tweakml_name, correction_PS_residuals=correction_PS_residuals,
+#                            verbose=verbose, display= display)
+#
+#         self.grid = grid #should be only a 1D array for the moment
+#         self.chain_list = None
+#
+#     def optimise(self):
+#
+#         sigma = []
+#         zruns = []
+#         sigma_std = []
+#         zruns_std = []
+#         chi2 = []
+#         zruns_target = self.fit_vector[0]
+#         sigma_target = self.fit_vector[1]
+#
+#         if self.correction_PS_residuals:
+#             self.A_correction = self.compute_set_A_correction()
+#             print "I will slightly correct the amplitude of the Power Spectrum by a factor :", self.A_correction
+#
+#         for i, B in enumerate(self.grid):
+#             if self.para :
+#                 [[zruns_c, sigma_c], [zruns_std_c, sigma_std_c]], _, _ = self.make_mocks_para(theta=[B]) # Careful here, theta is a list even if there is only 1 parameter
+#             else :
+#                 [[zruns_c,sigma_c],[zruns_std_c,sigma_std_c]], _, _ = self.make_mocks(theta=[B]) #to debug, remove multiprocessing
+#             chi2.append(
+#                 (zruns_c - zruns_target) ** 2 / zruns_std_c ** 2 + (sigma_c - sigma_target) ** 2 / sigma_std_c ** 2)
+#
+#             sigma.append(sigma_c)
+#             zruns.append(zruns_c)
+#             sigma_std.append(sigma_std_c)
+#             zruns_std.append(zruns_std_c)
+#
+#         min_ind = np.argmin(chi2)
+#         self.chi2_mini = np.min(chi2)
+#         self.mean_mini = [zruns[min_ind], sigma[min_ind]]
+#         self.sigma_mini = [zruns_std[min_ind], sigma_std[min_ind]]
+#         self.rel_error_mini = [np.abs(zruns[min_ind] - zruns_target) / zruns_std[min_ind],
+#                                np.abs(sigma[min_ind] - sigma_target) / sigma_std[min_ind]]
+#
+#         self.chain_list = [self.grid, chi2, [zruns,sigma], [zruns_std,sigma_std]]
+#         self.chi2_mini, self.best_param = self.get_best_param()
+#
+#
+#         if self.verbose:
+#             print "target :", self.fit_vector
+#             print "Best parameter from grid search :", self.grid[min_ind]
+#             print "Associated chi2 : ", chi2[min_ind]
+#             print "Zruns : %2.6f +/- %2.6f (%2.4f sigma from target)" % (
+#             zruns[min_ind], zruns_std[min_ind], self.rel_error_mini[0])
+#             print "Sigma : %2.6f +/- %2.6f (%2.4f sigma from target)" % (sigma[min_ind], sigma_std[min_ind], self.rel_error_mini[1])
+#
+#         if self.rel_error_mini[0] < self.tolerance and self.rel_error_mini[1] < self.tolerance:
+#             self.success = True
+#         else:
+#             self.success = False
+#
+#         return self.chain_list
+#
+#     def get_best_param(self):
+#         if self.chain_list == None :
+#             print "Error you should run optimise() first !"
+#             exit()
+#         else:
+#             ind_min = np.argmin(self.chain_list[1][:])
+#             return self.chi2_mini, self.chain_list[0][ind_min]
+#
+#     def analyse_plot_results(self):
+#         pltfct.plot_chain_grid_dic(self)
 
 class Dic_Optimiser(Optimiser):
     def __init__(self, lcs, fit_vector, spline, knotstep=None,

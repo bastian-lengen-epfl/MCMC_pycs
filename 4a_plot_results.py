@@ -45,8 +45,7 @@ for a,kn in enumerate(knotstep) :
 
             toplot.append(spl)
 
-            text = [(0.43, 0.85, r"$\mathrm{" + full_lensname + "}$", {"fontsize": 18}),
-                    (0.7, 0.5, 'Warning, spline delays and errors \n are preliminary', {"fontsize": 10})]
+            text = [(0.43, 0.85, r"$\mathrm{" + full_lensname + "}$", {"fontsize": 18})]
 
             pycs.sim.plot.newdelayplot(toplot, rplot=5.0, displaytext=True, text=text,
                                        filename=figure_directory+"fig_delays__%i-%i_%s_%s.png" % (kn,knml,simset_mock, opt))
