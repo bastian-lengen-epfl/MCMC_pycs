@@ -7,7 +7,7 @@ def plot_chain_PSO(chain, param_list):
 
     f, axes = plt.subplots(1, 3, figsize=(18, 6), sharex=False, sharey=False)
     ax = axes[0]
-    ax.plot(np.log10(-np.array(X2_list)))
+    ax.plot(np.log10(np.array(X2_list)))
     ax.set_title('-logL')
 
     ax = axes[1]
