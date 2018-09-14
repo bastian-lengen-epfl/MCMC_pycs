@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/bash -l
 ####SBATCH --time=5-00:00:00  #days-hours:minutes:seconds or hours:minutes:seconds
 #SBATCH -o slurm_%j.out  # STDOUT
 #SBATCH -e slurm_%j.err  # STDERR

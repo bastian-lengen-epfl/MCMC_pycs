@@ -12,13 +12,14 @@ dataname = "Euler"
 lcs_label = ['A','B','C','D']
 
 
-module_directory = "/Users/martin/Desktop/MCMC_pycs/"
-lens_directory = "/Users/martin/Desktop/MCMC_pycs/" + lensname + "_" + dataname + "/"
-figure_directory = "/Users/martin/Desktop/MCMC_pycs/" + lensname + "_" + dataname + "/figure/"
-report_directory = "/Users/martin/Desktop/MCMC_pycs/" + lensname + "_" + dataname + "/report/"
+module_directory = "/home/epfl/millon/Desktop/MCMC_pycs/"
+lens_directory = "/home/epfl/millon/Desktop/MCMC_pycs/" + lensname + "_" + dataname + "/"
+figure_directory = "/home/epfl/millon/Desktop/MCMC_pycs/" + lensname + "_" + dataname + "/figure/"
+report_directory = "/home/epfl/millon/Desktop/MCMC_pycs/" + lensname + "_" + dataname + "/report/"
 
 if not os.path.exists(lens_directory):
     print "I will create the lens directory for you ! "
+    print lens_directory
     os.mkdir(lens_directory)
 
 if not os.path.isfile(lens_directory + "config_" + lensname + "_" + dataname + ".py"):
