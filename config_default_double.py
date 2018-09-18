@@ -27,8 +27,8 @@ scale = [200.0]
 errscale = [25.0]
 
 #initial guess :
-timeshifts = [0,8.,0.0,-14]
-magshifts =  [0,0,0,0]
+timeshifts = [0,8.]
+magshifts =  [0]
 
 
 # spldiff
@@ -48,17 +48,17 @@ ncopypkls = 20 #number of pickle
 # mock
 nsim = 20 #number of copy per pickle
 nsimpkls = 20 #number of pickle
-truetsr = 3.0  # Range of true time delay shifts when drawing the mock curves
-tsrand = 3.0  # Random shift of initial condition for each simulated lc in [initcond-tsrand, initcond+tsrand]
+truetsr = 5.0  # Range of true time delay shifts when drawing the mock curves
+tsrand = 5.0  # Random shift of initial condition for each simulated lc in [initcond-tsrand, initcond+tsrand]
 
 ## sim
-run_on_copies = False
+run_on_copies = True
 run_on_sims = True
 
 
 ### MICROLENSING ####
 mltype = "splml"  # splml or polyml
-mllist = [0,1,2,3]  # Which lcs do you want to attach ml to ?
+mllist = [0,1]  # Which lcs do you want to attach ml to ?
 mlname = 'splml'
 forcen = False # False for Maidanak, True for the other, if true I doesn't use mlknotstep
 mlknotsteps = [150]# 0 means no microlensing...
