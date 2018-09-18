@@ -16,11 +16,11 @@ optfctkw = "spl1" #function you used to optimise the curve at the 1st plase (in 
 simoptfctkw = "spl1" #function you want to use to optimise the mock curves, currently support spl1 and regdiff
 
 # spl1
-knotstep = [40,80,120] #give a list of the parameter you want
+knotstep = [35] #give a list of the parameter you want
 
 #regdiff params:
 covkernel = ['matern']  # can be matern, pow_exp or gaussian
-pointdensity = [2,3]
+pointdensity = [2]
 pow = [2.2]
 amp = [0.5]
 scale = [200.0]
@@ -43,18 +43,17 @@ interpdist = 30
 ## draw
 # copies
 ncopy = 10 #number of copy per pickle
-ncopypkls = 10 #number of pickle
+ncopypkls = 20 #number of pickle
 
 # mock
 nsim = 20 #number of copy per pickle
 nsimpkls = 20 #number of pickle
-truetsr = 10.0  # Range of true time delay shifts when drawing the mock curves
-tsrand = 10.0  # Random shift of initial condition for each simulated lc in [initcond-tsrand, initcond+tsrand]
+truetsr = 5.0  # Range of true time delay shifts when drawing the mock curves
+tsrand = 5.0  # Random shift of initial condition for each simulated lc in [initcond-tsrand, initcond+tsrand]
 
 ## sim
-run_on_copies = True
+run_on_copies = False
 run_on_sims = True
-
 
 
 ### MICROLENSING ####
@@ -62,7 +61,7 @@ mltype = "splml"  # splml or polyml
 mllist = [0,1,2,3]  # Which lcs do you want to attach ml to ?
 mlname = 'splml'
 forcen = False # False for Maidanak, True for the other, if true I doesn't use mlknotstep
-mlknotsteps = [450,900]# 0 means no microlensing...
+mlknotsteps = [150]# 0 means no microlensing...
 #Unused :
 nmlspl = 2  #nb_knot - 1, used only if forcen == True
 mlbokeps = 88 #  min spacing between ml knots, used only if forcen == True
@@ -70,37 +69,39 @@ mlbokeps = 88 #  min spacing between ml knots, used only if forcen == True
 
 ###### TWEAK ML #####
 #Noise generator for the mocks light curve, script 3a :
-tweakml_name = 'PS_noise4' #give a name to your tweakml, change the name if you change the type of tweakml, avoid to have _opt_ in your name !
+tweakml_name = 'PSO_PS_test' #give a name to your tweakml, change the name if you change the type of tweakml, avoid to have _opt_ in your name !
 tweakml_type = 'PS_from_residuals' #choose either colored_noise or PS_from_residuals
-find_tweak_ml_param = True  #To let the program find the parameters for you
-colored_noise_param = [[-1.9,0.1],[-2.,0.2],[-2.,0.2],[-2.,0.2] ] #give your beta and sigma parameter for colored noise, used only if find_tweak_ml == False
-PS_param_B = [2.0,2.0,2.0,2.0] #if you don't want the algorithm fine tune the high cut frequency (given in unit of Nymquist frequency)
 shotnoise_type = None #Select among [None, "magerrs", "res", "mcres", "sigma"] You should have None for PS_from_residuals
+
+find_tweak_ml_param = True #To let the program find the parameters for you, if false it will use the lines below :
+colored_noise_param = [[-2.95,0.001],[-0.5,0.511],[-0.1,0.510],[-2.95,0.001]] #give your beta and sigma parameter for colored noise, used only if find_tweak_ml == False
+PS_param_B = [[1.0],[1.0],[1.0],[1.0]] #if you don't want the algorithm fine tune the high cut frequency (given in unit of Nymquist frequency)
+
 
 #remember to use shotnoise = None for PS_from_residuals and 'magerrs' or 'mcres' for colored_noise
 
 #if you chose to optimise the tweakml automatically, you might want to change this
-optimiser = 'DIC' # choose between PSO, MCMC or GRID
-max_core = None #None will use all the core available, None --> take the maximum available
-n_curve_stat = 8 # Number of curve to compute the statistics on, (the larger the better but it takes longer... 16 or 32 are good, 8 is still OK) .
-n_particles = 8 #this is use only in PSO optimser
+optimiser = 'PSO' # choose between PSO, MCMC or GRID or DIC
+max_core = 8 #None will use all the core available
+n_curve_stat =2 # Number of curve to compute the statistics on, (the larger the better but it takes longer... 16 or 32 are good, 8 is still OK) .
+n_particles = 1 #this is use only in PSO optimser
 n_iter = 1 #number of iteration in PSO or MCMC
 mpi = False # if you want to use MPI for the PSO
-grid = np.linspace(0.1,1,10) #this is use in the GRID and DIC optimiser, DIC will use the first element of grid and the step of the grid as a starting pts
+grid = np.linspace(0.1,1,10) #this is use in the GRID optimiser
 max_iter = 10 # this is used in the DIC optimiser, 10 is usually enough.
 
 
 ###### SPLINE MARGINALISATION #########
 # Chose the parameters you want to marginalise on for the spline optimiser. Script 4b.
-name_marg_spline = 'marginalisation_spl1' #choose a name for your marginalisation
-tweakml_name_marg_spline = ['PS_noise4']
+name_marg_spline = 'marginalisation_noise' #choose a name for your marginalisation
+tweakml_name_marg_spline = ['PS_noise', 'colored_noise','colored_noise_magerrs']
 knotstep_marg = knotstep #parameters to marginalise over, give a list or just select the same that you used above to marginalise over all the available parameters
 mlknotsteps_marg = mlknotsteps
 
 ###### REGDIFF MARGINALISATION #########
 # Chose the parameters you want to marginalise on for the regdiff optimiser. Script 4c.
 name_marg_regdiff = 'marginalisation_regdiff'
-tweakml_name_marg_regdiff = ['PS_noise4']
+tweakml_name_marg_regdiff = ['PS_noise']
 auto_all = False #set this flag to True (recommanded) and it will use all the available regdiff simulation (all of the line below are ignored)
 knotstep_marg_regdiff = knotstep
 mlknotsteps_marg_regdiff = mlknotsteps
@@ -117,7 +118,7 @@ delay_labels = ["AB", "AC", "AD", "BC", "BD" , "CD"]
 sigmathresh = 0   #0 is a true marginalisation, choose 1000 to take the most precise.
 
 ###### MARGGINALISE SPLINE AND REGDIFF TOGETHER #######
-#choose here the marginalisation you want to combine in script 4c:
+#choose here the marginalisation you want to combine in script 4d, it will also use the sigmathresh:
 name_marg_list = ['marginalisation_1','marginalisation_2']
 new_name_marg = 'marg_12'
 
@@ -207,8 +208,6 @@ elif simoptfctkw == 'spl1':
 else :
 	print 'Error : I dont recognize your simoptfctkw, please use regdiff or spl1'
 	sys.exit()
-
-
 
 
 #TODO : code kwargs transmission to the optimiser
