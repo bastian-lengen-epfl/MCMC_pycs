@@ -28,14 +28,26 @@ def run_PSO(lcs,spline,kn,optim_directory):
     PSO_opt.report()
 
     # write the python file containing the function :
-    for k in range(len(lcs)):
-        def tweakml_colored_NUMBER(lcs):
-            return pycs.sim.twk.tweakml(lcs, beta=BETA, sigma=SIGMA, fmin=1.0 / 500.0, fmax=0.2,
-                                        psplot=False)
+    if tweakml_type == "colored_noise":
+        for k in range(len(lcs)):
+            def tweakml_colored_NUMBER(lcs):
+                return pycs.sim.twk.tweakml(lcs, beta=BETA, sigma=SIGMA, fmin=1.0 / 500.0, fmax=0.2,
+                                            psplot=False)
 
-        util.write_func_append(tweakml_colored_NUMBER, f,
-                               BETA=str(best_param[k, 0]),
-                               SIGMA=str(best_param[k, 1]), NUMBER=str(k + 1))
+            util.write_func_append(tweakml_colored_NUMBER, f,
+                                   BETA=str(best_param[k, 0]),
+                                   SIGMA=str(best_param[k, 1]), NUMBER=str(k + 1))
+
+    elif tweakml_type =="PS_from_residuals":
+        A = PSO_opt.A_correction
+        for k in range(len(lcs)):
+            def tweakml_PS_NUMBER(lcs):
+                return twk.tweakml_PS(lcs, spline, B_PARAM, f_min=1 / 300.0, psplot=False, verbose=False,
+                                      interpolation='linear', A_correction=A_PARAM)
+
+            util.write_func_append(tweakml_PS_NUMBER, f,
+                                   B_PARAM=str(best_param[k, 0]), NUMBER=str(k + 1), A_PARAM=str(A[k]))
+
 
 def run_MCMC(lcs,spline,kn,optim_directory):
     fit_vector = mcmc.get_fit_vector(lcs, spline)

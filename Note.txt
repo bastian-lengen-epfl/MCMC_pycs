@@ -18,7 +18,6 @@ gen.stat.anaoptdrawn : l434 : remove hard bound of the plot
 
 
 RESTE
-TODO : coder la marginalisation
 
 TODO : maybe add a visualization code for the png after the fitting
 
