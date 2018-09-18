@@ -512,8 +512,17 @@ class PSO_Optimiser(Optimiser) :
 
         self.n_particles = n_particles
         self.n_iter = n_iter
-        self.lower_limit = [lower_limit[0] for i in range(self.ncurve)] + [lower_limit[1] for i in range(self.ncurve)] #PSO needs another format of the parameter to fit
-        self.upper_limit = [upper_limit[0] for i in range(self.ncurve)] + [upper_limit[1] for i in range(self.ncurve)]
+
+        if self.tweakml_type == "colored_noise" :
+            self.lower_limit = [lower_limit[0] for i in range(self.ncurve)] + [lower_limit[1] for i in range(self.ncurve)] #PSO needs another format of the parameter to fit
+            self.upper_limit = [upper_limit[0] for i in range(self.ncurve)] + [upper_limit[1] for i in range(self.ncurve)]
+        elif self.tweakml_type == "PS_from_residuals" :
+            self.lower_limit = [0.0 for i in range(self.ncurve)]
+            self.upper_limit = [2.0 for i in range(self.ncurve)]
+        else :
+            print "ERROR : unknown tweak_ml type, choose colored_noise or PS_from_residuals"
+            exit()
+
         self.mpi = mpi
         self.max_thread = max_core
         self.chain_list = None
