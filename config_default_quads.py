@@ -52,7 +52,7 @@ truetsr = 5.0  # Range of true time delay shifts when drawing the mock curves
 tsrand = 5.0  # Random shift of initial condition for each simulated lc in [initcond-tsrand, initcond+tsrand]
 
 ## sim
-run_on_copies = False
+run_on_copies = True
 run_on_sims = True
 
 
