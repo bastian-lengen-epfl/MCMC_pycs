@@ -718,7 +718,7 @@ class Dic_Optimiser(Optimiser):
     def __init__(self, lcs, fit_vector, spline, knotstep=None,
                      savedirectory="./", recompute_spline=True, max_core = 16, theta_init = None,
                     n_curve_stat = 32, shotnoise = "magerrs", tweakml_type = 'PS_from_residuals', tweakml_name = '',
-                 display = False, verbose = False, step = 0.2, correction_PS_residuals = True, max_iter = 10):
+                 display = False, verbose = False, step = 0.1, correction_PS_residuals = True, max_iter = 10):
 
         Optimiser.__init__(self,lcs, fit_vector,spline, knotstep = knotstep, savedirectory= savedirectory, recompute_spline=recompute_spline,
                                    max_core =max_core, n_curve_stat = n_curve_stat, shotnoise = shotnoise, theta_init= theta_init,
