@@ -79,7 +79,7 @@ class Optimiser(object):
         self.verbose = verbose
         self.grid = None
         self.message = '\n'
-        self.tolerance = 0.75 # tolerance in unit of sigma for the fit
+        self.tolerance = 0.5 # tolerance in unit of sigma for the fit
 
     def make_mocks_para(self, theta):
         stat = []
@@ -774,12 +774,14 @@ class Dic_Optimiser(Optimiser):
                     self.turn_back[i] += 1
                     self.step[i] = - self.step[i] / 2.0  # we go backward dividing the step by two
 
-                if self.iteration%3 == 0 and self.turn_back[i] == 0:
-                    self.step[i] = self.step[i]*2 #we double the step every 4 iterations we didn't pass the optimum
+                elif self.step[i] > 0.6 : #max step size
+                    self.step[i] = 0.6
 
-                if self.step[i] > 0.6 : self.step[i] = 0.6 #max step size
-                if B[i][0] <= 0.2 and self.step[i] <= -0.2 : #condition to reach 0 aymptotically
+                elif B[i][0] <= 0.2 and self.step[i] <= -0.2 : #condition to reach 0 aymptotically
                     self.step = self.step/ 2.0
+
+                elif self.iteration%3 == 0 and self.turn_back[i] == 0:
+                    self.step[i] = self.step[i]*2.0 #we double the step every 4 iterations we didn't pass the optimum
 
             if self.check_if_stop():
                 break
