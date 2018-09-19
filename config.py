@@ -5,21 +5,12 @@ import os
 from shutil import copyfile
 from module import util_func as ut
 
-<<<<<<< HEAD
+
 lensname = 'J1455'
 full_lensname ='J1455+1447'
 dataname = "Euler"
 lcs_label = ['A','B']
 #~ lcs_label = ['A+B','C','D']
-=======
-# lensname = 'HE0435b'
-lensname = 'J1455'
-# full_lensname ='HE0435-1223'
-full_lensname ='J1455+1447'
-dataname = "Euler"
-lcs_label = ['A','B']
-# lcs_label = ['A','B','C','D']
->>>>>>> 3099d868b0c4e6b4779546e8cc246f2ba835ed26
 
 
 module_directory = "/home/epfl/millon/Desktop/MCMC_pycs/"
