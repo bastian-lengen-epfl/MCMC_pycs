@@ -3,9 +3,9 @@ from module import util_func as ut
 
 execfile("config.py")
 
-print "Report will be writen in " + lens_directory +'report_fitting.txt'
+print "Report will be writen in " + lens_directory +'report/report_fitting.txt'
 
-f = open(lens_directory+'report_fitting.txt', 'w')
+f = open(lens_directory+'report/report_fitting.txt', 'w')
 f.write('Measured time shift after fitting the splines : \n')
 f.write('------------------------------------------------\n')
 
@@ -23,10 +23,13 @@ for i,kn in enumerate(knotstep) :
 f.write('------------------------------------------------\n')
 f.write('Measured time shift after fitting with regdiff : \n')
 f.write('\n')
-lcs = pycs.gen.util.readpickle(lens_directory + 'regdiff_fitting/initopt_regdiff.pkl', verbose = False)
-delay_pair, delay_name = ut.getdelays(lcs)
-f.write('Regdiff : ' +"     Delays are " + str(delay_pair) + " for pairs "  + str(delay_name) + '\n')
-f.write('------------------------------------------------\n')
+regdiff_param_kw = ut.generate_regdiff_regdiffparamskw(pointdensity, covkernel, pow, amp, scale, errscale)
+kwargs_optimiser_simoptfct = ut.get_keyword_regdiff(pointdensity, covkernel, pow, amp, scale, errscale)
+for i,k in enumerate(kwargs_optimiser_simoptfct):
+    lcs = pycs.gen.util.readpickle(lens_directory + 'regdiff_fitting/initopt_regdiff%s.pkl'%regdiff_param_kw[i], verbose = False)
+    delay_pair, delay_name = ut.getdelays(lcs)
+    f.write('Regdiff : ' +"     Delays are " + str(delay_pair) + " for pairs "  + str(delay_name) + '\n')
+    f.write('------------------------------------------------\n')
 
 starting_point = []
 for i in range(len(timeshifts)):

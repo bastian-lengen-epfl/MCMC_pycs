@@ -34,6 +34,7 @@ for i,lc in enumerate(lcs):
 
 for i,kn in enumerate(knotstep) :
 	for j, knml in enumerate(mlknotsteps):
+        
 		if knml != 0 :
 			attachml(lcs, knml) # add microlensing
 

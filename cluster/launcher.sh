@@ -9,7 +9,7 @@ export JOB_BASENAME="3a"
 export SERVER_NAME="regor"  # on Regor : 'r3', 'r4' ; otherwise 'deneb' or 'fidis'
 export QUEUE_NAME="r4"  # on Regor : 'r3', 'r4' ; on deneb "debug" or "serial"
 
-export OBJECT_NAME='HE0435b'
+export OBJECT_NAME='J1455'
 export NUM_CORE="16"
 max_node=1
 
