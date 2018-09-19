@@ -120,6 +120,8 @@ def run_DIC(lcs,spline,kn,optim_directory):
 
 
 tweakml_plot_dir = figure_directory + 'tweakml_plots/'
+optim_directory = tweakml_plot_dir + 'twk_optim_%s_%s/'%(optimiser, tweakml_name)
+
 
 if not os.path.isdir(tweakml_plot_dir):
 	os.mkdir(tweakml_plot_dir)
@@ -130,7 +132,6 @@ for i,kn in enumerate(knotstep):
         f.write('import pycs \n')
         f.write('from module import tweakml_PS_from_data as twk \n')
         lcs, spline = pycs.gen.util.readpickle(lens_directory + '%s/initopt_%s_ks%i_ksml%i.pkl' % (combkw[i, j], dataname, kn, knml))
-        optim_directory = tweakml_plot_dir + 'twk_optim_%s_%s/'%(optimiser, tweakml_name)
         if not os.path.isdir(optim_directory):
             os.mkdir(optim_directory)
         for k,l in enumerate(lcs):
@@ -204,7 +205,7 @@ for i,kn in enumerate(knotstep):
 
         #rename the file :
         files = [file for file in os.listdir(optim_directory)
-                 if os.path.isfile(os.path.join(optim_directory, file))]
+                 if os.path.isfile(os.path.join(optim_directory, file)) and ("knml" not in file)]
 
         for file in files:
             prefix,extension = file.split('.')
