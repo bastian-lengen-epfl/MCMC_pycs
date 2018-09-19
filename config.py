@@ -8,9 +8,10 @@ from module import util_func as ut
 # lensname = 'HE0435b'
 lensname = 'WFI2026'
 # full_lensname ='HE0435-1223'
-full_lensname ='J1455+1447'
+full_lensname ='WFI2026-4536'
 dataname = "Euler"
-lcs_label = ['A','B']
+# lcs_label = ['A','B']
+lcs_label = ['A','B','C']
 # lcs_label = ['A','B','C','D']
 
 
