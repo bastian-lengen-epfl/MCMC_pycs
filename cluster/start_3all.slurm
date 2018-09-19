@@ -7,7 +7,7 @@ set -x
 
 cd ..
 
-exec_command="python 3a_generate_tweakml.py"
+exec_command="python 3_all.py"
 exec_options=""
 whole_command="$exec_command $exec_options"
 

@@ -1,9 +1,9 @@
 #!/bin/bash -l
-####SBATCH --time=5-00:00:00  #days-hours:minutes:seconds or hours:minutes:seconds
 #SBATCH -o slurm_%j.out  # STDOUT
 #SBATCH -e slurm_%j.err  # STDERR
-####SBATCH --exclude=node[222,224,230,231,232]
 
+date
+set -x
 cd ..
 
 exec_command="python 3b_draw_copy_mocks.py"
