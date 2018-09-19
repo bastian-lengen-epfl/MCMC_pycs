@@ -21,4 +21,4 @@ RESTE
 
 TODO : maybe add a visualization code for the png after the fitting
 
-TODO : checker le chi2 des fits pour trouver le bon nombre de neouds
+TODO : mettre une step max... et un minimum pour B
