@@ -777,7 +777,7 @@ class Dic_Optimiser(Optimiser):
                 elif self.step[i] > 0.6 : #max step size
                     self.step[i] = 0.6
 
-                elif B[i][0] <= 0.3 and self.step[i] <= -0.2 : #condition to reach 0 aymptotically
+                elif B[i][0] <= 0.4 and self.step[i] <= -0.2 : #condition to reach 0 aymptotically
                     self.step = self.step/ 2.0
 
                 elif self.iteration%3 == 0 and self.turn_back[i] == 0:

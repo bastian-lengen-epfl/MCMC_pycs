@@ -6,7 +6,7 @@ from shutil import copyfile
 from module import util_func as ut
 
 # lensname = 'HE0435b'
-lensname = 'J1455'
+lensname = 'WFI2026'
 # full_lensname ='HE0435-1223'
 full_lensname ='J1455+1447'
 dataname = "Euler"

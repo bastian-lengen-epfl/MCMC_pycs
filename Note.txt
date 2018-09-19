@@ -20,5 +20,3 @@ gen.stat.anaoptdrawn : l434 : remove hard bound of the plot
 RESTE
 
 TODO : maybe add a visualization code for the png after the fitting
-
-TODO : mettre une step max... et un minimum pour B
