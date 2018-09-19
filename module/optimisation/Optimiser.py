@@ -744,7 +744,7 @@ class Dic_Optimiser(Optimiser):
         B = copy.deepcopy(self.theta_init)
 
         if self.correction_PS_residuals:
-            self.A_correction = self.compute_set_A_correction(B)
+            self.A_correction, _ ,_ ,_ , _ = self.compute_set_A_correction(B)
             print "I will slightly correct the amplitude of the Power Spectrum by a factor :", self.A_correction
 
         while True:
