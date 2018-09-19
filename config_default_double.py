@@ -27,8 +27,8 @@ scale = [200.0]
 errscale = [25.0]
 
 #initial guess :
-timeshifts = [0,8.]
-magshifts =  [0]
+timeshifts = [0.,8.]
+magshifts =  [0.,0.]
 
 
 # spldiff

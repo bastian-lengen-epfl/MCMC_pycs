@@ -5,11 +5,13 @@ import os
 from shutil import copyfile
 from module import util_func as ut
 
-lensname = 'HE0435b'
-full_lensname ='HE0435-1223'
+# lensname = 'HE0435b'
+lensname = 'J1455'
+# full_lensname ='HE0435-1223'
+full_lensname ='J1455+1447'
 dataname = "Euler"
-# lcs_label = ['A','B']
-lcs_label = ['A','B','C','D']
+lcs_label = ['A','B']
+# lcs_label = ['A','B','C','D']
 
 
 module_directory = "/Users/martin/Desktop/MCMC_pycs/"
