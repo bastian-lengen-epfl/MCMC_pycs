@@ -21,6 +21,4 @@ RESTE
 
 TODO : maybe add a visualization code for the png after the fitting
 
-TODO : rassembler les rapports apres le DIC/PSO
-
 TODO : mettre une step max... et un minimum pour B
