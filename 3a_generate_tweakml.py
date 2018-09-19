@@ -130,7 +130,7 @@ for i,kn in enumerate(knotstep):
         f.write('import pycs \n')
         f.write('from module import tweakml_PS_from_data as twk \n')
         lcs, spline = pycs.gen.util.readpickle(lens_directory + '%s/initopt_%s_ks%i_ksml%i.pkl' % (combkw[i, j], dataname, kn, knml))
-        optim_directory = lens_directory + '%s/twk_optim_%s_%s/'%(combkw[i, j], optimiser, tweakml_name)
+        optim_directory = tweakml_plot_dir + 'twk_optim_%s_%s/'%(optimiser, tweakml_name)
         if not os.path.isdir(optim_directory):
             os.mkdir(optim_directory)
         for k,l in enumerate(lcs):
@@ -201,3 +201,11 @@ for i,kn in enumerate(knotstep):
 
         else :
             print "I don't know your tweak_ml_type, please use colored_noise or PS_form_residuals."
+
+        #rename the file :
+        files = [file for file in os.listdir(optim_directory)
+                 if os.path.isfile(os.path.join(optim_directory, file))]
+
+        for file in files:
+            prefix,extension = file.split('.')
+            os.rename(os.path.join(optim_directory, file), os.path.join(optim_directory, prefix + "_kn%i_knml%i."%(kn,knml) + extension))
