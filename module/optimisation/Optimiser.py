@@ -777,7 +777,7 @@ class Dic_Optimiser(Optimiser):
                 elif self.step[i] > 0.6 : #max step size
                     self.step[i] = 0.6
 
-                elif B[i][0] <= 0.2 and self.step[i] <= -0.2 : #condition to reach 0 aymptotically
+                elif B[i][0] <= 0.3 and self.step[i] <= -0.2 : #condition to reach 0 aymptotically
                     self.step = self.step/ 2.0
 
                 elif self.iteration%3 == 0 and self.turn_back[i] == 0:
@@ -788,7 +788,7 @@ class Dic_Optimiser(Optimiser):
 
             for i in range(self.ncurve):
                 B[i][0] += self.step[i]
-                if B[i][0] <= 0.0 : B[i][0] = 0.01 #minimum for B
+                if B[i][0] <= 0.0 : B[i][0] = 0.2 #minimum for B
 
         if self.correction_PS_residuals: # refine A correction, one last time
             self.A_correction, zruns_c, sigma_c, zruns_std_c, sigma_std_c = self.compute_set_A_correction(B)
