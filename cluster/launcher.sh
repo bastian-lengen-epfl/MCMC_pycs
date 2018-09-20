@@ -14,12 +14,12 @@ export NUM_CORE="16"
 max_node=1
 
 
-start_file="start_3a.slurm"
+start_file="start_3c.slurm"
 job_name_csr=$OBJECT_NAME$JOB_BASENAME
 
 echo "job name = "$job_name_csr
 echo "start file = "$start_file
 echo "max node = "$max_node
-echo "MCMC_PyCS : sending job as sbatch -J $job_name_csr -n $NUM_CORE (-N $max_node) (-p $QUEUE_NAME) $start_file"
+echo "MCMC_PyCS : sending job as sbatch -J $job_name_csr -n 1 -c $NUM_CORE (-p $QUEUE_NAME) $start_file"
 
 sbatch -J $job_name_csr -p $QUEUE_NAME -n $NUM_CORE -N 1 $start_file

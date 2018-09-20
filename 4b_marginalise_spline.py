@@ -1,4 +1,4 @@
-import pycs
+import pycs.mltd
 import os, copy
 import numpy as np
 import pickle as pkl
@@ -95,14 +95,15 @@ combined.niceprint()
 
 #plot the results :
 
+radius = (np.max(errors_up_list) + np.max(errors_down_list))/2.0 *1.5
 text = [
-	(0.75, 0.92, r"$\mathrm{"+full_lensname+"}$" + "\n" + r"$\mathrm{PyCS\ estimates}$",
-	 {"fontsize": 26, "horizontalalignment": "center"})]
+	(0.10, 0.90, r"$\mathrm{"+full_lensname+"}$" + "\n" + r"$\mathrm{PyCS\ estimates}$",
+	 {"fontsize": 24, "horizontalalignment": "left"})]
 
 if display :
-    pycs.mltd.plot.delayplot(group_list+[combined], rplot=8.0, refgroup=combined, text=text, hidedetails=True, showbias=False, showran=False, showlegend=True, figsize=(15, 10), horizontaldisplay=False, legendfromrefgroup=False)
+    pycs.mltd.plot.delayplot(group_list+[combined], rplot=radius, refgroup=combined, text=text, hidedetails=True, showbias=False, showran=False, showlegend=True, figsize=(15, 10), horizontaldisplay=False, legendfromrefgroup=False)
 
-pycs.mltd.plot.delayplot(group_list+[combined], rplot=8.0, refgroup=combined, text=text, hidedetails=True, showbias=False, showran=False, showlegend=True, figsize=(15, 10), horizontaldisplay=False, legendfromrefgroup=False, filename = indiv_marg_dir + name_marg_spline +"_sigma_%2.2f.png"%sigmathresh)
+pycs.mltd.plot.delayplot(group_list+[combined], rplot=radius, refgroup=combined, text=text, hidedetails=True, showbias=False, showran=False, showlegend=True, figsize=(15, 10), horizontaldisplay=False, legendfromrefgroup=False, filename = indiv_marg_dir + name_marg_spline +"_sigma_%2.2f.png"%sigmathresh)
 
 pkl.dump(group_list, open(marginalisation_dir + name_marg_spline +"_sigma_%2.2f"%sigmathresh +'_goups.pkl', 'wb'))
 pkl.dump(combined, open(marginalisation_dir + name_marg_spline + "_sigma_%2.2f"%sigmathresh + '_combined.pkl', 'wb'))

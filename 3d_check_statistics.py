@@ -29,9 +29,9 @@ for i,kn in enumerate(knotstep) :
                     pycs.gen.stat.anaoptdrawn(lcs, spline, simset=sset, optset=ooset, showplot=False, nplots= 1,
                                               directory= lens_directory + combkw[i, j] + '/')
                     #move the figure to the correct directory :
-                    os.system("mv "  + "fig_anaoptdrawn_%s_%s_resi_1.pdf " % (sset, ooset) + check_stat_plot_dir
-                              +  "%s_fig_anaoptdrawn_%s_%s_resi_1.pdf" % (combkw[i, j], sset, ooset))
-                    os.system("mv "+ "fig_anaoptdrawn_%s_%s_resihists.pdf " % (sset, ooset) + check_stat_plot_dir
-                              + "%s_fig_anaoptdrawn_%s_%s_resihists.pdf" % (combkw[i, j], sset, ooset) )
+                    os.system("mv "  + "fig_anaoptdrawn_%s_%s_resi_1.png " % (sset, ooset) + check_stat_plot_dir
+                              +  "%s_fig_anaoptdrawn_%s_%s_resi_1.png" % (combkw[i, j], sset, ooset))
+                    os.system("mv "+ "fig_anaoptdrawn_%s_%s_resihists.png " % (sset, ooset) + check_stat_plot_dir
+                              + "%s_fig_anaoptdrawn_%s_%s_resihists.png" % (combkw[i, j], sset, ooset) )
 
 #TODO : confirm that it has no sens to use this script for regdiff
