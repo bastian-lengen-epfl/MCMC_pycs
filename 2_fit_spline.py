@@ -8,7 +8,7 @@ from module import util_func as ut
 
 execfile("config.py")
 
-
+#TODO : code something to give a delay and not a time shift
 def applyshifts(lcs,timeshifts,magshifts):
 
 	if not len(lcs) == len(timeshifts) and len(lcs) == len(magshifts):
@@ -42,7 +42,6 @@ if not os.path.isdir(figure_directory):
 	os.mkdir(figure_directory)
 
 lcs = pycs.gen.util.readpickle(data)
-applyshifts(lcs, timeshifts, magshifts)
 name = ['A','B','C','D']
 for i,lc in enumerate(lcs):
 	print "I will aplly a initial shift of : %2.4f days, %2.4f mag for %s" %(timeshifts[i],magshifts[i],name[i])

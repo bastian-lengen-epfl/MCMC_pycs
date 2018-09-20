@@ -42,12 +42,12 @@ interpdist = 30
 
 ## draw
 # copies
-ncopy = 10 #number of copy per pickle
+ncopy = 20 #number of copy per pickle
 ncopypkls = 20 #number of pickle
 
 # mock
 nsim = 20 #number of copy per pickle
-nsimpkls = 20 #number of pickle
+nsimpkls = 40 #number of pickle
 truetsr = 5.0  # Range of true time delay shifts when drawing the mock curves
 tsrand = 5.0  # Random shift of initial condition for each simulated lc in [initcond-tsrand, initcond+tsrand]
 
@@ -69,7 +69,7 @@ mlbokeps = 88 #  min spacing between ml knots, used only if forcen == True
 
 ###### TWEAK ML #####
 #Noise generator for the mocks light curve, script 3a :
-tweakml_name = 'PSO_PS_test' #give a name to your tweakml, change the name if you change the type of tweakml, avoid to have _opt_ in your name !
+tweakml_name = 'PS' #give a name to your tweakml, change the name if you change the type of tweakml, avoid to have _opt_ in your name !
 tweakml_type = 'PS_from_residuals' #choose either colored_noise or PS_from_residuals
 shotnoise_type = None #Select among [None, "magerrs", "res", "mcres", "sigma"] You should have None for PS_from_residuals
 
@@ -81,11 +81,11 @@ PS_param_B = [[1.0],[1.0],[1.0],[1.0]] #if you don't want the algorithm fine tun
 #remember to use shotnoise = None for PS_from_residuals and 'magerrs' or 'mcres' for colored_noise
 
 #if you chose to optimise the tweakml automatically, you might want to change this
-optimiser = 'PSO' # choose between PSO, MCMC or GRID or DIC
-max_core = 8 #None will use all the core available
-n_curve_stat =2 # Number of curve to compute the statistics on, (the larger the better but it takes longer... 16 or 32 are good, 8 is still OK) .
-n_particles = 1 #this is use only in PSO optimser
-n_iter = 1 #number of iteration in PSO or MCMC
+optimiser = 'DIC' # choose between PSO, MCMC or GRID or DIC
+max_core = 16 #None will use all the core available
+n_curve_stat =32 # Number of curve to compute the statistics on, (the larger the better but it takes longer... 16 or 32 are good, 8 is still OK) .
+n_particles = 80 #this is use only in PSO optimser
+n_iter = 50 #number of iteration in PSO or MCMC
 mpi = False # if you want to use MPI for the PSO
 grid = np.linspace(0.1,1,10) #this is use in the GRID optimiser
 max_iter = 10 # this is used in the DIC optimiser, 10 is usually enough.
