@@ -7,11 +7,18 @@ set -x
 
 cd ..
 
+run_command="srun -n 1 -c $NUM_CORE -u"
+if [ "$SERVER_NAME" = "r4" ]; then
+    run_options="--mpi=pmi2"
+else
+    run_options=""
+fi
 exec_command="python 3_all.py"
 exec_options=""
-whole_command="$exec_command $exec_options"
+whole_command="$run_command $run_options $exec_command $exec_options"
 
 echo "running '$whole_command'"
 eval $whole_command
 
 date
+

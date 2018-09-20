@@ -14,11 +14,10 @@ l : 403 : change the call to applyopt
 l : 207 add kwargs_optim as a mandatory parameter
 l 390
 gen.stat.anaoptdrawn : l434 : remove hard bound of the plot
+l458 : png instead of pdf
 
 
 
 RESTE
 
 TODO : maybe add a visualization code for the png after the fitting
-
-TODO : mettre une step max... et un minimum pour B

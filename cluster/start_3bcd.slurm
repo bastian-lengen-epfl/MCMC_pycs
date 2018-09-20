@@ -1,14 +1,11 @@
 #!/bin/bash -l
+
 #SBATCH -o slurm_%j.out  # STDOUT
 #SBATCH -e slurm_%j.err  # STDERR
-#SBATCH --exclude=node[222,224]
-
-
 
 date
 set -x
 cd ..
-
 
 run_command="srun -n 1 -c $NUM_CORE -u"
 if [ "$SERVER_NAME" = "r4" ]; then
@@ -16,11 +13,28 @@ if [ "$SERVER_NAME" = "r4" ]; then
 else
     run_options=""
 fi
+
 exec_command="python 3b_draw_copy_mocks.py"
 exec_options=""
 whole_command="$run_command $run_options $exec_command $exec_options"
 
 echo "running '$whole_command'"
 eval $whole_command
+
+exec_command="python 3c_optimise_copy_mocks.py"
+exec_options=""
+whole_command="$run_command $run_options $exec_command $exec_options"
+
+echo "running '$whole_command'"
+eval $whole_command
+
+
+exec_command="python 3d_check_statistics.py"
+exec_options=""
+whole_command="$run_command $run_options $exec_command $exec_options"
+
+echo "running '$whole_command'"
+eval $whole_command
+
 
 date

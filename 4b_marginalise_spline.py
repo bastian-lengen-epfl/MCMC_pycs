@@ -100,6 +100,7 @@ text = [
 	(0.10, 0.90, r"$\mathrm{"+full_lensname+"}$" + "\n" + r"$\mathrm{PyCS\ estimates}$",
 	 {"fontsize": 24, "horizontalalignment": "left"})]
 
+radius = (np.max(errors_up_list) + np.max(errors_down_list))/2.0 *1.5
 if display :
     pycs.mltd.plot.delayplot(group_list+[combined], rplot=radius, refgroup=combined, text=text, hidedetails=True, showbias=False, showran=False, showlegend=True, figsize=(15, 10), horizontaldisplay=False, legendfromrefgroup=False)
 
