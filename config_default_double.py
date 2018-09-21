@@ -6,6 +6,11 @@ import pycs
 import numpy as np
 from module import util_func as ut
 
+#info about the lens :
+full_lensname =''
+lcs_label = ['A','B']
+
+#general config :
 askquestions = False
 display = False
 
@@ -42,8 +47,8 @@ interpdist = 30
 
 ## draw
 # copies
-ncopy = 20 #number of copy per pickle
-ncopypkls = 20 #number of pickle
+ncopy = 25 #number of copy per pickle
+ncopypkls = 25 #number of pickle
 
 # mock
 nsim = 20 #number of copy per pickle
@@ -83,7 +88,7 @@ PS_param_B = [[1.0],[1.0]] #if you don't want the algorithm fine tune the high c
 #if you chose to optimise the tweakml automatically, you might want to change this
 optimiser = 'DIC' # choose between PSO, MCMC or GRID or DIC
 max_core = 16 #None will use all the core available
-n_curve_stat =2 # Number of curve to compute the statistics on, (the larger the better but it takes longer... 16 or 32 are good, 8 is still OK) .
+n_curve_stat =32 # Number of curve to compute the statistics on, (the larger the better but it takes longer... 16 or 32 are good, 8 is still OK) .
 n_particles = 1 #this is use only in PSO optimser
 n_iter = 1 #number of iteration in PSO or MCMC
 mpi = False # if you want to use MPI for the PSO
@@ -121,9 +126,6 @@ sigmathresh = 0   #0 is a true marginalisation, choose 1000 to take the most pre
 #choose here the marginalisation you want to combine in script 4d, it will also use the sigmathresh:
 name_marg_list = ['marginalisation_1','marginalisation_2']
 new_name_marg = 'marg_12'
-
-
-#TODO: implement a check function to assert that the ml parameters correspond to the mlname, if mlname already exists !
 
 if optfctkw == "regdiff" or simoptfctkw == "regdiff":
 	from pycs import regdiff
@@ -192,7 +194,6 @@ if simoptfctkw == "regdiff":
 	simoptfct = regdiff
 	regdiffparamskw = ut.generate_regdiff_regdiffparamskw(pointdensity,covkernel, pow, amp, scale, errscale)
 
-data = os.path.join(module_directory+'pkl/', "%s_%s.pkl" % (lensname, dataname))
 
 combkw = [["%s_ks%i_%s_ksml_%i" %(optfctkw, knotstep[i], mlname,mlknotsteps[j]) for j in range(len(mlknotsteps))]for i in range(len(knotstep))]
 combkw = np.asarray(combkw)
@@ -210,4 +211,3 @@ else :
 	sys.exit()
 
 
-#TODO : code kwargs transmission to the optimiser

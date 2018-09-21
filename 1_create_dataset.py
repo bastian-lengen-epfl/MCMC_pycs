@@ -2,25 +2,110 @@
 
 import pycs
 import os,sys
+import argparse as ap
+import numpy as np
+from shutil import copyfile
+from module import util_func as ut
 
-execfile("config.py")
+def main(lensname,dataname, work_dir = './'):
 
-##### import the data
+    data_directory = work_dir + "data/"
+    pickle_directory = work_dir + "pkl/"
+    config_directory = work_dir + "config/"
+    simu_directory = work_dir + "Simulation/"
+    lens_directory = work_dir + "Simulation/" + lensname + "_" + dataname + "/"
+    figure_directory = work_dir + "Simulation/" + lensname + "_" + dataname + "/figure/"
+    report_directory = work_dir + "Simulation/" + lensname + "_" + dataname + "/report/"
 
-rdbfile = 'data/'+lensname + "_" + dataname+'.rdb'
+    if not os.path.exists(data_directory):
+        print "I will create the data directory for you ! "
+        os.mkdir(data_directory)
+    if not os.path.exists(pickle_directory):
+        print "I will create the pickle directory for you ! "
+        os.mkdir(pickle_directory)
+    if not os.path.exists(simu_directory):
+        print "I will create the simulation directory for you ! "
+        os.mkdir(simu_directory)
+    if not os.path.exists(config_directory):
+        print "I will create the config directory for you ! "
+        os.mkdir(config_directory)
+    if not os.path.exists(lens_directory):
+        print "I will create the lens directory for you ! "
+        os.mkdir(lens_directory)
 
-lcs = []
-for i,a in enumerate(lcs_label):
-    lcs.append(pycs.gen.lc.rdbimport(rdbfile, a, 'mag_'+a, 'magerr_'+a, dataname))
+    rdbfile = 'data/' + lensname + "_" + dataname + '.rdb'
+    d = np.loadtxt(rdbfile, skiprows=2)
+    n_curve = (len(d[0,:]) -1) / 2
 
-if display :
-    pycs.gen.mrg.colourise(lcs)
-    pycs.gen.lc.display(lcs,showdates=True)
+    if not os.path.isfile(config_directory + "config_" + lensname + "_" + dataname + ".py"):
+        print "I will create the lens config file for you ! "
+        if n_curve == 2 :
+            copyfile("config_default_double.py",config_directory+"config_"+ lensname + "_" + dataname + ".py")
+        elif n_curve == 4 :
+            copyfile("config_default_quads.py", config_directory + "config_" + lensname + "_" + dataname + ".py")
+        else :
+            print " Warning : do you have a quad or a double ? Make sure you update lcs_label in the config file ! I'll copy the double template for this time !"
+            copyfile("config_default_double.py", config_directory + "config_" + lensname + "_" + dataname + ".py")
 
-pycs.gen.util.writepickle(lcs,'pkl/'+lensname + "_" + dataname+'.pkl')
+        cfile = open(os.path.join(config_directory, "config_" + lensname + "_" + dataname + ".py"), 'a')
+        cfile.write("#Automaticcaly generated paths : \n")
+        cfile.write("work_dir='%s'\n"%work_dir)
+        cfile.write("data_directory='%s'\n"%data_directory)
+        cfile.write("pickle_directory='%s'\n"%pickle_directory)
+        cfile.write("simu_directory='%s'\n"%simu_directory)
+        cfile.write("config_directory='%s'\n"%config_directory)
+        cfile.write("lens_directory='%s'\n"%lens_directory)
+        cfile.write("figure_directory='%s'\n"%figure_directory)
+        cfile.write("report_directory='%s'\n"%report_directory)
+        cfile.write("data = pickle_directory + '%s_%s.pkl' \n"%(lensname, dataname))
+        cfile.close()
 
-if not os.path.exists(lens_directory + 'figure/'):
-    os.mkdir(lens_directory + 'figure/')
+        print "Default config file created ! You might want to change the default parameters. "
+        ut.proquest(True)
 
-print "I have created a new config file for this object ! You probably want to edit it in %s"%(lens_directory + "config_" + lensname + "_" + dataname + ".py")
 
+    if not os.path.exists(figure_directory):
+        os.mkdir(figure_directory)
+    if not os.path.exists(report_directory):
+        os.mkdir(report_directory)
+
+    sys.path.append(config_directory)
+    import importlib
+    config = importlib.import_module("config_" + lensname + "_" + dataname)
+
+    ##### import the data
+    rdbfile = data_directory +lensname + "_" + dataname+'.rdb'
+
+    lcs = []
+    for i,a in enumerate(config.lcs_label):
+        lcs.append(pycs.gen.lc.rdbimport(rdbfile, a, 'mag_'+a, 'magerr_'+a, dataname))
+
+    if config.display :
+        pycs.gen.mrg.colourise(lcs)
+        pycs.gen.lc.display(lcs,showdates=True)
+
+    pycs.gen.util.writepickle(lcs, pickle_directory+lensname + "_" + dataname+'.pkl')
+
+    if not os.path.exists(lens_directory + 'figure/'):
+        os.mkdir(lens_directory + 'figure/')
+
+    print "I have created a new config file for this object ! You probably want to edit it in %s"%(config_directory + "config_" + lensname + "_" + dataname + ".py")
+
+if __name__ == '__main__':
+    parser = ap.ArgumentParser(prog="python {}".format(os.path.basename(__file__)),
+                               description="Create the data set and organise the file system for a new measurement",
+                               formatter_class=ap.RawTextHelpFormatter)
+    help_lensname = "name of the lens to process"
+    help_dataname = "name of the data set to process (Euler, SMARTS, ... )"
+    help_work_dir = "name of the working directory"
+    parser.add_argument(dest='lensname', type=str,
+                        metavar='lens_name', action='store',
+                        help=help_lensname)
+    parser.add_argument(dest='dataname', type=str,
+                        metavar='dataname', action='store',
+                        help=help_dataname)
+    parser.add_argument('--dir', dest='work_dir', type=str,
+                        metavar='', action='store', default='./',
+                        help=help_work_dir)
+    args = parser.parse_args()
+    main(args.lensname, args.dataname, work_dir=args.work_dir)

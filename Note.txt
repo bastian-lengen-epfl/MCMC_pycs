@@ -21,3 +21,5 @@ l458 : png instead of pdf
 RESTE
 
 TODO : maybe add a visualization code for the png after the fitting
+TODO: implement a check function to assert that the ml parameters correspond to the mlname, if mlname already exists !
+TODO : code kwargs transmission to the optimiser

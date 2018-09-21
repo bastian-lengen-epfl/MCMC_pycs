@@ -6,6 +6,10 @@ import pycs
 import numpy as np
 from module import util_func as ut
 
+#info about the lens :
+full_lensname =''
+lcs_label = ['A','B','C','D']
+
 askquestions = False
 display = False
 
@@ -42,8 +46,8 @@ interpdist = 30
 
 ## draw
 # copies
-ncopy = 20 #number of copy per pickle
-ncopypkls = 20 #number of pickle
+ncopy = 25 #number of copy per pickle
+ncopypkls = 25 #number of pickle
 
 # mock
 nsim = 20 #number of copy per pickle
@@ -123,8 +127,6 @@ name_marg_list = ['marginalisation_1','marginalisation_2']
 new_name_marg = 'marg_12'
 
 
-#TODO: implement a check function to assert that the ml parameters correspond to the mlname, if mlname already exists !
-
 if optfctkw == "regdiff" or simoptfctkw == "regdiff":
 	from pycs import regdiff
 
@@ -192,7 +194,6 @@ if simoptfctkw == "regdiff":
 	simoptfct = regdiff
 	regdiffparamskw = ut.generate_regdiff_regdiffparamskw(pointdensity,covkernel, pow, amp, scale, errscale)
 
-data = os.path.join(module_directory+'pkl/', "%s_%s.pkl" % (lensname, dataname))
 
 combkw = [["%s_ks%i_%s_ksml_%i" %(optfctkw, knotstep[i], mlname,mlknotsteps[j]) for j in range(len(mlknotsteps))]for i in range(len(knotstep))]
 combkw = np.asarray(combkw)
@@ -209,5 +210,3 @@ else :
 	print 'Error : I dont recognize your simoptfctkw, please use regdiff or spl1'
 	sys.exit()
 
-
-#TODO : code kwargs transmission to the optimiser

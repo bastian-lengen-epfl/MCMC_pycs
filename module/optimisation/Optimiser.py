@@ -286,8 +286,9 @@ class Optimiser(object):
         if os.path.isfile(self.savedirectory + 'report_tweakml_optimisation.txt'):
             os.remove(self.savedirectory + 'report_tweakml_optimisation.txt')
 
-    def compute_set_A_correction(self, eval_pts):
+    def compute_set_A_correction(self, eval_pts, reset_A = True):
         #this function compute the sigma obtained after optimisation in the middle of the grid and return the correction that will be used for the rest of the optimisation
+
         self.A_correction = [1.0 for i in range(self.ncurve)] #reset the A correction
 
         if self.para:
@@ -790,17 +791,16 @@ class Dic_Optimiser(Optimiser):
                 B[i][0] += self.step[i]
                 if B[i][0] <= 0.0 : B[i][0] = 0.2 #minimum for B
 
-        if self.correction_PS_residuals: # refine A correction, one last time
-            self.A_correction, zruns_c, sigma_c, zruns_std_c, sigma_std_c = self.compute_set_A_correction(B)
-            print "After fitting, the correction factor slightly changed :", self.A_correction
-            chi2.append(chi2_c)
-            sigma.append(sigma_c)
-            zruns.append(zruns_c)
-            sigma_std.append(sigma_std_c)
-            zruns_std.append(zruns_std_c)
-            self.explored_param.append(copy.deepcopy(B))
-            self.rel_error_zruns_mini = np.abs(zruns_c - self.fit_vector[:, 0]) / zruns_std_c #used to store the current relative error
-            self.rel_error_sigmas_mini = np.abs(sigma_c - self.fit_vector[:, 1]) / sigma_std_c
+        # if self.correction_PS_residuals: # refine A correction, one last time
+        #     self.A_correction, zruns_c, sigma_c, zruns_std_c, sigma_std_c = self.compute_set_A_correction(B)
+        #     print "After fitting, the correction factor slightly changed :", self.A_correction
+        #     sigma.append(sigma_c)
+        #     zruns.append(zruns_c)
+        #     sigma_std.append(sigma_std_c)
+        #     zruns_std.append(zruns_std_c)
+        #     self.explored_param.append(copy.deepcopy(B))
+        #     self.rel_error_zruns_mini = np.abs(zruns_c - self.fit_vector[:, 0]) / zruns_std_c #used to store the current relative error
+        #     self.rel_error_sigmas_mini = np.abs(sigma_c - self.fit_vector[:, 1]) / sigma_std_c
 
 
         self.chain_list = [self.explored_param, chi2, zruns, sigma, zruns_std, sigma_std]#explored param has dimension(n_iter,ncurve,1)
