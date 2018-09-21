@@ -16,6 +16,12 @@ l 390
 gen.stat.anaoptdrawn : l434 : remove hard bound of the plot
 l458 : png instead of pdf
 
+in sim.twk.py
+l11 add a spline argument to match ps from residuals
+
+in sim.draw.py
+l203 : add argument spline.
+
 
 
 RESTE

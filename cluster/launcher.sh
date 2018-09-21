@@ -10,6 +10,7 @@ export SERVER_NAME="deneb"  # on Regor : 'r3', 'r4' ; otherwise 'deneb' or 'fidi
 export QUEUE_NAME="serial"  # on Regor : 'r3', 'r4' ; on deneb "debug" or "serial"
 
 export OBJECT_NAME='WFI2026'
+export DATA_NAME='Euler'
 export NUM_CORE="16"
 max_node=1
 

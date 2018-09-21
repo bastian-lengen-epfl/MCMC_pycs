@@ -11,7 +11,6 @@ from cosmoHammer import ParticleSwarmOptimizer
 import matplotlib.pyplot as plt
 import pickle
 from functools import partial
-import dill #this is important for multiprocessing
 
 class Optimiser(object):
     def __init__(self, lcs, fit_vector, spline, knotstep=None,
@@ -164,8 +163,8 @@ class Optimiser(object):
     def get_tweakml_list(self, theta):
         tweak_list = []
         if self.tweakml_type == 'colored_noise':
-            def tweakml_colored(lcs, beta, sigma):
-                return pycs.sim.twk.tweakml(lcs, beta=beta, sigma=sigma, fmin=1.0 / 500.0, fmax=0.2,
+            def tweakml_colored(lcs, spline, beta, sigma):
+                return pycs.sim.twk.tweakml(lcs,spline, beta=beta, sigma=sigma, fmin=1.0 / 500.0, fmax=0.2,
                                             psplot=False)
             for i in range(self.ncurve):
                 tweak_list.append(partial(tweakml_colored, beta=theta[i][0], sigma=theta[i][1]))
@@ -175,7 +174,7 @@ class Optimiser(object):
                 return twk.tweakml_PS(lcs, spline, B, f_min=1 / 300.0,psplot=False, save_figure_folder=None,
                                      verbose=self.verbose,interpolation='linear',A_correction=A_correction)
             for i in range(self.ncurve):
-                tweak_list.append(partial(tweakml_PS, spline = self.spline, B = theta[i][0], A_correction = self.A_correction[i]))
+                tweak_list.append(partial(tweakml_PS, B = theta[i][0], A_correction = self.A_correction[i]))
         return tweak_list
 
 

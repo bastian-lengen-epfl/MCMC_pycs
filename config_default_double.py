@@ -98,15 +98,15 @@ max_iter = 10 # this is used in the DIC optimiser, 10 is usually enough.
 
 ###### SPLINE MARGINALISATION #########
 # Chose the parameters you want to marginalise on for the spline optimiser. Script 4b.
-name_marg_spline = 'marginalisation_noise' #choose a name for your marginalisation
-tweakml_name_marg_spline = ['PS_noise', 'colored_noise','colored_noise_magerrs']
+name_marg_spline = 'marginalisation_spline' #choose a name for your marginalisation
+tweakml_name_marg_spline = ['PS']
 knotstep_marg = knotstep #parameters to marginalise over, give a list or just select the same that you used above to marginalise over all the available parameters
 mlknotsteps_marg = mlknotsteps
 
 ###### REGDIFF MARGINALISATION #########
 # Chose the parameters you want to marginalise on for the regdiff optimiser. Script 4c.
 name_marg_regdiff = 'marginalisation_regdiff'
-tweakml_name_marg_regdiff = ['PS_noise']
+tweakml_name_marg_regdiff = ['PS']
 auto_all = False #set this flag to True (recommanded) and it will use all the available regdiff simulation (all of the line below are ignored)
 knotstep_marg_regdiff = knotstep
 mlknotsteps_marg_regdiff = mlknotsteps
@@ -124,8 +124,8 @@ sigmathresh = 0   #0 is a true marginalisation, choose 1000 to take the most pre
 
 ###### MARGGINALISE SPLINE AND REGDIFF TOGETHER #######
 #choose here the marginalisation you want to combine in script 4d, it will also use the sigmathresh:
-name_marg_list = ['marginalisation_1','marginalisation_2']
-new_name_marg = 'marg_12'
+name_marg_list = ['marginalisation_spline','marginalisation_regdiff']
+new_name_marg = 'marg_spline-regdiff'
 
 if optfctkw == "regdiff" or simoptfctkw == "regdiff":
 	from pycs import regdiff
