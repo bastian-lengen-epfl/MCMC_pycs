@@ -6,12 +6,12 @@ from shutil import copyfile
 from module import util_func as ut
 
 # lensname = 'HE0435b'
-lensname = 'WFI2026'
+lensname = 'J0158'
 # full_lensname ='HE0435-1223'
-full_lensname ='WFI2026-4536'
+full_lensname ='J0158-4325'
 dataname = "Euler"
-# lcs_label = ['A','B']
-lcs_label = ['A','B','C']
+lcs_label = ['A','B']
+#lcs_label = ['A','B','C']
 # lcs_label = ['A','B','C','D']
 
 
