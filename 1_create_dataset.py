@@ -39,30 +39,33 @@ def main(lensname,dataname, work_dir = './'):
 
     if not os.path.isfile(config_directory + "config_" + lensname + "_" + dataname + ".py"):
         print "I will create the lens config file for you ! "
-        if n_curve == 2 :
-            copyfile("config_default_double.py",config_directory+"config_"+ lensname + "_" + dataname + ".py")
-        elif n_curve == 4 :
-            copyfile("config_default_quads.py", config_directory + "config_" + lensname + "_" + dataname + ".py")
+        if n_curve == 2 or n_curve == 4 :
+            if n_curve == 2 :
+                copyfile("config_default_double.py", config_directory+ "config_" + lensname + "_" + dataname + ".py")
+            elif n_curve == 4 :
+                copyfile("config_default_quads.py", config_directory + "config_" + lensname + "_" + dataname + ".py")
+
+            cfile = open(os.path.join(config_directory, "config_" + lensname + "_" + dataname + ".py"), 'a')
+            cfile.write("#Automaticcaly generated paths : \n")
+            cfile.write("work_dir='%s'\n" % work_dir)
+            cfile.write("data_directory='%s'\n" % data_directory)
+            cfile.write("pickle_directory='%s'\n" % pickle_directory)
+            cfile.write("simu_directory='%s'\n" % simu_directory)
+            cfile.write("config_directory='%s'\n" % config_directory)
+            cfile.write("lens_directory='%s'\n" % lens_directory)
+            cfile.write("figure_directory='%s'\n" % figure_directory)
+            cfile.write("report_directory='%s'\n" % report_directory)
+            cfile.write("data = pickle_directory + '%s_%s.pkl' \n" % (lensname, dataname))
+            cfile.close()
+
+            print "Default config file created ! You might want to change the default parameters. "
+            ut.proquest(True)
+
         else :
             print " Warning : do you have a quad or a double ? Make sure you update lcs_label in the config file ! I'll copy the double template for this time !"
             copyfile("config_default_double.py", config_directory + "config_" + lensname + "_" + dataname + ".py")
-
-        cfile = open(os.path.join(config_directory, "config_" + lensname + "_" + dataname + ".py"), 'a')
-        cfile.write("#Automaticcaly generated paths : \n")
-        cfile.write("work_dir='%s'\n"%work_dir)
-        cfile.write("data_directory='%s'\n"%data_directory)
-        cfile.write("pickle_directory='%s'\n"%pickle_directory)
-        cfile.write("simu_directory='%s'\n"%simu_directory)
-        cfile.write("config_directory='%s'\n"%config_directory)
-        cfile.write("lens_directory='%s'\n"%lens_directory)
-        cfile.write("figure_directory='%s'\n"%figure_directory)
-        cfile.write("report_directory='%s'\n"%report_directory)
-        cfile.write("data = pickle_directory + '%s_%s.pkl' \n"%(lensname, dataname))
-        cfile.close()
-
-        print "Default config file created ! You might want to change the default parameters. "
-        ut.proquest(True)
-
+            print "Please change the default parameters according to your object and rerun this script."
+            sys.exit()
 
     if not os.path.exists(figure_directory):
         os.mkdir(figure_directory)
