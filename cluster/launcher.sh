@@ -9,10 +9,10 @@ export JOB_BASENAME="3all"
 export SERVER_NAME="r4"  # on Regor : 'r3', 'r4' ; otherwise 'deneb' or 'fidis'
 export QUEUE_NAME="r4"  # on Regor : 'r3', 'r4' ; on deneb "debug" or "serial"
 
-export OBJECT_NAME='WFI2026'
+export OBJECT_NAME='J0158'
 export DATA_NAME='Euler'
 export NUM_CORE="16"
-export WORK_DIR='/Users/martin/Desktop/MCMC_pycs'
+export WORK_DIR='~/Desktop/MCMC_pycs'
 
 max_node=1
 

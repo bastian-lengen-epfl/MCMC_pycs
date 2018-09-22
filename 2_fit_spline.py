@@ -169,4 +169,3 @@ if __name__ == '__main__':
                             help=help_work_dir)
     args = parser.parse_args()
     main(args.lensname,args.dataname, work_dir=args.work_dir)
->>>>>>> f82a52d2dd5305d9ac91e9cbcd5b0a1d49047c27

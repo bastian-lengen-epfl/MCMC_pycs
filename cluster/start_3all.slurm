@@ -14,21 +14,21 @@ else
     run_options=""
 fi
 exec_command="python 3a_generate_tweakml.py"
-exec_options="$OBJECT_NAME $DATA_NAME --dir $WORK_DIR"
+exec_options="$OBJECT_NAME $DATA_NAME"
 whole_command="$run_command $run_options $exec_command $exec_options"
 
 echo "running '$whole_command'"
 eval $whole_command
 
 exec_command="python 3b_draw_copy_mocks.py"
-exec_options="$OBJECT_NAME $DATA_NAME --dir $WORK_DIR"
+exec_options="$OBJECT_NAME $DATA_NAME"
 whole_command="$run_command $run_options $exec_command $exec_options"
 
 echo "running '$whole_command'"
 eval $whole_command
 
 exec_command="python 3c_optimise_copy_mocks.py"
-exec_options="$OBJECT_NAME $DATA_NAME --dir $WORK_DIR"
+exec_options="$OBJECT_NAME $DATA_NAME"
 whole_command="$run_command $run_options $exec_command $exec_options"
 
 echo "running '$whole_command'"
@@ -36,7 +36,7 @@ eval $whole_command
 
 
 exec_command="python 3d_check_statistics.py"
-exec_options="$OBJECT_NAME $DATA_NAME --dir $WORK_DIR"
+exec_options="$OBJECT_NAME $DATA_NAME"
 whole_command="$run_command $run_options $exec_command $exec_options"
 
 echo "running '$whole_command'"
