@@ -12,7 +12,8 @@ export QUEUE_NAME="r4"  # on Regor : 'r3', 'r4' ; on deneb "debug" or "serial"
 export OBJECT_NAME='J0158'
 export DATA_NAME='Euler'
 export NUM_CORE="16"
-export WORK_DIR='~/Desktop/MCMC_pycs'
+export WORK_DIR='./'
+
 
 max_node=1
 
