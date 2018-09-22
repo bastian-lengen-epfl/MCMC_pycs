@@ -21,7 +21,7 @@ def main(lensname,dataname, work_dir = './'):
             print "files to remove : ", files
             for fil in files :
                 os.remove(fil)
-
+            os.chdir(work_dir)
 
 if __name__ == '__main__':
     parser = ap.ArgumentParser(prog="python {}".format(os.path.basename(__file__)),
