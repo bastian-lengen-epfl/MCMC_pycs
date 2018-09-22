@@ -7,7 +7,6 @@ import os, glob, importlib
 import numpy as np
 import argparse as ap
 
-execfile("../config.py")
 
 def main(lensname,dataname, work_dir = './'):
     sys.path.append(work_dir + "config/")
