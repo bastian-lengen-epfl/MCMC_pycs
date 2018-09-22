@@ -5,16 +5,19 @@
 # set the simulation basename and the file you want to run
 
 
-export JOB_BASENAME="3a"
+export JOB_BASENAME="3all"
 export SERVER_NAME="r4"  # on Regor : 'r3', 'r4' ; otherwise 'deneb' or 'fidis'
 export QUEUE_NAME="r4"  # on Regor : 'r3', 'r4' ; on deneb "debug" or "serial"
 
-export OBJECT_NAME='J0158'
+export OBJECT_NAME='WFI2026'
+export DATA_NAME='Euler'
 export NUM_CORE="16"
+export WORK_DIR='/Users/martin/Desktop/MCMC_pycs'
+
 max_node=1
 
 
-start_file="start_3a.slurm"
+start_file="start_3all.slurm"
 job_name_csr=$OBJECT_NAME$JOB_BASENAME
 
 echo "job name = "$job_name_csr

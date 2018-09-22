@@ -57,14 +57,14 @@ def plot_chain_grid_dic(optimiser):
         sigmas_err = np.asarray(optimiser.chain_list[5])[:,i]
 
         fig1 = plt.figure(1)
-        plt.errorbar(x_param[:,0], z_runs, yerr=z_runs_err)
+        plt.errorbar(x_param[:,0], z_runs, yerr=z_runs_err,marker ='o')
         plt.hlines(optimiser.fit_vector[i,0], np.min(x_param[:,0]), np.max(x_param[:,0]), colors='r', linestyles='solid', label='target')
         plt.xlabel('B in unit of Nymquist frequency)')
         plt.ylabel('zruns')
         plt.legend()
 
         fig2 = plt.figure(2)
-        plt.errorbar(x_param[:,0], sigmas, yerr=sigmas_err)
+        plt.errorbar(x_param[:,0], sigmas, yerr=sigmas_err, marker ='o')
         plt.hlines(optimiser.fit_vector[i,1], np.min(x_param[:,0]), np.max(x_param[:,0]), colors='r', linestyles='solid', label='target')
         plt.xlabel('B in unit of Nymquist frequency)')
         plt.ylabel('sigma')

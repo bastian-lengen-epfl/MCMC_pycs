@@ -11,7 +11,6 @@ from cosmoHammer import ParticleSwarmOptimizer
 import matplotlib.pyplot as plt
 import pickle
 from functools import partial
-import dill #this is important for multiprocessing
 
 class Optimiser(object):
     def __init__(self, lcs, fit_vector, spline, knotstep=None,
@@ -164,8 +163,8 @@ class Optimiser(object):
     def get_tweakml_list(self, theta):
         tweak_list = []
         if self.tweakml_type == 'colored_noise':
-            def tweakml_colored(lcs, beta, sigma):
-                return pycs.sim.twk.tweakml(lcs, beta=beta, sigma=sigma, fmin=1.0 / 500.0, fmax=0.2,
+            def tweakml_colored(lcs, spline, beta, sigma):
+                return pycs.sim.twk.tweakml(lcs,spline, beta=beta, sigma=sigma, fmin=1.0 / 500.0, fmax=0.2,
                                             psplot=False)
             for i in range(self.ncurve):
                 tweak_list.append(partial(tweakml_colored, beta=theta[i][0], sigma=theta[i][1]))
@@ -175,7 +174,7 @@ class Optimiser(object):
                 return twk.tweakml_PS(lcs, spline, B, f_min=1 / 300.0,psplot=False, save_figure_folder=None,
                                      verbose=self.verbose,interpolation='linear',A_correction=A_correction)
             for i in range(self.ncurve):
-                tweak_list.append(partial(tweakml_PS, spline = self.spline, B = theta[i][0], A_correction = self.A_correction[i]))
+                tweak_list.append(partial(tweakml_PS, B = theta[i][0], A_correction = self.A_correction[i]))
         return tweak_list
 
 
@@ -286,8 +285,9 @@ class Optimiser(object):
         if os.path.isfile(self.savedirectory + 'report_tweakml_optimisation.txt'):
             os.remove(self.savedirectory + 'report_tweakml_optimisation.txt')
 
-    def compute_set_A_correction(self, eval_pts):
+    def compute_set_A_correction(self, eval_pts, reset_A = True):
         #this function compute the sigma obtained after optimisation in the middle of the grid and return the correction that will be used for the rest of the optimisation
+
         self.A_correction = [1.0 for i in range(self.ncurve)] #reset the A correction
 
         if self.para:
@@ -791,17 +791,16 @@ class Dic_Optimiser(Optimiser):
                 B[i][0] += self.step[i]
                 if B[i][0] <= 0.2 : B[i][0] = 0.2 #minimum for B
 
-        if self.correction_PS_residuals: # refine A correction, one last time
-            self.A_correction, zruns_c, sigma_c, zruns_std_c, sigma_std_c = self.compute_set_A_correction(B)
-            print "After fitting, the correction factor slightly changed :", self.A_correction
-            chi2.append(chi2_c)
-            sigma.append(sigma_c)
-            zruns.append(zruns_c)
-            sigma_std.append(sigma_std_c)
-            zruns_std.append(zruns_std_c)
-            self.explored_param.append(copy.deepcopy(B))
-            self.rel_error_zruns_mini = np.abs(zruns_c - self.fit_vector[:, 0]) / zruns_std_c #used to store the current relative error
-            self.rel_error_sigmas_mini = np.abs(sigma_c - self.fit_vector[:, 1]) / sigma_std_c
+        # if self.correction_PS_residuals: # refine A correction, one last time
+        #     self.A_correction, zruns_c, sigma_c, zruns_std_c, sigma_std_c = self.compute_set_A_correction(B)
+        #     print "After fitting, the correction factor slightly changed :", self.A_correction
+        #     sigma.append(sigma_c)
+        #     zruns.append(zruns_c)
+        #     sigma_std.append(sigma_std_c)
+        #     zruns_std.append(zruns_std_c)
+        #     self.explored_param.append(copy.deepcopy(B))
+        #     self.rel_error_zruns_mini = np.abs(zruns_c - self.fit_vector[:, 0]) / zruns_std_c #used to store the current relative error
+        #     self.rel_error_sigmas_mini = np.abs(sigma_c - self.fit_vector[:, 1]) / sigma_std_c
 
 
         self.chain_list = [self.explored_param, chi2, zruns, sigma, zruns_std, sigma_std]#explored param has dimension(n_iter,ncurve,1)

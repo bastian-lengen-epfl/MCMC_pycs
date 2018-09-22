@@ -6,6 +6,11 @@ import pycs
 import numpy as np
 from module import util_func as ut
 
+#info about the lens :
+full_lensname =''
+lcs_label = ['A','B']
+
+#general config :
 askquestions = False
 display = False
 
@@ -42,8 +47,8 @@ interpdist = 30
 
 ## draw
 # copies
-ncopy = 20 #number of copy per pickle
-ncopypkls = 20 #number of pickle
+ncopy = 25 #number of copy per pickle
+ncopypkls = 25 #number of pickle
 
 # mock
 nsim = 20 #number of copy per pickle
@@ -83,7 +88,7 @@ PS_param_B = [[1.0],[1.0]] #if you don't want the algorithm fine tune the high c
 #if you chose to optimise the tweakml automatically, you might want to change this
 optimiser = 'DIC' # choose between PSO, MCMC or GRID or DIC
 max_core = 16 #None will use all the core available
-n_curve_stat =2 # Number of curve to compute the statistics on, (the larger the better but it takes longer... 16 or 32 are good, 8 is still OK) .
+n_curve_stat =32 # Number of curve to compute the statistics on, (the larger the better but it takes longer... 16 or 32 are good, 8 is still OK) .
 n_particles = 1 #this is use only in PSO optimser
 n_iter = 1 #number of iteration in PSO or MCMC
 mpi = False # if you want to use MPI for the PSO
@@ -93,15 +98,15 @@ max_iter = 10 # this is used in the DIC optimiser, 10 is usually enough.
 
 ###### SPLINE MARGINALISATION #########
 # Chose the parameters you want to marginalise on for the spline optimiser. Script 4b.
-name_marg_spline = 'marginalisation_noise' #choose a name for your marginalisation
-tweakml_name_marg_spline = ['PS_noise', 'colored_noise','colored_noise_magerrs']
+name_marg_spline = 'marginalisation_spline' #choose a name for your marginalisation
+tweakml_name_marg_spline = ['PS']
 knotstep_marg = knotstep #parameters to marginalise over, give a list or just select the same that you used above to marginalise over all the available parameters
 mlknotsteps_marg = mlknotsteps
 
 ###### REGDIFF MARGINALISATION #########
 # Chose the parameters you want to marginalise on for the regdiff optimiser. Script 4c.
 name_marg_regdiff = 'marginalisation_regdiff'
-tweakml_name_marg_regdiff = ['PS_noise']
+tweakml_name_marg_regdiff = ['PS']
 auto_all = False #set this flag to True (recommanded) and it will use all the available regdiff simulation (all of the line below are ignored)
 knotstep_marg_regdiff = knotstep
 mlknotsteps_marg_regdiff = mlknotsteps
@@ -119,11 +124,8 @@ sigmathresh = 0   #0 is a true marginalisation, choose 1000 to take the most pre
 
 ###### MARGGINALISE SPLINE AND REGDIFF TOGETHER #######
 #choose here the marginalisation you want to combine in script 4d, it will also use the sigmathresh:
-name_marg_list = ['marginalisation_1','marginalisation_2']
-new_name_marg = 'marg_12'
-
-
-#TODO: implement a check function to assert that the ml parameters correspond to the mlname, if mlname already exists !
+name_marg_list = ['marginalisation_spline','marginalisation_regdiff']
+new_name_marg = 'marg_spline-regdiff'
 
 if optfctkw == "regdiff" or simoptfctkw == "regdiff":
 	from pycs import regdiff
@@ -192,7 +194,6 @@ if simoptfctkw == "regdiff":
 	simoptfct = regdiff
 	regdiffparamskw = ut.generate_regdiff_regdiffparamskw(pointdensity,covkernel, pow, amp, scale, errscale)
 
-data = os.path.join(module_directory+'pkl/', "%s_%s.pkl" % (lensname, dataname))
 
 combkw = [["%s_ks%i_%s_ksml_%i" %(optfctkw, knotstep[i], mlname,mlknotsteps[j]) for j in range(len(mlknotsteps))]for i in range(len(knotstep))]
 combkw = np.asarray(combkw)
@@ -210,4 +211,3 @@ else :
 	sys.exit()
 
 
-#TODO : code kwargs transmission to the optimiser

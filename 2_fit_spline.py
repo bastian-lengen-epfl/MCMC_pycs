@@ -1,156 +1,172 @@
 #!/urs/bin/env python
 
-import pycs
 import os,sys
 import numpy as np
-import pickle as pkl
+import argparse as ap
 from module import util_func as ut
-
-execfile("config.py")
 
 #TODO : code something to give a delay and not a time shift
 def applyshifts(lcs,timeshifts,magshifts):
 
-	if not len(lcs) == len(timeshifts) and len(lcs) == len(magshifts):
-		print "Hey, give me arrays of the same lenght !"
-		sys.exit()
+    if not len(lcs) == len(timeshifts) and len(lcs) == len(magshifts):
+        print "Hey, give me arrays of the same lenght !"
+        sys.exit()
 
-	for lc, timeshift, magshift in zip(lcs, timeshifts, magshifts):
-		lc.resetshifts()
-		lc.shiftmag(-np.median(lc.getmags()))
-		#lc.shiftmag(magshift)
-		lc.shifttime(timeshift)
+    for lc, timeshift, magshift in zip(lcs, timeshifts, magshifts):
+        lc.resetshifts()
+        lc.shiftmag(-np.median(lc.getmags()))
+        #lc.shiftmag(magshift)
+        lc.shifttime(timeshift)
 
 def compute_chi2(rls):
-	#return the chi2 given a rls object
-	chi2 = 0.0
-	count = 0.0
-	for rl in rls :
-		meanmag = np.mean(rl.getmags())
-		chi2_c = np.mean(((meanmag - rl.getmags())**2) / rl.getmagerrs()**2)
-		print "Chi2 for light curve %s : %2.2f"%(rl.object, chi2_c)
-		chi2 += chi2_c
-		count +=1.0
+    #return the chi2 given a rls object
+    chi2 = 0.0
+    count = 0.0
+    for rl in rls :
+        meanmag = np.mean(rl.getmags())
+        chi2_c = np.mean(((meanmag - rl.getmags())**2) / rl.getmagerrs()**2)
+        print "Chi2 for light curve %s : %2.2f"%(rl.object, chi2_c)
+        chi2 += chi2_c
+        count +=1.0
 
-	chi2 =chi2 / count
-	print "Final chi2 : %2.2f"%chi2
-	return chi2
+    chi2 =chi2 / count
+    print "Final chi2 : %2.2f"%chi2
+    return chi2
 
+def main(lensname,dataname,work_dir='./'):
+    import importlib
+    import pycs
+    sys.path.append(work_dir + "config/")
+    config = importlib.import_module("config_" + lensname + "_" + dataname)
 
-figure_directory = figure_directory + "spline_and_residuals_plots/"
-if not os.path.isdir(figure_directory):
-	os.mkdir(figure_directory)
+    figure_directory = config.figure_directory + "spline_and_residuals_plots/"
+    if not os.path.isdir(figure_directory):
+        os.mkdir(figure_directory)
 
-lcs = pycs.gen.util.readpickle(data)
-name = ['A','B','C','D']
-for i,lc in enumerate(lcs):
-	print "I will aplly a initial shift of : %2.4f days, %2.4f mag for %s" %(timeshifts[i],magshifts[i],name[i])
-
-
-# Do the optimisation with the splines
-chi2 = np.zeros((len(knotstep),len(mlknotsteps)))
-for i,kn in enumerate(knotstep) :
-	for j, knml in enumerate(mlknotsteps):
-		lcs = pycs.gen.util.readpickle(data)
-		applyshifts(lcs, timeshifts, magshifts)
-		if knml != 0 :
-			attachml(lcs, knml) # add microlensing
-
-		spline = spl1(lcs, kn = kn)
-		pycs.gen.mrg.colourise(lcs)
-		rls = pycs.gen.stat.subtract(lcs, spline)
-		chi2[i,j] = compute_chi2(rls)
-
-		if display :
-			pycs.gen.lc.display(lcs, [spline], showlegend=True, showdelays=True, filename="screen")
-			pycs.gen.stat.plotresiduals([rls])
-		else :
-			pycs.gen.lc.display(lcs, [spline], showlegend=True, showdelays=True,
-								filename=figure_directory + "spline_fit_ks%i_ksml%i.png"%(kn,knml))
-			pycs.gen.stat.plotresiduals([rls], filename=figure_directory + "residual_fit_ks%i_ksml%i.png"%(kn,knml))
+    lcs = pycs.gen.util.readpickle(config.data)
+    for i,lc in enumerate(config.lcs_label):
+        print "I will aplly a initial shift of : %2.4f days, %2.4f mag for %s" %(config.timeshifts[i],config.magshifts[i],config.lcs_label[i])
 
 
+    # Do the optimisation with the splines
+    chi2 = np.zeros((len(config.knotstep),len(config.mlknotsteps)))
+    for i,kn in enumerate(config.knotstep) :
+        for j, knml in enumerate(config.mlknotsteps):
+            lcs = pycs.gen.util.readpickle(config.data)
+            applyshifts(lcs, config.timeshifts, config.magshifts)
+            if knml != 0 :
+                config.attachml(lcs, knml) # add microlensing
 
-		# and write data, again
-		if not os.path.isdir(lens_directory + combkw[i,j]):
-			os.mkdir(lens_directory + combkw[i,j])
+            spline = config.spl1(lcs, kn = kn)
+            pycs.gen.mrg.colourise(lcs)
+            rls = pycs.gen.stat.subtract(lcs, spline)
+            chi2[i,j] = compute_chi2(rls)
 
-		pycs.gen.util.writepickle((lcs, spline), lens_directory + '%s/initopt_%s_ks%i_ksml%i.pkl' % (combkw[i,j], dataname, kn,knml))
+            if config.display :
+                pycs.gen.lc.display(lcs, [spline], showlegend=True, showdelays=True, filename="screen")
+                pycs.gen.stat.plotresiduals([rls])
+            else :
+                pycs.gen.lc.display(lcs, [spline], showlegend=True, showdelays=True,
+                                    filename=figure_directory + "spline_fit_ks%i_ksml%i.png"%(kn,knml))
+                pycs.gen.stat.plotresiduals([rls], filename=figure_directory + "residual_fit_ks%i_ksml%i.png"%(kn,knml))
 
 
 
-#DO the optimisation with regdiff as well, just to have an idea, this the first point of the grid !
-lcs = pycs.gen.util.readpickle(data)
-pycs.gen.mrg.colourise(lcs)
-applyshifts(lcs, timeshifts, magshifts)
+            # and write data, again
+            if not os.path.isdir(config.lens_directory + config.combkw[i,j]):
+                os.mkdir(config.lens_directory + config.combkw[i,j])
 
-import pycs.regdiff
-for ind, l in enumerate(lcs):
-	l.shiftmag(ind*0.1)
-
-kwargs_optimiser_simoptfct = ut.get_keyword_regdiff(pointdensity, covkernel, pow, amp, scale, errscale)
-regdiff_param_kw = ut.generate_regdiff_regdiffparamskw(pointdensity, covkernel, pow, amp, scale, errscale)
-for i,k in enumerate(kwargs_optimiser_simoptfct):
-
-	myrslcs = [pycs.regdiff.rslc.factory(l, pd=k['pointdensity'], covkernel=k['covkernel'],
-										 pow=k['pow'], amp=k['amp'], scale=k['scale'], errscale=k['errscale']) for l in lcs]
-
-	if display :
-		pycs.gen.lc.display(lcs, myrslcs)
-	pycs.gen.lc.display(lcs, myrslcs, showdelays=True, filename = figure_directory + "regdiff_fit%s.png"%regdiff_param_kw[i])
-
-	for ind, l in enumerate(lcs):
-		l.shiftmag(-ind*0.1)
-
-	# map(regdiff, [lcs], **kwargs_optimiser_simoptfct[0])
-	regdiff(lcs, **kwargs_optimiser_simoptfct[i])
-
-	if display :
-		pycs.gen.lc.display(lcs, showlegend=False, showdelays=True)
-	pycs.gen.lc.display(lcs, showlegend=False, showdelays=True, filename = figure_directory + "regdiff_optimized_fit%s.png"%regdiff_param_kw[i])
-	if not os.path.isdir(lens_directory + 'regdiff_fitting'):
-		os.mkdir(lens_directory + 'regdiff_fitting')
-	pycs.gen.util.writepickle(lcs, lens_directory + 'regdiff_fitting/initopt_regdiff%s.pkl'%regdiff_param_kw[i])
+            pycs.gen.util.writepickle((lcs, spline), config.lens_directory + '%s/initopt_%s_ks%i_ksml%i.pkl' % (config.combkw[i,j], dataname, kn,knml))
 
 
-#Write the report :
-print "Report will be writen in " + lens_directory +'report/report_fitting.txt'
 
-f = open(lens_directory+'report/report_fitting.txt', 'w')
-f.write('Measured time shift after fitting the splines : \n')
-f.write('------------------------------------------------\n')
+    #DO the optimisation with regdiff as well, just to have an idea, this the first point of the grid !
+    lcs = pycs.gen.util.readpickle(config.data)
+    pycs.gen.mrg.colourise(lcs)
+    applyshifts(lcs, config.timeshifts, config.magshifts)
 
-for i,kn in enumerate(knotstep) :
-    f.write('knotsetp : %i'%kn +'\n')
-    f.write('\n')
-    for j, knml in enumerate(mlknotsteps):
-        lcs, spline = pycs.gen.util.readpickle(lens_directory + '%s/initopt_%s_ks%i_ksml%i.pkl' % (combkw[i,j], dataname, kn,knml), verbose = False)
-        delay_pair, delay_name = ut.getdelays(lcs)
-        f.write('Micro-lensing knotstep = %i'%knml +"     Delays are " + str(delay_pair) + " for pairs "  + str(delay_name) + '. Chi2 : %2.2f\n'%chi2[i,j])
+    import pycs.regdiff
+    for ind, l in enumerate(lcs):
+        l.shiftmag(ind*0.1)
 
-    f.write('\n')
+    kwargs_optimiser_simoptfct = ut.get_keyword_regdiff(config.pointdensity, config.covkernel, config.pow, config.amp, config.scale, config.errscale)
+    regdiff_param_kw = ut.generate_regdiff_regdiffparamskw(config.pointdensity, config.covkernel, config.pow, config.amp, config.scale, config.errscale)
+    for i,k in enumerate(kwargs_optimiser_simoptfct):
 
-f.write('------------------------------------------------\n')
-f.write('Measured time shift after fitting with regdiff : \n')
-f.write('\n')
-regdiff_param_kw = ut.generate_regdiff_regdiffparamskw(pointdensity, covkernel, pow, amp, scale, errscale)
-kwargs_optimiser_simoptfct = ut.get_keyword_regdiff(pointdensity, covkernel, pow, amp, scale, errscale)
-for i,k in enumerate(kwargs_optimiser_simoptfct):
-    lcs = pycs.gen.util.readpickle(lens_directory + 'regdiff_fitting/initopt_regdiff%s.pkl'%regdiff_param_kw[i], verbose = False)
-    delay_pair, delay_name = ut.getdelays(lcs)
-    f.write('Regdiff : ' +"     Delays are " + str(delay_pair) + " for pairs "  + str(delay_name) + '\n')
+        myrslcs = [pycs.regdiff.rslc.factory(l, pd=k['pointdensity'], covkernel=k['covkernel'],
+                                             pow=k['pow'], amp=k['amp'], scale=k['scale'], errscale=k['errscale']) for l in lcs]
+
+        if config.display :
+            pycs.gen.lc.display(lcs, myrslcs)
+        pycs.gen.lc.display(lcs, myrslcs, showdelays=True, filename = figure_directory + "regdiff_fit%s.png"%regdiff_param_kw[i])
+
+        for ind, l in enumerate(lcs):
+            l.shiftmag(-ind*0.1)
+
+        config.regdiff(lcs, **kwargs_optimiser_simoptfct[i])
+
+        if config.display :
+            pycs.gen.lc.display(lcs, showlegend=False, showdelays=True)
+        pycs.gen.lc.display(lcs, showlegend=False, showdelays=True, filename = figure_directory + "regdiff_optimized_fit%s.png"%regdiff_param_kw[i])
+        if not os.path.isdir(config.lens_directory + 'regdiff_fitting'):
+            os.mkdir(config.lens_directory + 'regdiff_fitting')
+        pycs.gen.util.writepickle(lcs, config.lens_directory + 'regdiff_fitting/initopt_regdiff%s.pkl'%regdiff_param_kw[i])
+
+    #Write the report :
+    print "Report will be writen in " + config.lens_directory +'report/report_fitting.txt'
+
+    f = open(config.lens_directory+'report/report_fitting.txt', 'w')
+    f.write('Measured time shift after fitting the splines : \n')
     f.write('------------------------------------------------\n')
 
-starting_point = []
-for i in range(len(timeshifts)):
-    for j in range(len(timeshifts)):
-        if i >= j :
-			continue
-        else :
-            starting_point.append(timeshifts[j]-timeshifts[i])
+    for i,kn in enumerate(config.knotstep) :
+        f.write('knotsetp : %i'%kn +'\n')
+        f.write('\n')
+        for j, knml in enumerate(config.mlknotsteps):
+            lcs, spline = pycs.gen.util.readpickle(config.lens_directory + '%s/initopt_%s_ks%i_ksml%i.pkl' % (config.combkw[i,j], dataname, kn,knml), verbose = False)
+            delay_pair, delay_name = ut.getdelays(lcs)
+            f.write('Micro-lensing knotstep = %i'%knml +"     Delays are " + str(delay_pair) + " for pairs "  + str(delay_name) + '. Chi2 : %2.2f\n'%chi2[i,j])
 
-f.write('Starting point used : '+ str(starting_point) + " for pairs "  + str(delay_name) + '\n')
+        f.write('\n')
 
+    f.write('------------------------------------------------\n')
+    f.write('Measured time shift after fitting with regdiff : \n')
+    f.write('\n')
+    regdiff_param_kw = ut.generate_regdiff_regdiffparamskw(config.pointdensity, config.covkernel, config.pow, config.amp, config.scale, config.errscale)
+    kwargs_optimiser_simoptfct = ut.get_keyword_regdiff(config.pointdensity, config.covkernel, config.pow, config.amp, config.scale, config.errscale)
+    for i,k in enumerate(kwargs_optimiser_simoptfct):
+        lcs = pycs.gen.util.readpickle(config.lens_directory + 'regdiff_fitting/initopt_regdiff%s.pkl'%regdiff_param_kw[i], verbose = False)
+        delay_pair, delay_name = ut.getdelays(lcs)
+        f.write('Regdiff : ' +"     Delays are " + str(delay_pair) + " for pairs "  + str(delay_name) + '\n')
+        f.write('------------------------------------------------\n')
 
-f.close()
+    starting_point = []
+    for i in range(len(config.timeshifts)):
+        for j in range(len(config.timeshifts)):
+            if i >= j :
+                continue
+            else :
+                starting_point.append(config.timeshifts[j]-config.timeshifts[i])
 
+    f.write('Starting point used : '+ str(starting_point) + " for pairs "  + str(delay_name) + '\n')
+    f.close()
+
+if __name__ == '__main__':
+    parser = ap.ArgumentParser(prog="python {}".format(os.path.basename(__file__)),
+                               description="Fit spline and regdiff on the data.",
+                               formatter_class=ap.RawTextHelpFormatter)
+    help_lensname = "name of the lens to process"
+    help_dataname = "name of the data set to process (Euler, SMARTS, ... )"
+    help_work_dir = "name of the working directory"
+    parser.add_argument(dest='lensname', type=str,
+                        metavar='lens_name', action='store',
+                        help=help_lensname)
+    parser.add_argument(dest='dataname', type=str,
+                        metavar='dataname', action='store',
+                        help=help_dataname)
+    parser.add_argument('--dir', dest='work_dir', type=str,
+                            metavar='', action='store', default='./',
+                            help=help_work_dir)
+    args = parser.parse_args()
+    main(args.lensname,args.dataname, work_dir=args.work_dir)
+>>>>>>> f82a52d2dd5305d9ac91e9cbcd5b0a1d49047c27
