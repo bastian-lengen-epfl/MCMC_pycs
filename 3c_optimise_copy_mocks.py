@@ -55,7 +55,7 @@ def main(lensname,dataname,work_dir='./'):
 
             # We also give them a microlensing model (here, similar to Courbin 2011)
             config.attachml(lcs,knml)
-            nworkers = int(cpu_count())
+            nworkers = config.max_core
 
             for c, opts in enumerate(config.optset):
                 if config.simoptfctkw == "spl1":
