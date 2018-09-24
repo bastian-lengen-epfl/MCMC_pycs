@@ -14,7 +14,7 @@ else
     run_options=""
 fi
 exec_command="python 3a_generate_tweakml.py"
-exec_options="$OBJECT_NAME $DATA_NAME $WORK_DIR"
+exec_options="$OBJECT_NAME $DATA_NAME --dir $WORK_DIR"
 whole_command="$run_command $run_options $exec_command $exec_options"
 
 echo "running '$whole_command'"
