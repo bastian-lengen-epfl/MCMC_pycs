@@ -47,7 +47,7 @@ interpdist = 30
 
 ## draw
 # copies
-ncopy = 25 #number of copy per pickle
+ncopy = 20 #number of copy per pickle
 ncopypkls = 25 #number of pickle
 
 # mock

@@ -40,12 +40,13 @@ def exec_worker_mocks(i, simset_mock, lcs, simoptfct, kwargs_optim, optset, tsra
 
 
 def main(lensname,dataname,work_dir='./'):
-
+    main_path = os.getcwd()
     sys.path.append(work_dir + "config/")
     config = importlib.import_module("config_" + lensname + "_" + dataname)
     base_lcs = pycs.gen.util.readpickle(config.data)
     for a,kn in enumerate(config.knotstep) :
         for  b, knml in enumerate(config.mlknotsteps):
+            os.chdir(main_path)
             print config.combkw[a,b]
             os.chdir(config.lens_directory + config.combkw[a, b]) # Because carrot
             lcs = copy.deepcopy(base_lcs)
