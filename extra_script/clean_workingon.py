@@ -9,7 +9,7 @@ import argparse as ap
 
 
 def main(lensname,dataname, work_dir = './'):
-    os.chdir(work_dir)
+    os.chdir('..')
     sys.path.append(work_dir + "config/")
     sys.path.append(work_dir)
     config = importlib.import_module("config_" + lensname + "_" + dataname)
