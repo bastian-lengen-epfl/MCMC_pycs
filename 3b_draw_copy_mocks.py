@@ -6,9 +6,11 @@ def main(lensname,dataname,work_dir='./'):
     import importlib
     sys.path.append(work_dir + "config/")
     config = importlib.import_module("config_" + lensname + "_" + dataname)
+    main_path = os.getcwd()
 
     for i,kn in enumerate(config.knotstep) :
         for j, knml in enumerate(config.mlknotsteps):
+            os.chdir(main_path)
             print "I am drawing curves for ks%i, ksml%i" %(kn,knml)
             os.chdir(config.lens_directory+config.combkw[i,j])
             lcs, spline = pycs.gen.util.readpickle('initopt_%s_ks%i_ksml%i.pkl' % (dataname, kn,knml))
