@@ -4,6 +4,7 @@ import argparse as ap
 import multiprocess
 
 def draw_mock_para(i, j, kn, knml, lensname, dataname, work_dir):
+    current_dir = os.getcwd()
     import importlib
     sys.path.append(work_dir + "config/")
     config = importlib.import_module("config_" + lensname + "_" + dataname)
@@ -81,6 +82,7 @@ def draw_mock_para(i, j, kn, knml, lensname, dataname, work_dir):
                                     simset=config.simset_mock, tweakml=tweakml_list,
                                     shotnoise=config.shotnoise_type,
                                     truetsr=config.truetsr, shotnoisefrac=1.0)
+    os.chdir(current_dir)
 
 def draw_mock_para_aux(args):
     return draw_mock_para(*args)
@@ -89,7 +91,6 @@ def main(lensname,dataname,work_dir='./'):
     import importlib
     sys.path.append(work_dir + "config/")
     config = importlib.import_module("config_" + lensname + "_" + dataname)
-    main_path = os.getcwd()
 
     p = multiprocess.Pool(processes=config.max_core)
     print "Runing on %i cores. "%config.max_core

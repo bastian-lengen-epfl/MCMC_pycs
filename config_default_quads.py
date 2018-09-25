@@ -92,7 +92,7 @@ n_particles = 80 #this is use only in PSO optimser
 n_iter = 50 #number of iteration in PSO or MCMC
 mpi = False # if you want to use MPI for the PSO
 grid = np.linspace(0.1,1,10) #this is use in the GRID optimiser
-max_iter = 10 # this is used in the DIC optimiser, 10 is usually enough.
+max_iter = 15 # this is used in the DIC optimiser, 10 is usually enough.
 
 
 ###### SPLINE MARGINALISATION #########
