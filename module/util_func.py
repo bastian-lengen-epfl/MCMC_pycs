@@ -2,6 +2,7 @@ import sys
 import numpy as np
 from inspect import getsource
 from textwrap import dedent
+import json
 
 def proquest(askquestions):
 	"""
@@ -45,7 +46,7 @@ def write_func_append(fn, stream, **kwargs):
 
     stream.write('\n' + fn_as_string)
 
-def generate_regdiff_regdiffparamskw(pointdensity, covkernel, pow, amp, scale, errscale):
+def generate_regdiffparamskw(pointdensity, covkernel, pow, amp, scale, errscale):
 	out_kw = []
 	for c in covkernel :
 		for pts in pointdensity:
@@ -60,6 +61,18 @@ def generate_regdiff_regdiffparamskw(pointdensity, covkernel, pow, amp, scale, e
 								pts, c, p, a, s, e))
 	return out_kw
 
+def read_preselected_regdiffparamskw(file):
+	out_kw = []
+	with open(file, 'r') as f :
+		dic = json.load(f)
+		for d in dic :
+			if d['covkernel'] == 'gaussian':  # no pow parameter
+				out_kw.append("_pd%i_ck%s_amp%.1f_sc%i_errsc%i_" % (d['pointdensity'], d['covkernel'], d['amp'], d['scale'], d['errscale']))
+			else:
+				out_kw.append("_pd%i_ck%s_pow%.1f_amp%.1f_sc%i_errsc%i_" %(d['pointdensity'], d['covkernel'], d['amp'],d['pow'], d['scale'], d['errscale']))
+	return out_kw
+
+
 def get_keyword_regdiff(pointdensity, covkernel, pow, amp, scale, errscale):
     kw_list = []
     for c in covkernel:
@@ -70,6 +83,11 @@ def get_keyword_regdiff(pointdensity, covkernel, pow, amp, scale, errscale):
                         for e in errscale:
                             kw_list.append({'covkernel':c, 'pointdensity':pts, 'pow':p, 'amp':a, 'scale':s, 'errscale':e})
     return kw_list
+
+def get_keyword_regdiff_from_file(file):
+	with open(file, 'r') as f :
+		kw_list = json.load(f)
+	return kw_list
 
 def get_keyword_spline(kn):
     return {'kn' : kn}

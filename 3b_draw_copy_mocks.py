@@ -92,7 +92,12 @@ def main(lensname,dataname,work_dir='./'):
     sys.path.append(work_dir + "config/")
     config = importlib.import_module("config_" + lensname + "_" + dataname)
 
-    p = multiprocess.Pool(processes=config.max_core)
+    if config.max_core == None :
+        processes = multiprocess.cpu_count()
+    else :
+        processes = config.max_core
+
+    p = multiprocess.Pool(processes=processes)
     print "Runing on %i cores. "%config.max_core
     job_args = []
     for i,kn in enumerate(config.knotstep) :
