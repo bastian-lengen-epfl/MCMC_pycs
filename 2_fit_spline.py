@@ -90,7 +90,7 @@ def main(lensname,dataname,work_dir='./'):
         l.shiftmag(ind*0.1)
 
     kwargs_optimiser_simoptfct = ut.get_keyword_regdiff(config.pointdensity, config.covkernel, config.pow, config.amp, config.scale, config.errscale)
-    regdiff_param_kw = ut.generate_regdiff_regdiffparamskw(config.pointdensity, config.covkernel, config.pow, config.amp, config.scale, config.errscale)
+    regdiff_param_kw = ut.generate_regdiffparamskw(config.pointdensity, config.covkernel, config.pow, config.amp, config.scale, config.errscale)
     for i,k in enumerate(kwargs_optimiser_simoptfct):
 
         myrslcs = [pycs.regdiff.rslc.factory(l, pd=k['pointdensity'], covkernel=k['covkernel'],
@@ -132,7 +132,7 @@ def main(lensname,dataname,work_dir='./'):
     f.write('------------------------------------------------\n')
     f.write('Measured time shift after fitting with regdiff : \n')
     f.write('\n')
-    regdiff_param_kw = ut.generate_regdiff_regdiffparamskw(config.pointdensity, config.covkernel, config.pow, config.amp, config.scale, config.errscale)
+    regdiff_param_kw = ut.generate_regdiffparamskw(config.pointdensity, config.covkernel, config.pow, config.amp, config.scale, config.errscale)
     kwargs_optimiser_simoptfct = ut.get_keyword_regdiff(config.pointdensity, config.covkernel, config.pow, config.amp, config.scale, config.errscale)
     for i,k in enumerate(kwargs_optimiser_simoptfct):
         lcs = pycs.gen.util.readpickle(config.lens_directory + 'regdiff_fitting/initopt_regdiff%s.pkl'%regdiff_param_kw[i], verbose = False)

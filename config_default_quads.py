@@ -192,7 +192,7 @@ if simoptfctkw == "spl1":
 
 if simoptfctkw == "regdiff":
 	simoptfct = regdiff
-	regdiffparamskw = ut.generate_regdiff_regdiffparamskw(pointdensity,covkernel, pow, amp, scale, errscale)
+	regdiffparamskw = ut.generate_regdiffparamskw(pointdensity, covkernel, pow, amp, scale, errscale)
 
 
 combkw = [["%s_ks%i_%s_ksml_%i" %(optfctkw, knotstep[i], mlname,mlknotsteps[j]) for j in range(len(mlknotsteps))]for i in range(len(knotstep))]

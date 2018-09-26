@@ -95,7 +95,7 @@ def main(lensname,dataname,work_dir='./'):
     combined.name = 'combined $\sigma = %2.2f$'%config.sigmathresh
     combined.plotcolor = 'black'
 
-    print "Final combination for marginalisation ", name_marg_spline
+    print "Final combination for marginalisation ", config.name_marg_spline
     combined.niceprint()
 
     #plot the results :
