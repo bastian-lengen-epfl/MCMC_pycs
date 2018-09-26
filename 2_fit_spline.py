@@ -89,10 +89,15 @@ def main(lensname,dataname,work_dir='./'):
     for ind, l in enumerate(lcs):
         l.shiftmag(ind*0.1)
 
-    kwargs_optimiser_simoptfct = ut.get_keyword_regdiff(config.pointdensity, config.covkernel, config.pow, config.amp, config.scale, config.errscale)
-    regdiff_param_kw = ut.generate_regdiffparamskw(config.pointdensity, config.covkernel, config.pow, config.amp, config.scale, config.errscale)
-    for i,k in enumerate(kwargs_optimiser_simoptfct):
+    if config.use_preselected_regdiff:
+        kwargs_optimiser_simoptfct = ut.get_keyword_regdiff_from_file(config.preselection_file)
+        regdiff_param_kw = ut.read_preselected_regdiffparamskw(config.preselection_file)
+    else:
+        kwargs_optimiser_simoptfct = ut.get_keyword_regdiff(config.pointdensity, config.covkernel, config.pow, config.amp, config.scale, config.errscale)
+        regdiff_param_kw = ut.generate_regdiffparamskw(config.pointdensity, config.covkernel, config.pow, config.amp, config.scale, config.errscale)
 
+    for i,k in enumerate(kwargs_optimiser_simoptfct):
+        myrslcs = []
         myrslcs = [pycs.regdiff.rslc.factory(l, pd=k['pointdensity'], covkernel=k['covkernel'],
                                              pow=k['pow'], amp=k['amp'], scale=k['scale'], errscale=k['errscale']) for l in lcs]
 
@@ -132,8 +137,7 @@ def main(lensname,dataname,work_dir='./'):
     f.write('------------------------------------------------\n')
     f.write('Measured time shift after fitting with regdiff : \n')
     f.write('\n')
-    regdiff_param_kw = ut.generate_regdiffparamskw(config.pointdensity, config.covkernel, config.pow, config.amp, config.scale, config.errscale)
-    kwargs_optimiser_simoptfct = ut.get_keyword_regdiff(config.pointdensity, config.covkernel, config.pow, config.amp, config.scale, config.errscale)
+
     for i,k in enumerate(kwargs_optimiser_simoptfct):
         lcs = pycs.gen.util.readpickle(config.lens_directory + 'regdiff_fitting/initopt_regdiff%s.pkl'%regdiff_param_kw[i], verbose = False)
         delay_pair, delay_name = ut.getdelays(lcs)

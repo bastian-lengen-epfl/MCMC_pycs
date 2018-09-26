@@ -8,10 +8,10 @@ from module import util_func as ut
 
 #info about the lens :
 full_lensname =''
-lcs_label = ['A','B','C','D']
+lcs_label = ['A','B','C']
 #initial guess :
-timeshifts = [0.,0.,0.,0.]
-magshifts =  [0.,0.,0.,0.]
+timeshifts = [0.,0.,0.]
+magshifts =  [0.,0.,0.]
 
 #general config :
 askquestions = False
@@ -66,7 +66,7 @@ run_on_sims = True
 
 ### MICROLENSING ####
 mltype = "splml"  # splml or polyml
-mllist = [0,1,2,3]  # Which lcs do you want to attach ml to ?
+mllist = [0,1,2]  # Which lcs do you want to attach ml to ?
 mlname = 'splml'
 mlknotsteps = [150,300,450,600]# 0 means no microlensing...
 #To force the spacing  :
@@ -82,8 +82,8 @@ tweakml_type = 'PS_from_residuals' #choose either colored_noise or PS_from_resid
 shotnoise_type = None #Select among [None, "magerrs", "res", "mcres", "sigma"] You should have None for PS_from_residuals
 
 find_tweak_ml_param = True #To let the program find the parameters for you, if false it will use the lines below :
-colored_noise_param = [[-2.95,0.001],[-0.5,0.511],[-2.95,0.001],[-0.5,0.511]] #give your beta and sigma parameter for colored noise, used only if find_tweak_ml == False
-PS_param_B = [[1.0],[1.0],[1.0],[1.0]] #if you don't want the algorithm fine tune the high cut frequency (given in unit of Nymquist frequency)
+colored_noise_param = [[-2.95,0.001],[-0.5,0.511],[-2.95,0.001]] #give your beta and sigma parameter for colored noise, used only if find_tweak_ml == False
+PS_param_B = [[1.0],[1.0],[1.0]] #if you don't want the algorithm fine tune the high cut frequency (given in unit of Nymquist frequency)
 
 #if you chose to optimise the tweakml automatically, you might want to change this
 optimiser = 'DIC' # choose between PSO, MCMC or GRID or DIC
@@ -118,7 +118,7 @@ errscale_marg = errscale
 
 #other parameteres for regdiff and spline marginalisation :
 testmode = True
-delay_labels = ["AB", "AC", "AD", "BC", "BD" , "CD"]
+delay_labels = ["AB", "AC", "BC",]
 sigmathresh = 0   #sigma threshold for sigma clipping, 0 is a true marginalisation, choose 1000 to take the most precise.
 
 ###### MARGGINALISE SPLINE AND REGDIFF TOGETHER #######
