@@ -39,9 +39,11 @@ def main(lensname,dataname, work_dir = './'):
 
     if not os.path.isfile(config_directory + "config_" + lensname + "_" + dataname + ".py"):
         print "I will create the lens config file for you ! "
-        if n_curve == 2 or n_curve == 4 :
+        if n_curve == 2 or n_curve ==3 or n_curve == 4 :
             if n_curve == 2 :
                 copyfile("config_default_double.py", config_directory+ "config_" + lensname + "_" + dataname + ".py")
+            if n_curve == 3 :
+                copyfile("config_default_triple.py", config_directory+ "config_" + lensname + "_" + dataname + ".py")
             elif n_curve == 4 :
                 copyfile("config_default_quads.py", config_directory + "config_" + lensname + "_" + dataname + ".py")
 

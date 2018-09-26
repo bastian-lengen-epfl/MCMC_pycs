@@ -9,21 +9,29 @@ from module import util_func as ut
 #info about the lens :
 full_lensname =''
 lcs_label = ['A','B']
+#initial guess :
+timeshifts = [0.,0.]
+magshifts =  [0.,0.]
 
 #general config :
 askquestions = False
 display = False
+max_core = None #None will use all the core available
 
-### optimisation function
 
-# for now, we assume that we use the same function to draw the initial condition and run the optimiser.
+### OPTIMISATION FUNCTION ###
+# select here the optimiser you want to use :
 optfctkw = "spl1" #function you used to optimise the curve at the 1st plase (in the script 2a), it should stay at spl1
 simoptfctkw = "spl1" #function you want to use to optimise the mock curves, currently support spl1 and regdiff
 
-# spl1
-knotstep = [35] #give a list of the parameter you want
+### SPLINE PARAMETERS ###
+knotstep = [35,45,55,65] #give a list of the parameter you want
 
-#regdiff params:
+### REGDIFF PARAMETERS ###
+#To use 5 set of parameters pre-selected :
+use_preselected_regdiff = True
+preselection_file = 'config/preset_regdiff_ECAM.txt'
+#You can give your own grid here if use_preselected_regdiff == False :
 covkernel = ['matern']  # can be matern, pow_exp or gaussian
 pointdensity = [2]
 pow = [2.2]
@@ -31,21 +39,16 @@ amp = [0.5]
 scale = [200.0]
 errscale = [25.0]
 
-#initial guess :
-timeshifts = [0.,8.]
-magshifts =  [0.,0.]
-
-
+### SPLDIFF parameters ###
+#TODO : repair this
 # spldiff
 pointdensity_spldiff = 4
 knotstep_spldiff = 25
-
 # dispersion
 interpdist = 30
 
-### Run parameters
-
-## draw
+### RUN PARAMETERS #####
+#change here the number of copie and mock curve you want to draw :
 # copies
 ncopy = 20 #number of copy per pickle
 ncopypkls = 25 #number of pickle
@@ -53,8 +56,8 @@ ncopypkls = 25 #number of pickle
 # mock
 nsim = 20 #number of copy per pickle
 nsimpkls = 40 #number of pickle
-truetsr = 5.0  # Range of true time delay shifts when drawing the mock curves
-tsrand = 5.0  # Random shift of initial condition for each simulated lc in [initcond-tsrand, initcond+tsrand]
+truetsr = 10.0  # Range of true time delay shifts when drawing the mock curves
+tsrand = 10.0  # Random shift of initial condition for each simulated lc in [initcond-tsrand, initcond+tsrand]
 
 ## sim
 run_on_copies = True
@@ -65,9 +68,9 @@ run_on_sims = True
 mltype = "splml"  # splml or polyml
 mllist = [0,1]  # Which lcs do you want to attach ml to ?
 mlname = 'splml'
-forcen = False # False for Maidanak, True for the other, if true I doesn't use mlknotstep
-mlknotsteps = [150]# 0 means no microlensing...
-#Unused :
+mlknotsteps = [150,300,450,600]# 0 means no microlensing...
+#To force the spacing  :
+forcen = False # if true I doesn't use mlknotstep
 nmlspl = 2  #nb_knot - 1, used only if forcen == True
 mlbokeps = 88 #  min spacing between ml knots, used only if forcen == True
 
@@ -82,18 +85,14 @@ find_tweak_ml_param = True #To let the program find the parameters for you, if f
 colored_noise_param = [[-2.95,0.001],[-0.5,0.511]] #give your beta and sigma parameter for colored noise, used only if find_tweak_ml == False
 PS_param_B = [[1.0],[1.0]] #if you don't want the algorithm fine tune the high cut frequency (given in unit of Nymquist frequency)
 
-
-#remember to use shotnoise = None for PS_from_residuals and 'magerrs' or 'mcres' for colored_noise
-
 #if you chose to optimise the tweakml automatically, you might want to change this
 optimiser = 'DIC' # choose between PSO, MCMC or GRID or DIC
-max_core = 16 #None will use all the core available
-n_curve_stat =32 # Number of curve to compute the statistics on, (the larger the better but it takes longer... 16 or 32 are good, 8 is still OK) .
-n_particles = 1 #this is use only in PSO optimser
-n_iter = 1 #number of iteration in PSO or MCMC
+n_curve_stat =32# Number of curve to compute the statistics on, (the larger the better but it takes longer... 16 or 32 are good, 8 is still OK) .
+n_particles = 50 #this is use only in PSO optimser
+n_iter = 80 #number of iteration in PSO or MCMC
 mpi = False # if you want to use MPI for the PSO
 grid = np.linspace(0.1,1,10) #this is use in the GRID optimiser
-max_iter = 10 # this is used in the DIC optimiser, 10 is usually enough.
+max_iter = 15 # this is used in the DIC optimiser, 10 is usually enough.
 
 
 ###### SPLINE MARGINALISATION #########
@@ -117,27 +116,27 @@ amp_marg = amp
 scale_marg = scale
 errscale_marg = errscale
 
-#other parameteres for regdioff and spline marginalisation :
+#other parameteres for regdiff and spline marginalisation :
 testmode = True
 delay_labels = ["AB"]
-sigmathresh = 0   #0 is a true marginalisation, choose 1000 to take the most precise.
+sigmathresh = 0   #sigma threshold for sigma clipping, 0 is a true marginalisation, choose 1000 to take the most precise.
 
 ###### MARGGINALISE SPLINE AND REGDIFF TOGETHER #######
 #choose here the marginalisation you want to combine in script 4d, it will also use the sigmathresh:
-name_marg_list = ['marginalisation_spline','marginalisation_regdiff']
-new_name_marg = 'marg_spline-regdiff'
+name_marg_list = ['marginalisation_1','marginalisation_2']
+new_name_marg = 'marg_12'
 
-if optfctkw == "regdiff" or simoptfctkw == "regdiff":
-	from pycs import regdiff
 
 ### Functions definition
+if optfctkw == "regdiff" or simoptfctkw == "regdiff":
+	from pycs import regdiff
 
 def spl1(lcs, **kwargs):
 	# spline = pycs.spl.topopt.opt_rough(lcs, nit=5)
 	spline = pycs.spl.topopt.opt_fine(lcs, knotstep=kwargs['kn'], bokeps=kwargs['kn']/3.0, nit=5, stabext=100)
 	return spline
 
-def regdiff(lcs, **kwargs): #knotstep is not used here but this is made to have the same number of argument as the other optimiser...
+def regdiff(lcs, **kwargs):
 	return pycs.regdiff.multiopt.opt_ts(lcs, pd=kwargs['pointdensity'], covkernel=kwargs['covkernel'], pow=kwargs['pow'],
 										amp=kwargs['amp'], scale=kwargs['scale'], errscale=kwargs['errscale'], verbose=True, method="weights")
 
@@ -192,7 +191,10 @@ if simoptfctkw == "spl1":
 
 if simoptfctkw == "regdiff":
 	simoptfct = regdiff
-	regdiffparamskw = ut.generate_regdiffparamskw(pointdensity, covkernel, pow, amp, scale, errscale)
+	if use_preselected_regdiff :
+		regdiffparamskw = ut.read_preselected_regdiffparamskw(preselection_file)
+	else :
+		regdiffparamskw = ut.generate_regdiffparamskw(pointdensity,covkernel, pow, amp, scale, errscale)
 
 
 combkw = [["%s_ks%i_%s_ksml_%i" %(optfctkw, knotstep[i], mlname,mlknotsteps[j]) for j in range(len(mlknotsteps))]for i in range(len(knotstep))]
@@ -202,12 +204,14 @@ simset_copy = "copies_n%i" % (int(ncopy * ncopypkls))
 simset_mock = "mocks_n%it%i_%s" % (int(nsim * nsimpkls), truetsr,tweakml_name)
 
 if simoptfctkw == "regdiff":
-	kwargs_optimiser_simoptfct = ut.get_keyword_regdiff(pointdensity, covkernel, pow, amp, scale, errscale)
-	optset = [simoptfctkw + regdiffparamskw[i] + 't' + str(int(tsrand)) for i in range(len(regdiffparamskw))]
+	if use_preselected_regdiff :
+		kwargs_optimiser_simoptfct = ut.get_keyword_regdiff_from_file(preselection_file)
+		optset = [simoptfctkw + regdiffparamskw[i] + 't' + str(int(tsrand)) for i in range(len(regdiffparamskw))]
+	else :
+		kwargs_optimiser_simoptfct = ut.get_keyword_regdiff(pointdensity, covkernel, pow, amp, scale, errscale)
+		optset = [simoptfctkw + regdiffparamskw[i] + 't' + str(int(tsrand)) for i in range(len(regdiffparamskw))]
 elif simoptfctkw == 'spl1':
 	optset = [simoptfctkw + 't' + str(int(tsrand))]
 else :
 	print 'Error : I dont recognize your simoptfctkw, please use regdiff or spl1'
 	sys.exit()
-
-
