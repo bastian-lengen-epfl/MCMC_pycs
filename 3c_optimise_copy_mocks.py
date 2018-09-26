@@ -46,7 +46,7 @@ def main(lensname,dataname,work_dir='./'):
     base_lcs = pycs.gen.util.readpickle(config.data)
     for a,kn in enumerate(config.knotstep) :
         for  b, knml in enumerate(config.mlknotsteps):
-            os.chdir(main_path)
+	    os.chdir(main_path)
             print config.combkw[a,b]
             os.chdir(config.lens_directory + config.combkw[a, b]) # Because carrot
             lcs = copy.deepcopy(base_lcs)

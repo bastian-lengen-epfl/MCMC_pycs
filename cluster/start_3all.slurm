@@ -1,6 +1,7 @@
 #!/bin/bash -l
 #SBATCH -o slurm_%j.out  # STDOUT
 #SBATCH -e slurm_%j.err  # STDERR
+#SBATCH --exclude=node[222,224,230-232]
 
 date
 set -x
