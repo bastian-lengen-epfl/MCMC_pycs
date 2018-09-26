@@ -10,6 +10,7 @@ import argparse as ap
 
 def main(lensname,dataname, work_dir = './'):
     os.chdir('..')
+    main_path = os.getcwd()
     sys.path.append(work_dir + "config/")
     sys.path.append(work_dir)
     config = importlib.import_module("config_" + lensname + "_" + dataname)
@@ -21,7 +22,7 @@ def main(lensname,dataname, work_dir = './'):
             print "files to remove : ", files
             for fil in files :
                 os.remove(fil)
-            os.chdir(work_dir)
+            os.chdir(main_path)
 
 if __name__ == '__main__':
     parser = ap.ArgumentParser(prog="python {}".format(os.path.basename(__file__)),
