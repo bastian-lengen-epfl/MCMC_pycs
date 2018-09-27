@@ -98,7 +98,7 @@ def main(lensname,dataname,work_dir='./'):
         processes = config.max_core
 
     p = multiprocess.Pool(processes=processes)
-    print "Runing on %i cores. "%config.max_core
+    print "Runing on %i cores. "%processes
     job_args = []
     for i,kn in enumerate(config.knotstep) :
         for j, knml in enumerate(config.mlknotsteps):
