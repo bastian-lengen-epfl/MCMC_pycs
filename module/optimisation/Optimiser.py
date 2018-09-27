@@ -78,7 +78,7 @@ class Optimiser(object):
         self.verbose = verbose
         self.grid = None
         self.message = '\n'
-        self.tolerance = 0.5 # tolerance in unit of sigma for the fit
+        self.tolerance = 0.75 # tolerance in unit of sigma for the fit
 
     def make_mocks_para(self, theta):
         stat = []
