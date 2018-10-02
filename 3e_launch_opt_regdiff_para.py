@@ -63,8 +63,9 @@ def main(lensname,dataname,work_dir='./'):
                         print "Not implemented yet, please use regdiff"
 
                     elif config.simoptfctkw == "regdiff":
-                        os.system("srun -n 1 -c 1 -u python exec_regdiff.py %s %s %s %s"%(pkl_name,'1', c_path, config_path ))
-                        exit()
+                        os.system("srun -n 1 -c 1 -u -e %s -o %s python exec_regdiff.py %s %s %s %s &"%
+                                  (os.join.path(main_path, 'cluster/slurm_regdiff_%i_copie.err'%pkl_n),
+                                   os.join.path(main_path, 'cluster/slurm_regdiff_%i_copie.out'%pkl_n) ,pkl_name,'1', c_path, config_path ))
 
                 if config.run_on_sims:
                     print "I will run the optimiser on the simulated lcs with the parameters :", kwargs
@@ -73,9 +74,10 @@ def main(lensname,dataname,work_dir='./'):
                     if config.simoptfctkw == "spl1":
                         print "Not implemented yet, please use regdiff"
                     elif config.simoptfctkw == "regdiff":
-                        job_args = (0, config.simset_mock, lcs, config.simoptfct, kwargs, opts, config.tsrand)
-                        exec_worker_mocks_aux(job_args)  # because for some reason, regdiff does not like multiproc.
-                        # p.map(exec_worker_copie_aux, job_args)
+                        os.system("srun -n 1 -c 1 -u -e %s -o %s python exec_regdiff.py %s %s %s %s &" %
+                                  (os.join.path(main_path, 'cluster/slurm_regdiff_%i_mocks.err' % pkl_n),
+                                   os.join.path(main_path, 'cluster/slurm_regdiff_%i_mocks.out' % pkl_n), pkl_name, '1',
+                                   c_path, config_path))
 
 if __name__ == '__main__':
     parser = ap.ArgumentParser(prog="python {}".format(os.path.basename(__file__)),
