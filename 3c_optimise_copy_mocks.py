@@ -76,9 +76,9 @@ def main(lensname,dataname,work_dir='./'):
                     if config.simoptfctkw == "spl1":
                         p.map(exec_worker_copie_aux, job_args)
                     elif config.simoptfctkw == "regdiff":
-                        job_args = (0, config.simset_copy, lcs, config.simoptfct, kwargs, opts, config.tsrand)
-                        exec_worker_copie_aux(job_args)
-                        # p.map(exec_worker_copie_aux, job_args)# because for some reason, regdiff does not like multiproc.
+                        #~ job_args = (0, config.simset_copy, lcs, config.simoptfct, kwargs, opts, config.tsrand)
+                        #~ exec_worker_copie_aux(job_args)
+                        p.map(exec_worker_copie_aux, job_args)# because for some reason, regdiff does not like multiproc.
 
                 if config.run_on_sims:
                     print "I will run the optimiser on the simulated lcs with the parameters :", kwargs
@@ -89,9 +89,9 @@ def main(lensname,dataname,work_dir='./'):
                     if config.simoptfctkw == "spl1":
                         p.map(exec_worker_mocks_aux, job_args)
                     elif config.simoptfctkw == "regdiff":
-                        job_args = (0, config.simset_mock, lcs, config.simoptfct, kwargs, opts, config.tsrand)
-                        exec_worker_mocks_aux(job_args)  # because for some reason, regdiff does not like multiproc.
-                        # p.map(exec_worker_copie_aux, job_args)
+                        #~ job_args = (0, config.simset_mock, lcs, config.simoptfct, kwargs, opts, config.tsrand)
+                        #~ exec_worker_mocks_aux(job_args)  # because for some reason, regdiff does not like multiproc.
+                        p.map(exec_worker_copie_aux, job_args)
 
 if __name__ == '__main__':
     parser = ap.ArgumentParser(prog="python {}".format(os.path.basename(__file__)),
