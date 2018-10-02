@@ -18,26 +18,6 @@ def applyshifts(lcs, timeshifts, magshifts):
         lc.shiftmag(-numpy.median(lc.getmags()))
         lc.shifttime(timeshift)
 
-def exec_worker_copie_aux(args):
-    return exec_worker_copie(*args)
-
-
-def exec_worker_copie(i, simset_copy, lcs, simoptfct, kwargs_optim, optset, tsrand):
-    print "worker %i starting..." % i
-    time.sleep(i)
-    pycs.sim.run.multirun(simset_copy, lcs, simoptfct, kwargs_optim=kwargs_optim,
-                          optset=optset, tsrand=tsrand)
-
-def exec_worker_mocks_aux(args):
-    return exec_worker_mocks(*args)
-
-
-def exec_worker_mocks(i, simset_mock, lcs, simoptfct, kwargs_optim, optset, tsrand):
-    print "worker %i starting..." % i
-    time.sleep(i)
-    pycs.sim.run.multirun(simset_mock, lcs,simoptfct, kwargs_optim=kwargs_optim,
-                          optset=optset, tsrand=tsrand, keepopt=True)
-
 
 def main(lensname,dataname,work_dir='./'):
     main_path = os.getcwd()
