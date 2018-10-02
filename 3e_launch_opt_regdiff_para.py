@@ -43,7 +43,7 @@ def main(lensname,dataname,work_dir='./'):
             config.attachml(lcs,knml)
 
             for c, opts in enumerate(config.optset):
-                pkl_name = os.path.join(c_path, 'trasnfert_pickle_%i.pkl'%pkl_n)
+                pkl_name = os.path.join(c_path, 'transfert_pickle_%i.pkl'%pkl_n)
 
                 if config.simoptfctkw == "spl1":
                     kwargs = {'kn' : kn}
@@ -54,7 +54,7 @@ def main(lensname,dataname,work_dir='./'):
 
                 if config.run_on_copies:
                     print "I will run the optimiser on the copies with the parameters :", kwargs
-                    with open(pkl_name, 'r') as f :
+                    with open(pkl_name, 'wb') as f :
                         pkl.dump([config.simset_copy, lcs, config.simoptfct, kwargs, opts, config.tsrand], f)
 
                     if config.simoptfctkw == "spl1":
@@ -66,7 +66,7 @@ def main(lensname,dataname,work_dir='./'):
 
                 if config.run_on_sims:
                     print "I will run the optimiser on the simulated lcs with the parameters :", kwargs
-                    with open(pkl_name, 'r') as f:
+                    with open(pkl_name, 'wb') as f:
                         pkl.dump([ config.simset_mock, lcs, config.simoptfct, kwargs, opts, config.tsrand], f)
                     if config.simoptfctkw == "spl1":
                         print "Not implemented yet, please use regdiff"
