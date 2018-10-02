@@ -64,8 +64,8 @@ def main(lensname,dataname,work_dir='./'):
 
                     elif config.simoptfctkw == "regdiff":
                         os.system("srun -n 1 -c 1 -u -e %s -o %s python exec_regdiff.py %s %s %s %s &"%
-                                  (os.join.path(main_path, 'cluster/slurm_regdiff_%i_copie.err'%pkl_n),
-                                   os.join.path(main_path, 'cluster/slurm_regdiff_%i_copie.out'%pkl_n) ,pkl_name,'1', c_path, config_path ))
+                                  (os.path.join(main_path, 'cluster/slurm_regdiff_%i_copie.err'%pkl_n),
+                                   os.path.join(main_path, 'cluster/slurm_regdiff_%i_copie.out'%pkl_n) ,pkl_name,'1', c_path, config_path ))
 
                 if config.run_on_sims:
                     print "I will run the optimiser on the simulated lcs with the parameters :", kwargs
@@ -75,8 +75,8 @@ def main(lensname,dataname,work_dir='./'):
                         print "Not implemented yet, please use regdiff"
                     elif config.simoptfctkw == "regdiff":
                         os.system("srun -n 1 -c 1 -u -e %s -o %s python exec_regdiff.py %s %s %s %s &" %
-                                  (os.join.path(main_path, 'cluster/slurm_regdiff_%i_mocks.err' % pkl_n),
-                                   os.join.path(main_path, 'cluster/slurm_regdiff_%i_mocks.out' % pkl_n), pkl_name, '1',
+                                  (os.path.join(main_path, 'cluster/slurm_regdiff_%i_mocks.err' % pkl_n),
+                                   os.path.join(main_path, 'cluster/slurm_regdiff_%i_mocks.out' % pkl_n), pkl_name, '1',
                                    c_path, config_path))
 
 if __name__ == '__main__':
