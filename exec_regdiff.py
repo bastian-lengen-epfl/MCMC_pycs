@@ -7,11 +7,13 @@ def main(pickle_name, is_copy, path):
 
     os.chdir(path)
     if is_copy :
-        simset_copy, lcs, simoptfct, kwargs, opts, tsrand = pkl.load(pickle_name)
+        with open(pickle_name,'r') as f :
+            simset_copy, lcs, simoptfct, kwargs, opts, tsrand = pkl.load(f)
         pycs.sim.run.multirun(simset_copy, lcs, simoptfct, kwargs_optim=kwargs,
                           optset=opts, tsrand=tsrand)
     else :
-        simset_mock, lcs, simoptfct, kwargs, opts, tsrand = pkl.load(pickle_name)
+        with open(pickle_name, 'r') as f:
+            simset_mock, lcs, simoptfct, kwargs, opts, tsrand = pkl.load(f)
         pycs.sim.run.multirun(simset_mock, lcs, simoptfct, kwargs_optim=kwargs,
                               optset=opts, tsrand=tsrand, keepopt=True)
 
