@@ -30,7 +30,6 @@ def main(lensname,dataname,work_dir='./'):
 
     for a,kn in enumerate(config.knotstep) :
         for  b, knml in enumerate(config.mlknotsteps):
-            pkl_n += 1
 
             print config.combkw[a,b]
             os.chdir(config.lens_directory + config.combkw[a, b]) # Because carrot
@@ -45,6 +44,7 @@ def main(lensname,dataname,work_dir='./'):
             config.attachml(lcs,knml)
 
             for c, opts in enumerate(config.optset):
+                pkl_n += 1
                 pkl_name = os.path.join(c_path, 'transfert_pickle_%i.pkl'%pkl_n)
 
                 if config.simoptfctkw == "spl1":
