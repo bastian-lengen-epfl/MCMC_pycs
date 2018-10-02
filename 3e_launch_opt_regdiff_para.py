@@ -66,6 +66,8 @@ def main(lensname,dataname,work_dir='./'):
                         os.system("srun -n 1 -c 1 -u -e %s -o %s python exec_regdiff.py %s %s %s %s &"%
                                   (os.path.join(main_path, 'cluster/slurm_regdiff_%i_copie.err'%pkl_n),
                                    os.path.join(main_path, 'cluster/slurm_regdiff_%i_copie.out'%pkl_n) ,pkl_name,'1', c_path, config_path ))
+                        print "Job launched on copies ! "
+                        time.sleep(1)
 
                 if config.run_on_sims:
                     print "I will run the optimiser on the simulated lcs with the parameters :", kwargs
@@ -76,8 +78,10 @@ def main(lensname,dataname,work_dir='./'):
                     elif config.simoptfctkw == "regdiff":
                         os.system("srun -n 1 -c 1 -u -e %s -o %s python exec_regdiff.py %s %s %s %s &" %
                                   (os.path.join(main_path, 'cluster/slurm_regdiff_%i_mocks.err' % pkl_n),
-                                   os.path.join(main_path, 'cluster/slurm_regdiff_%i_mocks.out' % pkl_n), pkl_name, '1',
+                                   os.path.join(main_path, 'cluster/slurm_regdiff_%i_mocks.out' % pkl_n), pkl_name, '0',
                                    c_path, config_path))
+                        print "Job launched on mocks ! "
+                        time.sleep(1)
 
 if __name__ == '__main__':
     parser = ap.ArgumentParser(prog="python {}".format(os.path.basename(__file__)),
