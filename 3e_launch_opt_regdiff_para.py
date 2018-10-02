@@ -22,6 +22,8 @@ def applyshifts(lcs, timeshifts, magshifts):
 def main(lensname,dataname,work_dir='./'):
     main_path = os.getcwd()
     sys.path.append(work_dir + "config/")
+    config_path = os.path.abspath(work_dir + "config/")
+    print config_path
     config = importlib.import_module("config_" + lensname + "_" + dataname)
     base_lcs = pycs.gen.util.readpickle(config.data)
     pkl_n = 0
@@ -61,7 +63,7 @@ def main(lensname,dataname,work_dir='./'):
                         print "Not implemented yet, please use regdiff"
 
                     elif config.simoptfctkw == "regdiff":
-                        os.system("srun -n 1 -c 1 -u python exec_regdiff.py %s %s %s"%(pkl_name,'1', c_path ))
+                        os.system("srun -n 1 -c 1 -u python exec_regdiff.py %s %s %s %s"%(pkl_name,'1', c_path, config_path ))
                         exit()
 
                 if config.run_on_sims:
