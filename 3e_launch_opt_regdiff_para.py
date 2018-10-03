@@ -63,7 +63,7 @@ def main(lensname,dataname,work_dir='./'):
                         print "Not implemented yet, please use regdiff"
 
                     elif config.simoptfctkw == "regdiff":
-                        os.system("srun -n 1 -c 1 -u -e %s -o %s python exec_regdiff.py %s %s %s %s &"%
+                        os.system("srun -n 1 -c 1 -u -e -p p4 %s -o %s python exec_regdiff.py %s %s %s %s &"%
                                   (os.path.join(main_path, 'cluster/slurm_regdiff_%i_copie.err'%pkl_n),
                                    os.path.join(main_path, 'cluster/slurm_regdiff_%i_copie.out'%pkl_n) ,pkl_name,'1', c_path, config_path ))
                         print "Job launched on copies ! "
@@ -76,7 +76,7 @@ def main(lensname,dataname,work_dir='./'):
                     if config.simoptfctkw == "spl1":
                         print "Not implemented yet, please use regdiff"
                     elif config.simoptfctkw == "regdiff":
-                        os.system("srun -n 1 -c 1 -u -e %s -o %s python exec_regdiff.py %s %s %s %s &" %
+                        os.system("srun -n 1 -c 1 -u -p p4 -e %s -o %s python exec_regdiff.py %s %s %s %s &" %
                                   (os.path.join(main_path, 'cluster/slurm_regdiff_%i_mocks.err' % pkl_n),
                                    os.path.join(main_path, 'cluster/slurm_regdiff_%i_mocks.out' % pkl_n), pkl_name, '0',
                                    c_path, config_path))
