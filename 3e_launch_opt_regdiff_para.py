@@ -45,7 +45,8 @@ def main(lensname,dataname,work_dir='./'):
 
             for c, opts in enumerate(config.optset):
                 pkl_n += 1
-                pkl_name = os.path.join(c_path, 'transfert_pickle_%i.pkl'%pkl_n)
+                pkl_name_copie = os.path.join(c_path, 'transfert_pickle_copie_%i.pkl'%pkl_n)
+                pkl_name_mocks = os.path.join(c_path, 'transfert_pickle_mocks_%i.pkl'%pkl_n)
 
                 if config.simoptfctkw == "spl1":
                     kwargs = {'kn' : kn}
@@ -56,32 +57,32 @@ def main(lensname,dataname,work_dir='./'):
 
                 if config.run_on_copies:
                     print "I will run the optimiser on the copies with the parameters :", kwargs
-                    with open(pkl_name, 'wb') as f :
+                    with open(pkl_name_copie, 'wb') as f :
                         pkl.dump([config.simset_copy, lcs, config.simoptfct, kwargs, opts, config.tsrand], f)
 
                     if config.simoptfctkw == "spl1":
                         print "Not implemented yet, please use regdiff"
 
                     elif config.simoptfctkw == "regdiff":
-                        os.system("srun -n 1 -c 1 -u -e -p p4 %s -o %s python exec_regdiff.py %s %s %s %s &"%
-                                  (os.path.join(main_path, 'cluster/slurm_regdiff_%i_copie.err'%pkl_n),
-                                   os.path.join(main_path, 'cluster/slurm_regdiff_%i_copie.out'%pkl_n) ,pkl_name,'1', c_path, config_path ))
+                        os.system("srun -n 1 -c 1 -J %s -u -e %s -o %s python exec_regdiff.py %s %s %s %s &"%
+                                  (lensname+'_copies_'+str(kn)+'-'+str(knml),os.path.join(main_path, 'cluster/slurm_regdiff_%i_copie.err'%pkl_n),
+                                   os.path.join(main_path, 'cluster/slurm_regdiff_%i_copie.out'%pkl_n) ,pkl_name_copie,'1', c_path, config_path ))
                         print "Job launched on copies ! "
-                        time.sleep(1)
+                        time.sleep(0.1)
 
                 if config.run_on_sims:
                     print "I will run the optimiser on the simulated lcs with the parameters :", kwargs
-                    with open(pkl_name, 'wb') as f:
-                        pkl.dump([ config.simset_mock, lcs, config.simoptfct, kwargs, opts, config.tsrand], f)
+                    with open(pkl_name_mocks, 'wb') as f:
+                        pkl.dump([config.simset_mock, lcs, config.simoptfct, kwargs, opts, config.tsrand], f)
                     if config.simoptfctkw == "spl1":
                         print "Not implemented yet, please use regdiff"
                     elif config.simoptfctkw == "regdiff":
-                        os.system("srun -n 1 -c 1 -u -p p4 -e %s -o %s python exec_regdiff.py %s %s %s %s &" %
-                                  (os.path.join(main_path, 'cluster/slurm_regdiff_%i_mocks.err' % pkl_n),
-                                   os.path.join(main_path, 'cluster/slurm_regdiff_%i_mocks.out' % pkl_n), pkl_name, '0',
+                        os.system("srun -n 1 -c 1 -J %s -u -e %s -o %s python exec_regdiff.py %s %s %s %s &" %
+                                  (lensname+'_mocks_'+str(kn)+'-'+str(knml),os.path.join(main_path, 'cluster/slurm_regdiff_%i_mocks.err' % pkl_n),
+                                   os.path.join(main_path, 'cluster/slurm_regdiff_%i_mocks.out' % pkl_n), pkl_name_mocks, '0',
                                    c_path, config_path))
                         print "Job launched on mocks ! "
-                        time.sleep(1)
+                        time.sleep(0.1)
 
 if __name__ == '__main__':
     parser = ap.ArgumentParser(prog="python {}".format(os.path.basename(__file__)),
