@@ -106,9 +106,11 @@ mlknotsteps_marg = mlknotsteps
 # Chose the parameters you want to marginalise on for the regdiff optimiser. Script 4c.
 name_marg_regdiff = 'marginalisation_regdiff'
 tweakml_name_marg_regdiff = ['PS']
-auto_all = False #set this flag to True (recommanded) and it will use all the available regdiff simulation (all of the line below are ignored)
-knotstep_marg_regdiff = knotstep
-mlknotsteps_marg_regdiff = mlknotsteps
+knotstep_marg_regdiff = knotstep #choose the knotstep range you want to marginalise over, by default it is recommanded to take the same as knotstep
+mlknotsteps_marg_regdiff = mlknotsteps #choose the mlknotstep range you want to marginalise over, by default it is recommanded to take the same as mlknotstep
+auto_marginalisation = True #set this flag to True (recommanded) and it will marginalise over the setting in your preselection_file.
+
+# if you don't want to use the auto marginalisation
 covkernel_marg = covkernel #parameters to marginalise over, give a list or just select the same that you used above to marginalise over all the available parameters
 pointdensity_marg = pointdensity
 pow_marg = pow
@@ -117,14 +119,15 @@ scale_marg = scale
 errscale_marg = errscale
 
 #other parameteres for regdiff and spline marginalisation :
-testmode = True
+testmode = True #Number of bins to use for the marginalisation, True is faster and usually precise enough
 delay_labels = ["AB", "AC", "AD", "BC", "BD" , "CD"]
-sigmathresh = 0   #sigma threshold for sigma clipping, 0 is a true marginalisation, choose 1000 to take the most precise.
+sigmathresh = 0.5   #sigma threshold for sigma clipping, 0 is a true marginalisation, choose 1000 to take the most precise.
 
 ###### MARGGINALISE SPLINE AND REGDIFF TOGETHER #######
 #choose here the marginalisation you want to combine in script 4d, it will also use the sigmathresh:
 name_marg_list = ['marginalisation_1','marginalisation_2']
 new_name_marg = 'marg_12'
+sigmathresh_list = [0.5,0.5] #sigmathresh used for marginalisation_1 and marginalisation_2, it can be different from the sigmathresh used for the new marginalisation
 
 
 ### Functions definition
