@@ -41,6 +41,8 @@ def tweakml_PS(lcs, spline, B, f_min = 1/300.0,psplot=False, save_figure_folder 
         pgram = sc.lombscargle(x, y, freqs_data)
 
         if verbose :
+            print "#############################################"
+            print "Light curve ", l.object
             print "Time Span of your lightcurve : %i days"%span
             print "Average sampling of the curve [day] :", sampling
             print "Nymquist frequency [1/day]:", 1 / (sampling * 2.0)

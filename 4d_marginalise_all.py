@@ -4,6 +4,8 @@ import numpy as np
 import pickle as pkl
 import importlib
 import argparse as ap
+from module import util_func as ut
+
 
 def main(lensname,dataname,work_dir='./'):
     sys.path.append(work_dir + "config/")
@@ -28,55 +30,9 @@ def main(lensname,dataname,work_dir='./'):
         print "Error : name_marg_list and sigmathresh_list must haev the same size ! "
         exit()
 
-    if config.testmode:
-        nbins = 500
-    else:
-        nbins = 5000
-
-    group_list = []
-    medians_list = []
-    errors_up_list = []
-    errors_down_list = []
-
-    for i,marg in enumerate(config.name_marg_list):
-        path = config.lens_directory + marg + '/' + marg +'_sigma_%2.2f'%config.sigmathresh_list[i] + '_combined.pkl'
-        if not os.path.isfile(path):
-            print "Warning : I cannot find %s. I will skip this one. Be careful !" %path
-            continue
-
-        group = pkl.load(open(path, 'rb'))
-        group.name = marg
-        group_list.append(group)
-        medians_list.append(group.medians)
-        errors_up_list.append(group.errors_up)
-        errors_down_list.append(group.errors_down)
-
-    #build the bin list :
-    medians_list = np.asarray(medians_list)
-    errors_down_list = np.asarray(errors_down_list)
-    errors_up_list = np.asarray(errors_up_list)
-    binslist = []
-    for i, lab in enumerate(config.delay_labels):
-        bins = np.linspace(min(medians_list[:,i]) - 10 *min(errors_down_list[:,i]), max(medians_list[:,i]) + 10*max(errors_up_list[:,i]), nbins)
-        binslist.append(bins)
-
-    color_id = 0
-    for g,group in enumerate(group_list):
-        group.plotcolor = colors[color_id]
-        group.binslist = binslist
-        group.linearize(testmode=config.testmode)
-        color_id += 1
-        if color_id >= len(colors):
-            print "Warning : I don't have enough colors in my list, I'll restart from the beginning."
-            color_id = 0  # reset the color form the beginning
-
-
-    combined = copy.deepcopy(pycs.mltd.comb.combine_estimates(group_list, sigmathresh=config.sigmathresh, testmode=config.testmode))
-    combined.linearize(testmode=config.testmode)
-    combined.name = 'combined $\sigma = %2.2f$'%config.sigmathresh
-    combined.plotcolor = 'black'
-    print "Final combination for marginalisation ", config.new_name_marg
-    combined.niceprint()
+    path_list = [config.lens_directory + marg + '/' + marg +'_sigma_%2.2f'%sig + '_combined.pkl' for marg,sig in zip(config.name_marg_list,config.sigmathresh_list)]
+    name_list = [marg for marg in config.name_marg_list]
+    group_list, combined = ut.group_estimate(path_list, name_list, config.delay_labels, colors, config.sigma_thresh, config.new_name_marg, testmode = config.testmode)
 
     #plot the results :
 
