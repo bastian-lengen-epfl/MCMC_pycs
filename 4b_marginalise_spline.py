@@ -39,12 +39,16 @@ def main(lensname,dataname,work_dir='./'):
     simset_mock_ava = ["mocks_n%it%i_%s" % (int(config.nsim * config.nsimpkls), config.truetsr,i) for i in config.tweakml_name_marg_spline]
     opt = 'spl1'
 
+    combkw_marg = [["%s_ks%i_%s_ksml_%i" % (config.optfctkw, config.knotstep_marg[i], config.mlname, config.mlknotsteps_marg[j])
+               for j in range(len(config.mlknotsteps_marg))] for i in range(len(config.knotstep_marg))]
+    combkw_marg = np.asarray(combkw_marg)
+
     for a,kn in enumerate(config.knotstep_marg):
         for b, knml in enumerate(config.mlknotsteps_marg):
             for n, noise in enumerate(config.tweakml_name_marg_spline):
-                result_file_delay = config.lens_directory + config.combkw[a, b] + '/sims_%s_opt_%st%i/' % (config.simset_copy, opt, int(config.tsrand)) \
+                result_file_delay = config.lens_directory + combkw_marg[a, b] + '/sims_%s_opt_%st%i/' % (config.simset_copy, opt, int(config.tsrand)) \
                                     + 'sims_%s_opt_%s' % (config.simset_copy, opt) + 't%i_delays.pkl'%int(config.tsrand)
-                result_file_errorbars = config.lens_directory + config.combkw[a, b] + '/sims_%s_opt_%st%i/' % (config.simset_copy, opt, int(config.tsrand))\
+                result_file_errorbars = config.lens_directory + combkw_marg[a, b] + '/sims_%s_opt_%st%i/' % (config.simset_copy, opt, int(config.tsrand))\
                                         + 'sims_%s_opt_%s' % (simset_mock_ava[n], opt) + 't%i_errorbars.pkl'%int(config.tsrand)
                 if not os.path.isfile(result_file_delay) or not os.path.isfile(result_file_errorbars):
                     print 'Error I cannot find the files %s or %s. ' \
