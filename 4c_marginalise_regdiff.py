@@ -36,6 +36,9 @@ def main(lensname,dataname,work_dir='./'):
     f = open(marginalisation_dir + 'report_%s_sigma%2.1f.txt' % (config.name_marg_regdiff, config.sigmathresh), 'w')
     path_list = []
     name_list = []
+    combkw_marg = [["%s_ks%i_%s_ksml_%i" % (config.optfctkw, config.knotstep_marg[i], config.mlname, config.mlknotsteps_marg[j])
+               for j in range(len(config.mlknotsteps_marg))] for i in range(len(config.knotstep_marg))]
+    combkw_marg = np.asarray(combkw_marg)
 
     for a, kn in enumerate(config.knotstep_marg_regdiff):
         for b, knml in enumerate(config.mlknotsteps_marg_regdiff):
@@ -58,11 +61,11 @@ def main(lensname,dataname,work_dir='./'):
 
                 for paramskw in kw_list :
                     for n, noise in enumerate(config.tweakml_name_marg_regdiff):
-                        result_file_delay = config.lens_directory + config.combkw[a, b] + '/sims_%s_opt_%st%i/' \
+                        result_file_delay = config.lens_directory + combkw_marg[a, b] + '/sims_%s_opt_%st%i/' \
                                             % (config.simset_copy, paramskw, int(config.tsrand)) \
                                             + 'sims_%s_opt_%s' % (config.simset_copy, paramskw) + 't%i_delays.pkl' % int(
                             config.tsrand)
-                        result_file_errorbars = config.lens_directory + config.combkw[a, b] + '/sims_%s_opt_%st%i/' \
+                        result_file_errorbars = config.lens_directory + combkw_marg[a, b] + '/sims_%s_opt_%st%i/' \
                                                 % (config.simset_copy, paramskw, int(config.tsrand)) \
                                                 + 'sims_%s_opt_%s' % (simset_mock_ava[n], paramskw) + \
                                                 't%i_errorbars.pkl' % int(config.tsrand)
@@ -113,10 +116,10 @@ def main(lensname,dataname,work_dir='./'):
                                             else :
                                                 paramskw = "regdiff_pd%i_ck%s_pow%.1f_amp%.1f_sc%i_errsc%i_" % (pts, c, p, am, s, e)
                                             print count
-                                            result_file_delay = config.lens_directory + config.combkw[a, b] + '/sims_%s_opt_%st%i/' \
+                                            result_file_delay = config.lens_directory + combkw_marg[a, b] + '/sims_%s_opt_%st%i/' \
                                                                 %(config.simset_copy, paramskw, int(config.tsrand)) \
                                                                 + 'sims_%s_opt_%s' % (config.simset_copy, paramskw) + 't%i_delays.pkl'%int(config.tsrand)
-                                            result_file_errorbars = config.lens_directory + config.combkw[a, b] + '/sims_%s_opt_%st%i/' \
+                                            result_file_errorbars = config.lens_directory + combkw_marg[a, b] + '/sims_%s_opt_%st%i/' \
                                                                     % (config.simset_copy, paramskw, int(config.tsrand))\
                                                                     + 'sims_%s_opt_%s' % (simset_mock_ava[n], paramskw) + \
                                                                     't%i_errorbars.pkl'%int(config.tsrand)
