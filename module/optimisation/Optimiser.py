@@ -36,7 +36,7 @@ class Optimiser(object):
             if tweakml_type == 'colored_noise':
                 theta_init = [[-2.0,0.1] for i in range(self.ncurve)]
             elif tweakml_type == 'PS_from_residuals':
-                theta_init = [[1.0] for i in range(self.ncurve)]
+                theta_init = [[0.5] for i in range(self.ncurve)]
         if len(theta_init) != len(lcs):
             print "Error : Your init vector and list of light curves must have the same size !"
             exit()
@@ -818,7 +818,7 @@ class Dic_Optimiser(Optimiser):
             print self.message[:-2]
             return True
         if all(self.turn_back[i] > 4 for i in range(self.ncurve)):
-            self.message = "I stopped because I passed four times the optimal value.\n"
+            self.message = "I stopped because I passed four times the optimal value for all the curves.\n"
             print self.message[:-2]
             return True
         if self.check_success():
