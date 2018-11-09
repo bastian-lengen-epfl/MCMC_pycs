@@ -1,5 +1,5 @@
 import sys
-import pycs
+import pycs, copy
 import os
 import numpy as np
 import pickle as pkl
@@ -43,7 +43,7 @@ def main(lensname,dataname,work_dir='./'):
     for a, kn in enumerate(config.knotstep_marg_regdiff):
         for b, knml in enumerate(config.mlknotsteps_marg_regdiff):
 
-
+            count = 0
             color_id = 0
 
             group_list = []
@@ -58,16 +58,17 @@ def main(lensname,dataname,work_dir='./'):
                     raise RuntimeError("Turn the use_preselected_regdiff to True and set your preselection_file before using auto_marginalisation.")
 
                 kw_list = ut.read_preselected_regdiffparamskw(config.preselection_file)
+                kw_dic = ut.get_keyword_regdiff_from_file(config.preselection_file)
 
-                for paramskw in kw_list :
+                for paramskw, dickw in zip(kw_list,kw_dic) :
                     for n, noise in enumerate(config.tweakml_name_marg_regdiff):
-                        result_file_delay = config.lens_directory + combkw_marg[a, b] + '/sims_%s_opt_%st%i/' \
+                        result_file_delay = config.lens_directory + combkw_marg[a, b] + '/sims_%s_opt_regdiff%st%i/' \
                                             % (config.simset_copy, paramskw, int(config.tsrand)) \
-                                            + 'sims_%s_opt_%s' % (config.simset_copy, paramskw) + 't%i_delays.pkl' % int(
+                                            + 'sims_%s_opt_regdiff%s' % (config.simset_copy, paramskw) + 't%i_delays.pkl' % int(
                             config.tsrand)
-                        result_file_errorbars = config.lens_directory + combkw_marg[a, b] + '/sims_%s_opt_%st%i/' \
+                        result_file_errorbars = config.lens_directory + combkw_marg[a, b] + '/sims_%s_opt_regdiff%st%i/' \
                                                 % (config.simset_copy, paramskw, int(config.tsrand)) \
-                                                + 'sims_%s_opt_%s' % (simset_mock_ava[n], paramskw) + \
+                                                + 'sims_%s_opt_regdiff%s' % (simset_mock_ava[n], paramskw) + \
                                                 't%i_errorbars.pkl' % int(config.tsrand)
 
                         if not os.path.isfile(result_file_delay) or not os.path.isfile(result_file_errorbars):
@@ -79,7 +80,7 @@ def main(lensname,dataname,work_dir='./'):
 
                         group_list.append(pycs.mltd.comb.getresults(
                             pycs.mltd.comb.CScontainer(data=dataname, knots=kn, ml=knml,
-                                                       name="set %i" % count,
+                                                       name="set %i"%(count+1),
                                                        drawopt=config.optfctkw, runopt=opt,
                                                        ncopy=config.ncopy * config.ncopypkls,
                                                        nmocks=config.nsim * config.nsimpkls, truetsr=config.truetsr,
@@ -90,13 +91,16 @@ def main(lensname,dataname,work_dir='./'):
                         errors_up_list.append(group_list[-1].errors_up)
                         errors_down_list.append(group_list[-1].errors_down)
                         color_id += 1
+                        count +=1
                         if color_id >= len(colors):
                             print "Warning : I don't have enough colors in my list, I'll restart from the beginning."
                             color_id = 0  # reset the color form the beginning
 
                         f.write('Set %i, knotstep : %2.2f, mlknotstep : %2.2f \n' % (count, kn, knml))
                         f.write('covkernel : %s, point density: %2.2f, pow : %2.2f, amp : %2.2f, '
-                                'scale:%2.2f, errscale:%2.2f \n' % (c, pts, p, am, s, e))
+                                'scale:%2.2f, errscale:%2.2f \n' % (dickw["covkernel"], dickw["pointdensity"],
+                                                                    dickw["pow"],dickw["amp"],dickw["scale"],
+                                                                    dickw["errscale"]))
                         f.write('Tweak ml name : %s \n' % noise)
                         f.write('------------------------------------------------ \n')
 
@@ -132,7 +136,7 @@ def main(lensname,dataname,work_dir='./'):
 
                                             group_list.append(pycs.mltd.comb.getresults(
                                                 pycs.mltd.comb.CScontainer(data=dataname, knots=kn, ml=knml,
-                                                                           name="set %i" %count,
+                                                                           name="set %i" %(count+1),
                                                                            drawopt=config.optfctkw, runopt=opt, ncopy=config.ncopy*config.ncopypkls,
                                                                            nmocks=config.nsim*config.nsimpkls, truetsr=config.truetsr,
                                                                            colour=colors[color_id],
@@ -172,7 +176,7 @@ def main(lensname,dataname,work_dir='./'):
                     print "Warning : I don't have enough colors in my list, I'll restart from the beginning."
                     color_id = 0  # reset the color form the beginning
 
-            combined= pycs.mltd.comb.combine_estimates(group_list, sigmathresh=config.sigmathresh, testmode=config.testmode)
+            combined= copy.deepcopy(pycs.mltd.comb.combine_estimates(group_list, sigmathresh=config.sigmathresh, testmode=config.testmode))
             combined.linearize(testmode=config.testmode)
             combined.name = 'combined $\sigma = %2.2f$'%config.sigmathresh
 
@@ -201,7 +205,7 @@ def main(lensname,dataname,work_dir='./'):
 
 
     ###################  MAKE THE FINAL REGDIFF ESTIMATE ####################
-    final_groups, final_combined = ut.group_estimate(path_list, name_list, config.delay_labels, colors, config.sigma_thresh, config.name_marg_regdiff, testmode = config.testmode)
+    final_groups, final_combined = ut.group_estimate(path_list, name_list, config.delay_labels, colors, config.sigmathresh, config.name_marg_regdiff, testmode = config.testmode)
     text = [
         (0.75, 0.92, r"$\mathrm{" + config.full_lensname + "}$" + "\n" + r"$\mathrm{PyCS\ estimates}$",
          {"fontsize": 26, "horizontalalignment": "center"})]
