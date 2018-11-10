@@ -8,6 +8,8 @@ from module import tweakml_PS_from_data as twk
 from module.plots import plot_functions as pltfct
 from cosmoHammer import MpiParticleSwarmOptimizer
 from cosmoHammer import ParticleSwarmOptimizer
+import matplotlib as mpl
+mpl.use('Agg')
 import matplotlib.pyplot as plt
 import pickle
 from functools import partial

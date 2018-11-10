@@ -3,6 +3,8 @@
 from module import tweakml_PS_from_data as twk
 import pycs, os
 from module.optimisation import Optimiser as mcmc
+import matplotlib as mpl
+mpl.use('Agg')
 import matplotlib.pyplot as plt
 import numpy as np
 import pickle as pkl

@@ -2,6 +2,8 @@
 import pycs, sys
 import os, importlib
 import argparse as ap
+import matplotlib as mpl
+mpl.use('Agg')
 import matplotlib.pyplot as plt
 
 
