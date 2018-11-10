@@ -23,7 +23,6 @@ def main(lensname,dataname,work_dir='./'):
     main_path = os.getcwd()
     sys.path.append(work_dir + "config/")
     config_path = os.path.abspath(work_dir + "config/")
-    print config_path
     config = importlib.import_module("config_" + lensname + "_" + dataname)
     base_lcs = pycs.gen.util.readpickle(config.data)
     pkl_n = 0

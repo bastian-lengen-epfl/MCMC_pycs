@@ -1,9 +1,8 @@
+
 import pycs.regdiff
 import time
 from module.optimisation import mcmc_function as mcmc
 import numpy as np
-import matplotlib as mpl
-mpl.use('Agg')
 import matplotlib.pyplot as plt
 
 start_time = time.time()

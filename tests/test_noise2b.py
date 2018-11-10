@@ -2,11 +2,11 @@
 import sys
 sys.path.append("..")
 from module import tweakml_PS_from_data as twk
-import pycs
-import numpy as np
 import matplotlib as mpl
 mpl.use('Agg')
 import matplotlib.pyplot as plt
+import pycs
+import numpy as np
 
 source ="pickle"
 object = "WFI2033"

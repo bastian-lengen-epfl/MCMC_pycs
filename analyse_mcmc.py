@@ -1,8 +1,8 @@
-import pickle
-import corner
 import matplotlib as mpl
 mpl.use('Agg')
 import matplotlib.pyplot as plt
+import pickle
+import corner
 import numpy as np
 import pycs
 from module.optimisation import mcmc_function as fmcmc
