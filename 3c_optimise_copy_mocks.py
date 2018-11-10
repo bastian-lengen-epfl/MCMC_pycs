@@ -1,4 +1,5 @@
 ##### Now, we can analyse these results with the method of our choice. WARNING : this may take loooooooong
+##### I'm not re-running on already optimized lcs !
 import sys
 import pycs
 import time
