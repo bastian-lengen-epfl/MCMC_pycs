@@ -1,10 +1,9 @@
-
-import pycs, sys
-import os, importlib
-import argparse as ap
 import matplotlib as mpl
 mpl.use('Agg')
 import matplotlib.pyplot as plt
+import pycs, sys
+import os, importlib
+import argparse as ap
 
 
 def main(lensname,dataname,work_dir='./'):

@@ -1,11 +1,10 @@
 #This script show how you can use the POwer Spectrum of the residuals to tweak your ml spline.
-
-from module import tweakml_PS_from_data as twk
-import pycs, os
-from module.optimisation import Optimiser as mcmc
 import matplotlib as mpl
 mpl.use('Agg')
 import matplotlib.pyplot as plt
+from module import tweakml_PS_from_data as twk
+import pycs, os
+from module.optimisation import Optimiser as mcmc
 import numpy as np
 import pickle as pkl
 
