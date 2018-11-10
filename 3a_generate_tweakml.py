@@ -1,4 +1,3 @@
-
 import pycs
 from module import tweakml_PS_from_data as twk
 from module.optimisation import Optimiser as mcmc
@@ -8,6 +7,9 @@ import sys
 import numpy as np
 import argparse as ap
 import importlib
+import matplotlib as mpl
+mpl.use('Agg')
+import matplotlib.pyplot as plt
 
 def run_PSO(lcs,spline,kn,optim_directory, config_file, stream):
     config = importlib.import_module(config_file)
