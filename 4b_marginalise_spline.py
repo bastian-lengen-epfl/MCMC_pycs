@@ -28,8 +28,9 @@ def main(lensname,dataname,work_dir='./'):
     else:
         nbins = 5000
 
-    colors = ["royalblue", "crimson", "seagreen", "darkorchid", "darkorange", 'indianred', 'purple', 'brown', 'violet', 'paleturquoise', 'palevioletred', 'olive',
-              'indianred', 'salmon','lightcoral', 'chocolate', 'indigo', 'steelblue' , 'cyan', 'gold']
+    colors = ["royalblue", "crimson", "seagreen", "darkorchid", "darkorange", 'indianred', 'purple', 'brown', 'black',
+              'violet', 'dodgerblue', 'palevioletred', 'olive',
+              'brown', 'salmon', 'chocolate', 'indigo', 'steelblue', 'cyan', 'gold' , 'lightcoral']
     color_id = 0
 
     group_list = []
@@ -105,7 +106,7 @@ def main(lensname,dataname,work_dir='./'):
     #plot the results :
 
     text = [
-        (0.75, 0.92, r"$\mathrm{" + config.full_lensname + "}$" + "\n" + r"$\mathrm{PyCS\ estimates}$",
+        (0.80, 0.90, r"$\mathrm{" + config.full_lensname + "}$" + "\n" + r"$\mathrm{PyCS\ estimates}$",
          {"fontsize": 26, "horizontalalignment": "center"})]
 
     radius = (np.max(errors_up_list) + np.max(errors_down_list))/2.0 *1.5

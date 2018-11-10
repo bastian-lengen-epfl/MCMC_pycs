@@ -30,7 +30,7 @@ knotstep = [35,45,55,65] #give a list of the parameter you want
 ### REGDIFF PARAMETERS ###
 #To use 5 set of parameters pre-selected :
 use_preselected_regdiff = True
-preselection_file = 'config/preset_regdiff_ECAM.txt'
+preselection_file = 'CHANGE PATH HERE' #'config/preset_regdiff_ECAM.txt'
 #You can give your own grid here if use_preselected_regdiff == False :
 covkernel = ['matern']  # can be matern, pow_exp or gaussian
 pointdensity = [2]
