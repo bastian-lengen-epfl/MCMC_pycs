@@ -4,7 +4,9 @@
 import pycs
 import os,sys, glob, importlib
 import argparse as ap
-
+import matplotlib as mpl
+mpl.use('Agg')
+import matplotlib.pyplot as plt
 
 def main(lensname,dataname,work_dir='./'):
     sys.path.append(work_dir + "config/")
