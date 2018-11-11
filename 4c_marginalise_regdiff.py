@@ -94,6 +94,9 @@ def main(lensname,dataname,work_dir='./'):
                         medians_list.append(group_list[-1].medians)
                         errors_up_list.append(group_list[-1].errors_up)
                         errors_down_list.append(group_list[-1].errors_down)
+
+                        print medians_list[-1],errors_up_list[-1],errors_down_list[-1]
+
                         if np.isnan(np.any(medians_list[-1])) or np.isnan(np.any(errors_up_list[-1])) or np.isnan(np.any(errors_down_list[-1])):
                             print "There is some Nan value in %s, for noise %s, kn %i, knml%i"%(dickw['name'], noise, kn,knml)
                             print "I could erase this entry and continue the marginalisation. "
@@ -101,6 +104,7 @@ def main(lensname,dataname,work_dir='./'):
                             medians_list = medians_list[:-1]
                             errors_down_list = errors_down_list[:-1]
                             errors_up_list = errors_down_list[:-1]
+                            group_list = group_list[:-1]
                             continue
                         color_id += 1
                         count +=1
