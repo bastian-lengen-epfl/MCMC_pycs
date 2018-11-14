@@ -12,6 +12,8 @@ def main(lensname,dataname,work_dir='./'):
     sys.path.append(work_dir + "config/")
     config = importlib.import_module("config_" + lensname + "_" + dataname)
     marginalisation_plot_dir = config.figure_directory + 'marginalisation_plots/'
+    regdiff_dir = os.path.join(config.lens_directory, "regdiff_outputs/")
+    regdiff_copie_dir = os.path.join(regdiff_dir, "copies/")
 
     if not os.path.isdir(marginalisation_plot_dir):
         os.mkdir(marginalisation_plot_dir)
@@ -66,12 +68,11 @@ def main(lensname,dataname,work_dir='./'):
                 for a, kn in enumerate(config.knotstep_marg_regdiff):
                     for b, knml in enumerate(config.mlknotsteps_marg_regdiff):
 
-                        result_file_delay = config.lens_directory + combkw_marg[a, b] + '/sims_%s_opt_regdiff%st%i/' \
-                                            % (config.simset_copy, paramskw, int(config.tsrand)) \
-                                            + 'sims_%s_opt_regdiff%s' % (config.simset_copy, paramskw) + 't%i_delays.pkl' % int(
-                            config.tsrand)
-                        result_file_errorbars = config.lens_directory + combkw_marg[a, b] + '/sims_%s_opt_regdiff%st%i/' \
-                                                % (config.simset_copy, paramskw, int(config.tsrand)) \
+                        regdiff_mocks_dir = os.path.join(regdiff_dir, "mocks_knt%i_mlknt%i/" %(kn, knml))
+
+                        result_file_delay = regdiff_copie_dir + 'sims_%s_opt_regdiff%s' % (config.simset_copy, paramskw) \
+                                            + 't%i_delays.pkl' % int(config.tsrand)
+                        result_file_errorbars = regdiff_mocks_dir \
                                                 + 'sims_%s_opt_regdiff%s' % (simset_mock_ava[n], paramskw) + \
                                                 't%i_errorbars.pkl' % int(config.tsrand)
 
