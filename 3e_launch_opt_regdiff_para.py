@@ -55,19 +55,23 @@ def main(lensname,dataname,work_dir='./'):
                     print "Error : simoptfctkw must be spl1 or regdiff"
 
                 if config.run_on_copies:
-                    print "I will run the optimiser on the copies with the parameters :", kwargs
-                    with open(pkl_name_copie, 'wb') as f :
-                        pkl.dump([config.simset_copy, lcs, config.simoptfct, kwargs, opts, config.tsrand], f)
+                    if a == 0 and b == 0:  # for copies, run on only 1 (knstp,mlknstp) as it the same for others
+                        print "I will run the optimiser on the copies with the parameters :", kwargs
+                        with open(pkl_name_copie, 'wb') as f :
+                            pkl.dump([config.simset_copy, lcs, config.simoptfct, kwargs, opts, config.tsrand], f)
 
-                    if config.simoptfctkw == "spl1":
-                        print "Not implemented yet, please use regdiff"
+                        if config.simoptfctkw == "spl1":
+                            print "Not implemented yet, please use regdiff"
 
-                    elif config.simoptfctkw == "regdiff":
-                        os.system("srun -n 1 -c 1 -J %s -u -e %s -o %s python exec_regdiff.py %s %s %s %s &"%
-                                  (lensname+'_copies_'+str(kn)+'-'+str(knml),os.path.join(main_path, 'cluster/slurm_regdiff_%i_copie.err'%pkl_n),
-                                   os.path.join(main_path, 'cluster/slurm_regdiff_%i_copie.out'%pkl_n) ,pkl_name_copie,'1', c_path, config_path ))
-                        print "Job launched on copies ! "
-                        time.sleep(0.1)
+                        elif config.simoptfctkw == "regdiff":
+                            os.system("srun -n 1 -c 1 -J %s -u -e %s -o %s python exec_regdiff.py %s %s %s %s &"%
+                                      (lensname+'_copies_'+str(kn)+'-'+str(knml),os.path.join(main_path, 'cluster/slurm_regdiff_%i_copie.err'%pkl_n),
+                                       os.path.join(main_path, 'cluster/slurm_regdiff_%i_copie.out'%pkl_n) ,pkl_name_copie,'1', c_path, config_path ))
+                            print "Job launched on copies ! "
+
+                            dir_link = os.path.join(c_path,"sims_%s_opt_%s" % (config.simset_copy, opts))
+                            pkl.dump(dir_link,open(os.path.join(config.lens_directory,'regdiff_copies_link_%s.pkl'%kwargs['name']),'w'))
+                            time.sleep(0.1)
 
                 if config.run_on_sims:
                     print "I will run the optimiser on the simulated lcs with the parameters :", kwargs
