@@ -19,7 +19,7 @@ def applyshifts(lcs, timeshifts, magshifts):
         lc.shifttime(timeshift)
 
 
-def main(lensname,dataname,work_dir='./'):
+def main(lensname,dataname,work_dir='./',queue='s1'):
     main_path = os.getcwd()
     sys.path.append(work_dir + "config/")
     config_path = os.path.abspath(work_dir + "config/")
@@ -64,8 +64,8 @@ def main(lensname,dataname,work_dir='./'):
                             print "Not implemented yet, please use regdiff"
 
                         elif config.simoptfctkw == "regdiff":
-                            os.system("srun -n 1 -c 1 -J %s -u -e %s -o %s python exec_regdiff.py %s %s %s %s &"%
-                                      (lensname+'_copies_'+str(kn)+'-'+str(knml),os.path.join(main_path, 'cluster/slurm_regdiff_%i_copie.err'%pkl_n),
+                            os.system("srun -n 1 -c 1 -p %s -J %s -u -e %s -o %s python exec_regdiff.py %s %s %s %s &"%
+                                      (queue, lensname+'_copies_'+str(kn)+'-'+str(knml),os.path.join(main_path, 'cluster/slurm_regdiff_%i_copie.err'%pkl_n),
                                        os.path.join(main_path, 'cluster/slurm_regdiff_%i_copie.out'%pkl_n) ,pkl_name_copie,'1', c_path, config_path ))
                             print "Job launched on copies ! "
 
@@ -80,8 +80,8 @@ def main(lensname,dataname,work_dir='./'):
                     if config.simoptfctkw == "spl1":
                         print "Not implemented yet, please use regdiff"
                     elif config.simoptfctkw == "regdiff":
-                        os.system("srun -n 1 -c 1 -J %s -u -e %s -o %s python exec_regdiff.py %s %s %s %s &" %
-                                  (lensname+'_mocks_'+str(kn)+'-'+str(knml),os.path.join(main_path, 'cluster/slurm_regdiff_%i_mocks.err' % pkl_n),
+                        os.system("srun -n 1 -c 1 -p %s -J %s -u -e %s -o %s python exec_regdiff.py %s %s %s %s &" %
+                                  (queue, lensname+'_mocks_'+str(kn)+'-'+str(knml),os.path.join(main_path, 'cluster/slurm_regdiff_%i_mocks.err' % pkl_n),
                                    os.path.join(main_path, 'cluster/slurm_regdiff_%i_mocks.out' % pkl_n), pkl_name_mocks, '0',
                                    c_path, config_path))
                         print "Job launched on mocks ! "
@@ -94,6 +94,7 @@ if __name__ == '__main__':
     help_lensname = "name of the lens to process"
     help_dataname = "name of the data set to process (Euler, SMARTS, ... )"
     help_work_dir = "name of the working directory"
+    help_queue = "queue to launch the jobs"
     parser.add_argument(dest='lensname', type=str,
                         metavar='lens_name', action='store',
                         help=help_lensname)
@@ -103,5 +104,8 @@ if __name__ == '__main__':
     parser.add_argument('--dir', dest='work_dir', type=str,
                             metavar='', action='store', default='./',
                             help=help_work_dir)
+    parser.add_argument('--p', dest='queue', type=str,
+                            metavar='', action='store', default='s1',
+                            help=help_queue)
     args = parser.parse_args()
-    main(args.lensname,args.dataname, work_dir=args.work_dir)
+    main(args.lensname,args.dataname, work_dir=args.work_dir, queue = args.queue)
