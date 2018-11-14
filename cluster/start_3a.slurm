@@ -8,7 +8,7 @@ set -x
 
 cd ..
 
-run_command="srun -n 1 -c $NUM_CORE -u"
+run_command="srun -n 1 -c $NUM_CORE -u "
 if [ "$SERVER_NAME" = "r4" ]; then
     run_options="--mpi=pmi2"
 else

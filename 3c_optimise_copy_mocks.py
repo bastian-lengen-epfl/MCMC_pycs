@@ -8,6 +8,7 @@ import os, copy
 import argparse as ap
 import importlib
 import numpy
+import pickle as pkl
 
 def applyshifts(lcs, timeshifts, magshifts):
     if not len(lcs) == len(timeshifts) and len(lcs) == len(magshifts):
@@ -23,21 +24,21 @@ def exec_worker_copie_aux(args):
     return exec_worker_copie(*args)
 
 
-def exec_worker_copie(i, simset_copy, lcs, simoptfct, kwargs_optim, optset, tsrand):
+def exec_worker_copie(i, simset_copy, lcs, simoptfct, kwargs_optim, optset, tsrand, destpath):
     print "worker %i starting..." % i
     time.sleep(i)
     pycs.sim.run.multirun(simset_copy, lcs, simoptfct, kwargs_optim=kwargs_optim,
-                          optset=optset, tsrand=tsrand)
+                          optset=optset, tsrand=tsrand, destpath= destpath)
 
 def exec_worker_mocks_aux(args):
     return exec_worker_mocks(*args)
 
 
-def exec_worker_mocks(i, simset_mock, lcs, simoptfct, kwargs_optim, optset, tsrand):
+def exec_worker_mocks(i, simset_mock, lcs, simoptfct, kwargs_optim, optset, tsrand, destpath):
     print "worker %i starting..." % i
     time.sleep(i)
     pycs.sim.run.multirun(simset_mock, lcs,simoptfct, kwargs_optim=kwargs_optim,
-                          optset=optset, tsrand=tsrand, keepopt=True)
+                          optset=optset, tsrand=tsrand, keepopt=True, destpath=destpath)
 
 
 def main(lensname,dataname,work_dir='./'):
@@ -47,10 +48,9 @@ def main(lensname,dataname,work_dir='./'):
     base_lcs = pycs.gen.util.readpickle(config.data)
     for a,kn in enumerate(config.knotstep) :
         for  b, knml in enumerate(config.mlknotsteps):
-	    os.chdir(main_path)
-            print config.combkw[a,b]
-            os.chdir(config.lens_directory + config.combkw[a, b]) # Because carrot
             lcs = copy.deepcopy(base_lcs)
+            destpath = os.path.join(main_path, config.lens_directory + config.combkw[a, b] + '/')
+            print destpath
             ##### We start by shifting our curves "by eye", to get close to the result and help the optimisers to do a good job
             applyshifts(lcs, config.timeshifts, config.magshifts)
 
@@ -71,28 +71,31 @@ def main(lensname,dataname,work_dir='./'):
 
                 if config.run_on_copies:
                     print "I will run the optimiser on the copies with the parameters :", kwargs
-                    job_args = [(j, config.simset_copy, lcs, config.simoptfct, kwargs, opts, config.tsrand) for j in
-                                range(nworkers)]
                     p = Pool(nworkers)
                     if config.simoptfctkw == "spl1":
+                        job_args = [(j, config.simset_copy, lcs, config.simoptfct, kwargs, opts, config.tsrand, destpath) for j in
+                                    range(nworkers)]
                         p.map(exec_worker_copie_aux, job_args)
                     elif config.simoptfctkw == "regdiff":
-                        #~ job_args = (0, config.simset_copy, lcs, config.simoptfct, kwargs, opts, config.tsrand)
-                        #~ exec_worker_copie_aux(job_args)
-                        p.map(exec_worker_copie_aux, job_args)# because for some reason, regdiff does not like multiproc.
+                        if a == 0 and b == 0 : # for copies, run on only 1 (knstp,mlknstp) as it the same for others
+                            job_args = (0, config.simset_copy, lcs, config.simoptfct, kwargs, opts, config.tsrand, destpath)
+                            exec_worker_copie_aux(job_args)
+                            dir_link = os.path.join(destpath,"sims_%s_opt_%s" % (config.simset_copy, opts))
+                            print "Dir link :", dir_link
+                            pkl.dump(dir_link,open(os.path.join(config.lens_directory,'regdiff_copies_link_%s.pkl'%kwargs['name']),'w'))
+                        # p.map(exec_worker_copie_aux, job_args)# because for some reason, regdiff does not like multiproc.
 
                 if config.run_on_sims:
                     print "I will run the optimiser on the simulated lcs with the parameters :", kwargs
-
-                    job_args = [(j, config.simset_mock, lcs, config.simoptfct, kwargs, opts, config.tsrand) for j in
-                                range(nworkers)]
                     p = Pool(nworkers)
                     if config.simoptfctkw == "spl1":
+                        job_args = [(j, config.simset_mock, lcs, config.simoptfct, kwargs, opts, config.tsrand, destpath) for j in
+                                    range(nworkers)]
                         p.map(exec_worker_mocks_aux, job_args)
                     elif config.simoptfctkw == "regdiff":
-                        #~ job_args = (0, config.simset_mock, lcs, config.simoptfct, kwargs, opts, config.tsrand)
-                        #~ exec_worker_mocks_aux(job_args)  # because for some reason, regdiff does not like multiproc.
-                        p.map(exec_worker_copie_aux, job_args)
+                        job_args = (0, config.simset_mock, lcs, config.simoptfct, kwargs, opts, config.tsrand, destpath)
+                        exec_worker_mocks_aux(job_args)  # because for some reason, regdiff does not like multiproc.
+                        # p.map(exec_worker_copie_aux, job_args)
 
 if __name__ == '__main__':
     parser = ap.ArgumentParser(prog="python {}".format(os.path.basename(__file__)),

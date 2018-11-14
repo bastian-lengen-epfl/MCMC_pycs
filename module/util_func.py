@@ -148,3 +148,16 @@ def group_estimate(path_list, name_list, delay_labels, colors, sigma_thresh, new
     combined.niceprint()
 
     return group_list, combined
+
+def convert_delays2timeshifts(timedelay):
+    """
+    Convert the time-delays you can measure by eye into time-shifts for the individual curve
+    :param timedelay: list of time delays
+    :return: list of timeshifts
+    """
+    timeshift=np.zeros(len(timedelay)+1)
+    timeshift[1:]=timedelay
+    return timeshift
+
+
+

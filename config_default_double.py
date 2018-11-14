@@ -10,7 +10,7 @@ from module import util_func as ut
 full_lensname =''
 lcs_label = ['A','B']
 #initial guess :
-timeshifts = [0.,0.]
+timeshifts = ut.convert_delays2timeshifts([0.])#give the estimated AB delay
 magshifts =  [0.,0.]
 
 #general config :

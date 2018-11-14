@@ -815,7 +815,7 @@ class Dic_Optimiser(Optimiser):
         return self.chain_list
 
     def check_if_stop(self):
-        if self.iteration > self.max_iter:
+        if self.iteration >= self.max_iter:
             self.message = "I stopped because I reached the max number of iteration.\n"
             print self.message[:-2]
             return True

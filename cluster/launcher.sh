@@ -7,11 +7,11 @@
 
 export JOB_BASENAME="3c"
 export SERVER_NAME="lesta"  # on Regor : 'r3', 'r4' ; otherwise 'deneb' or 'fidis'
-export QUEUE_NAME="p4"  # on Regor : 'r3', 'r4' ; on deneb "debug" or "serial"
+export QUEUE_NAME="s2"  # on Regor : 'r3', 'r4' ; on deneb "debug" or "serial"
 
-export OBJECT_NAME='J0158'
+export OBJECT_NAME='WFI2026'
 export DATA_NAME='Euler'
-export NUM_CORE="1"
+export NUM_CORE="12"
 export WORK_DIR='./'
 
 

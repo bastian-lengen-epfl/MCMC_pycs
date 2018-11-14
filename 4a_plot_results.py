@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import pycs, sys
 import os, importlib
 import argparse as ap
+import pickle as pkl
 
 
 def main(lensname,dataname,work_dir='./'):
@@ -19,8 +20,15 @@ def main(lensname,dataname,work_dir='./'):
             for o, opt in enumerate(config.optset):
 
                 #Copies :
-                copiesres = [pycs.sim.run.collect(config.lens_directory + config.combkw[a, b] + '/sims_%s_opt_%s' %(config.simset_copy, opt), 'blue',
-                                                  dataname + "_" + config.combkw[a, b])]
+                if config.simoptfctkw == "regdiff":
+                    kwargs = config.kwargs_optimiser_simoptfct[o]
+                    dir_link = pkl.load(open(config.lens_directory,'regdiff_copies_link_%s.pkl'%kwargs['name'],'r'))
+                    copiesres = [pycs.sim.run.collect(dir_link, 'blue',
+                                                      dataname + "_regdiff_%s"%kwargs['name'])]
+                elif config.simoptfctkw == "spl1"
+                    copiesres = [pycs.sim.run.collect(config.lens_directory + config.combkw[a, b] + '/sims_%s_opt_%s' %(config.simset_copy, opt), 'blue',
+                                                      dataname + "_" + config.combkw[a, b])]
+
                 pycs.sim.plot.hists(copiesres, r=50.0, nbins=100, dataout=True,
                                     filename=figure_directory+'delay_hist_%i-%i_sims_%s_opt_%s.png'%(kn,knml,config.simset_copy, opt),
                                     outdir = config.lens_directory + config.combkw[a, b] + '/sims_%s_opt_%s/' %(config.simset_copy, opt))
