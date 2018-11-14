@@ -124,6 +124,7 @@ sigmathresh = 0   #sigma threshold for sigma clipping, 0 is a true marginalisati
 ###### MARGGINALISE SPLINE AND REGDIFF TOGETHER #######
 #choose here the marginalisation you want to combine in script 4d, it will also use the sigmathresh:
 name_marg_list = ['marginalisation_1','marginalisation_2']
+sigmathresh_list = [0.5,0.5] #sigmathresh used for marginalisation_1 and marginalisation_2, it can be different from the sigmathresh used for the new marginalisation
 new_name_marg = 'marg_12'
 
 
