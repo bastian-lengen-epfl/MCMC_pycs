@@ -23,9 +23,9 @@ def main(lensname,dataname,work_dir='./'):
                         dir_link = os.path.join(destpath, "sims_%s_opt_%s" % (config.simset_copy, opts))
                         print "Dir link :", dir_link
                         pkl.dump(dir_link, open(os.path.join(config.lens_directory, 'regdiff_copies_link_%s.pkl' % kwargs['name']), 'w'))
-                    else :
-                        print "Please turn on your simoptfctkw to regdiff."
-                        exit()
+                else :
+                    print "Please turn on your simoptfctkw to regdiff."
+                    exit()
 
 
 if __name__ == '__main__':
