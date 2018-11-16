@@ -70,6 +70,7 @@ class Optimiser(object):
 
         self.n_curve_stat = n_curve_stat
         self.shotnoise = shotnoise
+        self.shotnoisefrac = 1.0
         self.tweakml_type =tweakml_type
         self.tweakml_name = tweakml_name
         self.correction_PS_residuals = correction_PS_residuals #boolean to set if you want to use the correction, True by default
@@ -137,7 +138,7 @@ class Optimiser(object):
 
         for i in range(self.ncurve):
             chi2 += (self.fit_vector[i][0] - mean_zruns[i]) ** 2 / std_zruns[i] ** 2
-            chi2 += (self.fit_vector[i][1] - mean_sigmas[i]) ** 2 / (2 * std_sigmas[i] ** 2) #TODO : attention here I have doubled the error on sigma not to drive the fit too much...
+            chi2 += (self.fit_vector[i][1] - mean_sigmas[i]) ** 2 / (std_sigmas[i] ** 2)
             count +=1.0
 
         chi2 = chi2 / count
@@ -147,7 +148,7 @@ class Optimiser(object):
 
         tweak_list = self.get_tweakml_list(theta)
         mocklc = pycs.sim.draw.draw(self.lcs, self.spline,
-                                    tweakml= tweak_list,shotnoise=self.shotnoise, keeptweakedml=False)
+                                    tweakml= tweak_list,shotnoise=self.shotnoise, shotnoisefrac=self.shotnoisefrac, keeptweakedml=False)
 
         if self.recompute_spline:
             if self.knotstep == None:
@@ -196,7 +197,7 @@ class Optimiser(object):
         for i in range(self.n_curve_stat):
             tweak_list = self.get_tweakml_list(theta)
             mocklc.append(pycs.sim.draw.draw(self.lcs, self.spline,
-                                        tweakml=tweak_list, shotnoise=self.shotnoise, keeptweakedml=False))
+                                        tweakml=tweak_list, shotnoise=self.shotnoise,shotnoisefrac=self.shotnoisefrac, keeptweakedml=False))
 
             if self.recompute_spline:
                 if self.knotstep == None:
@@ -717,7 +718,7 @@ class PSO_Optimiser(Optimiser) :
 class Dic_Optimiser(Optimiser):
     def __init__(self, lcs, fit_vector, spline, knotstep=None,
                      savedirectory="./", recompute_spline=True, max_core = 16, theta_init = None,
-                    n_curve_stat = 32, shotnoise = "magerrs", tweakml_type = 'PS_from_residuals', tweakml_name = '',
+                    n_curve_stat = 32, shotnoise = None, tweakml_type = 'PS_from_residuals', tweakml_name = '',
                  display = False, verbose = False, step = 0.1, correction_PS_residuals = True, max_iter = 10):
 
         Optimiser.__init__(self,lcs, fit_vector,spline, knotstep = knotstep, savedirectory= savedirectory, recompute_spline=recompute_spline,
@@ -781,7 +782,7 @@ class Dic_Optimiser(Optimiser):
                     self.step = self.step/ 2.0
 
                 elif self.iteration%3 == 0 and self.turn_back[i] == 0:
-                    self.step[i] = self.step[i]*2.0 #we double the step every 4 iterations we didn't pass the optimum
+                    self.step[i] = self.step[i]*2.0 #we double the step every 3 iterations if we didn't pass the optimum
 
             if self.check_if_stop():
                 break
@@ -789,18 +790,6 @@ class Dic_Optimiser(Optimiser):
             for i in range(self.ncurve):
                 B[i][0] += self.step[i]
                 if B[i][0] <= 0.1 : B[i][0] = 0.1 #minimum for B
-
-        # if self.correction_PS_residuals: # refine A correction, one last time
-        #     self.A_correction, zruns_c, sigma_c, zruns_std_c, sigma_std_c = self.compute_set_A_correction(B)
-        #     print "After fitting, the correction factor slightly changed :", self.A_correction
-        #     sigma.append(sigma_c)
-        #     zruns.append(zruns_c)
-        #     sigma_std.append(sigma_std_c)
-        #     zruns_std.append(zruns_std_c)
-        #     self.explored_param.append(copy.deepcopy(B))
-        #     self.rel_error_zruns_mini = np.abs(zruns_c - self.fit_vector[:, 0]) / zruns_std_c #used to store the current relative error
-        #     self.rel_error_sigmas_mini = np.abs(sigma_c - self.fit_vector[:, 1]) / sigma_std_c
-
 
         self.chain_list = [self.explored_param, chi2, zruns, sigma, zruns_std, sigma_std]#explored param has dimension(n_iter,ncurve,1)
         self.chi2_mini, self.best_param = chi2[-1], self.explored_param[-1] # take the last iteration as the best estimate

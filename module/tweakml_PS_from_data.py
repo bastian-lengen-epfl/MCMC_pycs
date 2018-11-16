@@ -31,7 +31,7 @@ def tweakml_PS(lcs, spline, B, f_min = 1/300.0,psplot=False, save_figure_folder 
         span = stop - start
         sampling = span / n
 
-        samples =  int(span) * 5  #number of samples you want in the generated noise, the final curve is interpolated from this
+        samples =  int(span) * 5  # 5 samples per day, number of samples you want in the generated noise, the final curve is interpolated from this
         if samples%2 ==1 :
             samples -= 1
         samplerate = 1 # don't touch this, add more sample if you want
