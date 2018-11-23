@@ -27,8 +27,9 @@ def exec_worker_copie_aux(args):
 def exec_worker_copie(i, simset_copy, lcs, simoptfct, kwargs_optim, optset, tsrand, destpath):
     print "worker %i starting..." % i
     time.sleep(i)
-    pycs.sim.run.multirun(simset_copy, lcs, simoptfct, kwargs_optim=kwargs_optim,
+    sucess_dic = pycs.sim.run.multirun(simset_copy, lcs, simoptfct, kwargs_optim=kwargs_optim,
                           optset=optset, tsrand=tsrand, destpath= destpath)
+    return sucess_dic
 
 def exec_worker_mocks_aux(args):
     return exec_worker_mocks(*args)
@@ -37,8 +38,21 @@ def exec_worker_mocks_aux(args):
 def exec_worker_mocks(i, simset_mock, lcs, simoptfct, kwargs_optim, optset, tsrand, destpath):
     print "worker %i starting..." % i
     time.sleep(i)
-    pycs.sim.run.multirun(simset_mock, lcs,simoptfct, kwargs_optim=kwargs_optim,
+    sucess_dic = pycs.sim.run.multirun(simset_mock, lcs,simoptfct, kwargs_optim=kwargs_optim,
                           optset=optset, tsrand=tsrand, keepopt=True, destpath=destpath)
+    return sucess_dic
+
+def write_report_optimisation(f, success_dic):
+    if success_dic == None :
+        f.write('This set was already optimised.\n')
+    else :
+        if success_dic['success']:
+            f.write('None of the optimisations have failed. \n')
+        else :
+            f.write('The optimisation of the following curves have failed : \n')
+            for id in success_dic['failed_id']:
+                f.write("Curve %i :"%id + success_dic['error_list'][id])
+                f.write('\n')
 
 
 def main(lensname,dataname,work_dir='./'):
@@ -46,6 +60,7 @@ def main(lensname,dataname,work_dir='./'):
     sys.path.append(work_dir + "config/")
     config = importlib.import_module("config_" + lensname + "_" + dataname)
     base_lcs = pycs.gen.util.readpickle(config.data)
+    f = open(os.path.join(config.report_directory, 'report_optimisation_%s.txt'%config.simoptfctkw), 'w')
     for a,kn in enumerate(config.knotstep) :
         for  b, knml in enumerate(config.mlknotsteps):
             lcs = copy.deepcopy(base_lcs)
@@ -63,7 +78,7 @@ def main(lensname,dataname,work_dir='./'):
 
             for c, opts in enumerate(config.optset):
                 if config.simoptfctkw == "spl1":
-                    kwargs = {'kn' : kn}
+                    kwargs = {'kn' : kn, 'name':'spl1'}
                 elif config.simoptfctkw == "regdiff":
                     kwargs = config.kwargs_optimiser_simoptfct[c]
                 else :
@@ -75,15 +90,18 @@ def main(lensname,dataname,work_dir='./'):
                     if config.simoptfctkw == "spl1":
                         job_args = [(j, config.simset_copy, lcs, config.simoptfct, kwargs, opts, config.tsrand, destpath) for j in
                                     range(nworkers)]
-                        p.map(exec_worker_copie_aux, job_args)
+                        success_list_copies = p.map(exec_worker_copie_aux, job_args)
                     elif config.simoptfctkw == "regdiff":
                         if a == 0 and b == 0 : # for copies, run on only 1 (knstp,mlknstp) as it the same for others
                             job_args = (0, config.simset_copy, lcs, config.simoptfct, kwargs, opts, config.tsrand, destpath)
-                            exec_worker_copie_aux(job_args)
+                            success_list_copies = exec_worker_copie_aux(job_args)
                             dir_link = os.path.join(destpath,"sims_%s_opt_%s" % (config.simset_copy, opts))
                             print "Dir link :", dir_link
                             pkl.dump(dir_link,open(os.path.join(config.lens_directory,'regdiff_copies_link_%s.pkl'%kwargs['name']),'w'))
                         # p.map(exec_worker_copie_aux, job_args)# because for some reason, regdiff does not like multiproc.
+                    f.write('COPIES, kn%i, knml%i, optimiseur %s : \n' % (kn, knml, kwargs['name']))
+                    write_report_optimisation(f, success_list_copies)
+                    f.write('################### \n')
 
                 if config.run_on_sims:
                     print "I will run the optimiser on the simulated lcs with the parameters :", kwargs
@@ -91,11 +109,17 @@ def main(lensname,dataname,work_dir='./'):
                     if config.simoptfctkw == "spl1":
                         job_args = [(j, config.simset_mock, lcs, config.simoptfct, kwargs, opts, config.tsrand, destpath) for j in
                                     range(nworkers)]
-                        p.map(exec_worker_mocks_aux, job_args)
+                        success_list_simu = p.map(exec_worker_mocks_aux, job_args)
                     elif config.simoptfctkw == "regdiff":
                         job_args = (0, config.simset_mock, lcs, config.simoptfct, kwargs, opts, config.tsrand, destpath)
-                        exec_worker_mocks_aux(job_args)  # because for some reason, regdiff does not like multiproc.
+                        success_list_simu = exec_worker_mocks_aux(job_args)  # because for some reason, regdiff does not like multiproc.
                         # p.map(exec_worker_copie_aux, job_args)
+                    f.write('SIMULATIONS, kn%i, knml%i, optimiseur %s : \n' % (kn, knml, kwargs['name']))
+                    write_report_optimisation(f, success_list_simu)
+                    f.write('################### \n')
+
+    print "OPTIMISATION DONE : report written in %s"%(os.path.join(config.report_directory, 'report_optimisation_%s.txt'%config.simoptfctkw))
+    f.close()
 
 if __name__ == '__main__':
     parser = ap.ArgumentParser(prog="python {}".format(os.path.basename(__file__)),
