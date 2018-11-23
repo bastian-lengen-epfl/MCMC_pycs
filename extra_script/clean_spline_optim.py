@@ -28,7 +28,7 @@ def main(lensname,dataname, work_dir = './'):
         for  b, knml in enumerate(config.mlknotsteps):
             for o, opt in enumerate(config.optset):
 
-                os.chdir(main_path + config.lens_directory + config.combkw[a, b])
+                os.chdir(os.path.join(main_path, config.lens_directory + config.combkw[a, b]))
                 files = glob.glob('sims_*_opt_%s' %(opt))
                 print "files to remove : ", files
                 for file in files :
