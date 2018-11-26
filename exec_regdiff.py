@@ -9,12 +9,12 @@ def main(pickle_name, is_copy, path, config_path):
     if is_copy :
         with open(pickle_name,'r') as f :
             simset_copy, lcs, simoptfct, kwargs, opts, tsrand = pkl.load(f)
-        pycs.sim.run.multirun(simset_copy, lcs, simoptfct, kwargs_optim=kwargs,
+        success_dic = pycs.sim.run.multirun(simset_copy, lcs, simoptfct, kwargs_optim=kwargs,
                           optset=opts, tsrand=tsrand)
     else :
         with open(pickle_name, 'r') as f:
             simset_mock, lcs, simoptfct, kwargs, opts, tsrand = pkl.load(f)
-        pycs.sim.run.multirun(simset_mock, lcs, simoptfct, kwargs_optim=kwargs,
+        success_dic = pycs.sim.run.multirun(simset_mock, lcs, simoptfct, kwargs_optim=kwargs,
                               optset=opts, tsrand=tsrand, keepopt=True)
 
 
