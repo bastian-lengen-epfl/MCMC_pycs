@@ -46,12 +46,16 @@ def write_report_optimisation(f, success_dic):
     if success_dic == None :
         f.write('This set was already optimised.\n')
     else :
-        if success_dic['success']:
-            f.write('None of the optimisations have failed. \n')
-        else :
-            f.write('The optimisation of the following curves have failed : \n')
-            for id in success_dic['failed_id']:
-                f.write("Curve %i :"%id + success_dic['error_list'][id])
+        for i,dic in enumerate(success_dic):
+            f.write('------------- \n')
+            if dic == None :
+                continue
+            if dic['success']:
+                f.write('None of the optimisations have failed for pickle %i. \n'%i)
+            else :
+                f.write('The optimisation of the following curves have failed in pickle %i : \n'%i)
+                for id in dic['failed_id']:
+                    f.write("   Curve %i :"%id + str(dic['error_list'][0]) + ' \n')
                 f.write('\n')
 
 
@@ -91,6 +95,8 @@ def main(lensname,dataname,work_dir='./'):
                         job_args = [(j, config.simset_copy, lcs, config.simoptfct, kwargs, opts, config.tsrand, destpath) for j in
                                     range(nworkers)]
                         success_list_copies = p.map(exec_worker_copie_aux, job_args)
+                        # success_list_copies = [exec_worker_copie_aux(job_args[0])]# DEBUG
+
                     elif config.simoptfctkw == "regdiff":
                         if a == 0 and b == 0 : # for copies, run on only 1 (knstp,mlknstp) as it the same for others
                             job_args = (0, config.simset_copy, lcs, config.simoptfct, kwargs, opts, config.tsrand, destpath)
@@ -110,6 +116,7 @@ def main(lensname,dataname,work_dir='./'):
                         job_args = [(j, config.simset_mock, lcs, config.simoptfct, kwargs, opts, config.tsrand, destpath) for j in
                                     range(nworkers)]
                         success_list_simu = p.map(exec_worker_mocks_aux, job_args)
+                        # success_list_simu = [exec_worker_mocks_aux(job_args[0])] #DEBUG
                     elif config.simoptfctkw == "regdiff":
                         job_args = (0, config.simset_mock, lcs, config.simoptfct, kwargs, opts, config.tsrand, destpath)
                         success_list_simu = exec_worker_mocks_aux(job_args)  # because for some reason, regdiff does not like multiproc.
