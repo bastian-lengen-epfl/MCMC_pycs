@@ -203,7 +203,7 @@ def main(lensname,dataname,work_dir='./'):
             #plot the results :
 
             text = [
-                (0.80, 0.90, r"$\mathrm{"+config.full_lensname+"}$" + "\n" + r"$\mathrm{PyCS\ estimates}$",
+                (0.85, 0.90, r"$\mathrm{"+config.full_lensname+"}$" + "\n" + r"$\mathrm{PyCS\ estimates}$",
                  {"fontsize": 26, "horizontalalignment": "center"})]
 
             if config.display :
