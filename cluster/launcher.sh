@@ -4,12 +4,11 @@
 
 # set the simulation basename and the file you want to run
 
-
-export JOB_BASENAME="3c"
+export JOB_BASENAME="3bcd"
 export SERVER_NAME="lesta"  # on Regor : 'r3', 'r4' ; otherwise 'deneb' or 'fidis'
-export QUEUE_NAME="s1"  # on Regor : 'r3', 'r4' ; on deneb "debug" or "serial"
+export QUEUE_NAME="s2"  # on Regor : 'r3', 'r4' ; on deneb "debug" or "serial"
 
-export OBJECT_NAME='WFI2026'
+export OBJECT_NAME='J0246'
 export DATA_NAME='Euler'
 export NUM_CORE="12"
 export WORK_DIR='./'
@@ -18,7 +17,7 @@ export WORK_DIR='./'
 max_node=1
 
 
-start_file="start_3c.slurm"
+start_file="start_3bcd.slurm"
 job_name_csr=$OBJECT_NAME$JOB_BASENAME
 
 echo "job name = "$job_name_csr
