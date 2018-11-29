@@ -109,7 +109,7 @@ def main(lensname,dataname,work_dir='./'):
         (0.80, 0.90, r"$\mathrm{" + config.full_lensname + "}$" + "\n" + r"$\mathrm{PyCS\ estimates}$",
          {"fontsize": 26, "horizontalalignment": "center"})]
 
-    radius = (np.max(errors_up_list) + np.max(errors_down_list))/2.0 *1.5
+    radius = (np.max(errors_up_list) + np.max(errors_down_list))/2.0 *2.5
     if config.display :
         pycs.mltd.plot.delayplot(group_list+[combined], rplot=radius, refgroup=combined, text=text, hidedetails=True, showbias=False, showran=False, showlegend=True, figsize=(15, 10), horizontaldisplay=False, legendfromrefgroup=False)
 
