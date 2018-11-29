@@ -224,16 +224,17 @@ def main(lensname,dataname,work_dir='./'):
 
     ###################  MAKE THE FINAL REGDIFF ESTIMATE ####################
     final_groups, final_combined = ut.group_estimate(path_list, name_list, config.delay_labels, colors, config.sigmathresh, config.name_marg_regdiff, testmode = config.testmode)
+    radius_f = (final_combined.errors_down + final_combined.errors_up) / 2.0 * 2.5
     text = [
-        (0.80, 0.90, r"$\mathrm{" + config.full_lensname + "}$" + "\n" + r"$\mathrm{PyCS\ estimates}$",
+        (0.85, 0.90, r"$\mathrm{" + config.full_lensname + "}$" + "\n" + r"$\mathrm{PyCS\ estimates}$",
          {"fontsize": 26, "horizontalalignment": "center"})]
 
     if config.display:
-        pycs.mltd.plot.delayplot(final_groups + [final_combined], rplot=25.0, refgroup=final_combined,
+        pycs.mltd.plot.delayplot(final_groups + [final_combined], rplot=radius_f, refgroup=final_combined,
                                  text=text, hidedetails=True, showbias=False, showran=False,
                                  showlegend=True, figsize=(15, 10), horizontaldisplay=False, legendfromrefgroup=False)
 
-    pycs.mltd.plot.delayplot(final_groups + [final_combined], rplot=25.0, refgroup=final_combined, text=text, hidedetails=True,
+    pycs.mltd.plot.delayplot(final_groups + [final_combined], rplot=radius_f, refgroup=final_combined, text=text, hidedetails=True,
                              showbias=False, showran=False, showlegend=True, figsize=(15, 10), horizontaldisplay=False,
                              legendfromrefgroup=False,
                              filename=indiv_marg_dir + config.name_marg_regdiff + "_final_sigma_%2.2f.png" % (config.sigmathresh))
