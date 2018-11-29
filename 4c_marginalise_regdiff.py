@@ -203,15 +203,16 @@ def main(lensname,dataname,work_dir='./'):
             #plot the results :
 
             text = [
-                (0.80, 0.90, r"$\mathrm{"+config.full_lensname+"}$" + "\n" + r"$\mathrm{PyCS\ estimates}$",
+                (0.85, 0.90, r"$\mathrm{"+config.full_lensname+"}$" + "\n" + r"$\mathrm{PyCS\ estimates}$",
                  {"fontsize": 26, "horizontalalignment": "center"})]
+            radius = (np.max(errors_up_list) + np.max(errors_down_list)) / 2.0 * 3.5
 
             if config.display :
-                pycs.mltd.plot.delayplot(group_list+[combined], rplot=25.0, refgroup=combined,
+                pycs.mltd.plot.delayplot(group_list+[combined], rplot=radius, refgroup=combined,
                                          text=text, hidedetails=True, showbias=False, showran=False,
                                          showlegend=True, figsize=(15, 10), horizontaldisplay=False, legendfromrefgroup=False)
 
-            pycs.mltd.plot.delayplot(group_list+[combined], rplot=25.0, refgroup=combined, text=text, hidedetails=True,
+            pycs.mltd.plot.delayplot(group_list+[combined], rplot=radius, refgroup=combined, text=text, hidedetails=True,
                                      showbias=False, showran=False, showlegend=True, figsize=(15, 10), horizontaldisplay=False,
                                      legendfromrefgroup=False, filename = indiv_marg_dir + config.name_marg_regdiff + "_%s_%s.png"%(dickw['name'],noise))
 
