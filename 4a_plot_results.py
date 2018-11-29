@@ -64,7 +64,7 @@ def main(lensname,dataname,work_dir='./'):
                     pycs.sim.plot.hists(copiesres, r=50.0, nbins=100, dataout=True,
                                         filename=figure_directory+'delay_hist_%i-%i_sims_%s_opt_%s.png'%(kn,knml,config.simset_copy, opt),
                                         outdir = config.lens_directory + config.combkw[a, b] + '/sims_%s_opt_%s/' %(config.simset_copy, opt))
-                    pycs.sim.plot.measvstrue(simres, r=2.1 * config.truetsr , nbins=1, plotpoints=True,
+                    pycs.sim.plot.measvstrue(simres, r=1.5 * config.truetsr , nbins=4, plotpoints=True,
                                              ploterrorbars=True, sidebyside=True,
                                              errorrange=10., binclip=True, binclipr=20.0, dataout=True, figsize=(12, 8),
                                              filename=figure_directory + 'deviation_hist_%i-%i_sims_%s_opt_%s.png' % (
