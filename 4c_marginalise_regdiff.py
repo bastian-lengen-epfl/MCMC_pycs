@@ -237,10 +237,10 @@ def main(lensname,dataname,work_dir='./'):
     pycs.mltd.plot.delayplot(final_groups + [final_combined], rplot=radius_f, refgroup=final_combined, text=text, hidedetails=True,
                              showbias=False, showran=False, showlegend=True, figsize=(15, 10), horizontaldisplay=False,
                              legendfromrefgroup=False,
-                             filename=indiv_marg_dir + config.name_marg_regdiff + "_final_sigma_%2.2f.png" % (config.sigmathresh))
+                             filename=indiv_marg_dir + config.name_marg_regdiff + "_sigma_%2.2f.png" % (config.sigmathresh))
 
-    pkl.dump(group_list, open(marginalisation_dir + config.name_marg_regdiff + "_final_sigma_%2.2f" % (config.sigmathresh) + '_goups.pkl', 'wb'))
-    pkl.dump(combined, open(marginalisation_dir + config.name_marg_regdiff + "_final_sigma_%2.2f" % (config.sigmathresh) + '_combined.pkl', 'wb'))
+    pkl.dump(group_list, open(marginalisation_dir + config.name_marg_regdiff + "_sigma_%2.2f" % (config.sigmathresh) + '_goups.pkl', 'wb'))
+    pkl.dump(combined, open(marginalisation_dir + config.name_marg_regdiff + "_sigma_%2.2f" % (config.sigmathresh) + '_combined.pkl', 'wb'))
 
 
 if __name__ == '__main__':

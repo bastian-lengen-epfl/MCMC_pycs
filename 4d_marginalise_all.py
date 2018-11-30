@@ -37,13 +37,15 @@ def main(lensname,dataname,work_dir='./'):
     #plot the results :
 
     text = [
-        (0.75, 0.92, r"$\mathrm{"+config.full_lensname+"}$" + "\n" + r"$\mathrm{PyCS\ estimates}$",
+        (0.85, 0.90, r"$\mathrm{"+config.full_lensname+"}$" + "\n" + r"$\mathrm{PyCS\ estimates}$",
          {"fontsize": 26, "horizontalalignment": "center"})]
 
-    if config.display :
-        pycs.mltd.plot.delayplot(group_list+[combined], rplot=8.0, refgroup=combined, text=text, hidedetails=True, showbias=False, showran=False, showlegend=True, figsize=(15, 10), horizontaldisplay=False, legendfromrefgroup=False)
+    radius = (combined.errors_down[0] + combined.errors_up[0]) / 2.0 * 2.5
 
-    pycs.mltd.plot.delayplot(group_list+[combined], rplot=8.0, refgroup=combined, text=text, hidedetails=True, showbias=False, showran=False, showlegend=True, figsize=(15, 10), horizontaldisplay=False, legendfromrefgroup=False, filename = indiv_marg_dir + config.name_marg_spline +"_sigma_%2.2f.png"%config.sigmathresh)
+    if config.display :
+        pycs.mltd.plot.delayplot(group_list+[combined], rplot=radius, refgroup=combined, text=text, hidedetails=True, showbias=False, showran=False, showlegend=True, figsize=(15, 10), horizontaldisplay=False, legendfromrefgroup=False)
+
+    pycs.mltd.plot.delayplot(group_list+[combined], rplot=radius, refgroup=combined, text=text, hidedetails=True, showbias=False, showran=False, showlegend=True, figsize=(15, 10), horizontaldisplay=False, legendfromrefgroup=False, filename = indiv_marg_dir + config.name_marg_spline +"_sigma_%2.2f.png"%config.sigmathresh)
 
     pkl.dump(group_list, open(marginalisation_dir + config.new_name_marg +"_sigma_%2.2f"%config.sigmathresh +'_goups.pkl', 'wb'))
     pkl.dump(combined, open(marginalisation_dir + config.new_name_marg + "_sigma_%2.2f"%config.sigmathresh + '_combined.pkl', 'wb'))
