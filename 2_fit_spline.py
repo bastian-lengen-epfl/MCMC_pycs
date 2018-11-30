@@ -141,7 +141,7 @@ def main(lensname,dataname,work_dir='./'):
             lcs, spline = pycs.gen.util.readpickle(config.lens_directory + '%s/initopt_%s_ks%i_ksml%i.pkl' % (config.combkw[i,j], dataname, kn,knml), verbose = False)
             delay_pair, delay_name = ut.getdelays(lcs)
             f.write('Micro-lensing knotstep = %i'%knml +"     Delays are " + str(delay_pair) + " for pairs "  +
-                    str(delay_name) + '. Chi2 Red : %2.5f\n'%chi2[i,j] + ' DoF : %i'%dof[i,j])
+                    str(delay_name) + '. Chi2 Red : %2.5f '%chi2[i,j] + ' DoF : %i \n'%dof[i,j])
 
         f.write('\n')
 
