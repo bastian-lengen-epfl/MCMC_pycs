@@ -18,20 +18,28 @@ def applyshifts(lcs,timeshifts,magshifts):
         #lc.shiftmag(magshift)
         lc.shifttime(timeshift)
 
-def compute_chi2(rls):
+def compute_dof_spline(rls, kn,knml):
+    '''compute the degree of freedom for the spline optimiser'''
+    n_curve = len(rls)
+    a = rls[0].jds[0]
+    b = rls[0].jds[-1]
+    nkn = int(float(b - a) / float(kn) - 2) #number of internal knot
+    nknml = int(float(b - a) / float(kn) - 2) #number of internal ml knot
+    return (2*nkn + n_curve) + n_curve*(2*nknml + n_curve) + n_curve
+
+def compute_chi2(rls, kn, knml):
     #return the chi2 given a rls object
     chi2 = 0.0
-    count = 0.0
     for rl in rls :
-        meanmag = np.mean(rl.getmags())
-        chi2_c = np.mean(((meanmag - rl.getmags())**2) / rl.getmagerrs()**2)
+        chi2_c = np.mean((rl.getmags()**2) / rl.getmagerrs()**2)
         print "Chi2 for light curve %s : %2.2f"%(rl.object, chi2_c)
         chi2 += chi2_c
-        count +=1.0
 
-    chi2 =chi2 / count
-    print "Final chi2 : %2.2f"%chi2
-    return chi2
+    # chi2 =chi2 / count
+    chi2_red = chi2 / compute_dof_spline(rls, kn,knml)
+    print "DoF :", compute_dof_spline(rls, kn,knml)
+    print "Final chi2 reduced: %2.5f"%chi2_red
+    return chi2_red
 
 def main(lensname,dataname,work_dir='./'):
     import importlib
@@ -50,6 +58,7 @@ def main(lensname,dataname,work_dir='./'):
 
     # Do the optimisation with the splines
     chi2 = np.zeros((len(config.knotstep),len(config.mlknotsteps)))
+    dof = np.zeros((len(config.knotstep),len(config.mlknotsteps)))
     for i,kn in enumerate(config.knotstep) :
         for j, knml in enumerate(config.mlknotsteps):
             lcs = pycs.gen.util.readpickle(config.data)
@@ -60,7 +69,8 @@ def main(lensname,dataname,work_dir='./'):
             spline = config.spl1(lcs, kn = kn)
             pycs.gen.mrg.colourise(lcs)
             rls = pycs.gen.stat.subtract(lcs, spline)
-            chi2[i,j] = compute_chi2(rls)
+            chi2[i,j] = compute_chi2(rls, kn, knml)
+            dof[i,j] = compute_dof_spline(rls, kn, knml)
 
             if config.display :
                 pycs.gen.lc.display(lcs, [spline], showlegend=True, showdelays=True, filename="screen")
@@ -130,7 +140,8 @@ def main(lensname,dataname,work_dir='./'):
         for j, knml in enumerate(config.mlknotsteps):
             lcs, spline = pycs.gen.util.readpickle(config.lens_directory + '%s/initopt_%s_ks%i_ksml%i.pkl' % (config.combkw[i,j], dataname, kn,knml), verbose = False)
             delay_pair, delay_name = ut.getdelays(lcs)
-            f.write('Micro-lensing knotstep = %i'%knml +"     Delays are " + str(delay_pair) + " for pairs "  + str(delay_name) + '. Chi2 : %2.2f\n'%chi2[i,j])
+            f.write('Micro-lensing knotstep = %i'%knml +"     Delays are " + str(delay_pair) + " for pairs "  +
+                    str(delay_name) + '. Chi2 Red : %2.5f\n'%chi2[i,j] + ' DoF : %i'%dof[i,j])
 
         f.write('\n')
 
