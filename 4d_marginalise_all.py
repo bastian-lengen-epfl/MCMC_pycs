@@ -32,7 +32,7 @@ def main(lensname,dataname,work_dir='./'):
 
     path_list = [config.lens_directory + marg + '/' + marg +'_sigma_%2.2f'%sig + '_combined.pkl' for marg,sig in zip(config.name_marg_list,config.sigmathresh_list)]
     name_list = [marg for marg in config.name_marg_list]
-    group_list, combined = ut.group_estimate(path_list, name_list, config.delay_labels, colors, config.sigma_thresh, config.new_name_marg, testmode = config.testmode)
+    group_list, combined = ut.group_estimate(path_list, name_list, config.delay_labels, colors, config.sigmathresh_final, config.new_name_marg, testmode = config.testmode)
 
     #plot the results :
 

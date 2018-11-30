@@ -119,13 +119,14 @@ errscale_marg = errscale
 #other parameteres for regdiff and spline marginalisation :
 testmode = True
 delay_labels = ["AB", "AC", "BC",]
-sigmathresh = 0   #sigma threshold for sigma clipping, 0 is a true marginalisation, choose 1000 to take the most precise.
+sigmathresh = 0.5   #sigma threshold for sigma clipping, 0 is a true marginalisation, choose 1000 to take the most precise.
 
 ###### MARGGINALISE SPLINE AND REGDIFF TOGETHER #######
 #choose here the marginalisation you want to combine in script 4d, it will also use the sigmathresh:
-name_marg_list = ['marginalisation_1','marginalisation_2']
-sigmathresh_list = [0.5,0.5] #sigmathresh used for marginalisation_1 and marginalisation_2, it can be different from the sigmathresh used for the new marginalisation
-new_name_marg = 'marg_12'
+name_marg_list = ['marginalisation_spline','marginalisation_regdiff']
+new_name_marg = 'marginalisation_final'
+sigmathresh_list = [0.5,0.5] #sigmathresh to use for marginalisation_spline and marginalisation_regdiff, it can be different from the sigmathresh used for the new marginalisation
+sigmathresh_final = 0.0 #sigma used in the final marginalisation
 
 
 ### Functions definition
