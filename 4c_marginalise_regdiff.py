@@ -239,8 +239,8 @@ def main(lensname,dataname,work_dir='./'):
                              legendfromrefgroup=False,
                              filename=indiv_marg_dir + config.name_marg_regdiff + "_sigma_%2.2f.png" % (config.sigmathresh))
 
-    pkl.dump(group_list, open(marginalisation_dir + config.name_marg_regdiff + "_sigma_%2.2f" % (config.sigmathresh) + '_goups.pkl', 'wb'))
-    pkl.dump(combined, open(marginalisation_dir + config.name_marg_regdiff + "_sigma_%2.2f" % (config.sigmathresh) + '_combined.pkl', 'wb'))
+    pkl.dump(final_groups, open(marginalisation_dir + config.name_marg_regdiff + "_sigma_%2.2f" % (config.sigmathresh) + '_goups.pkl', 'wb'))
+    pkl.dump(final_combined, open(marginalisation_dir + config.name_marg_regdiff + "_sigma_%2.2f" % (config.sigmathresh) + '_combined.pkl', 'wb'))
 
 
 if __name__ == '__main__':
