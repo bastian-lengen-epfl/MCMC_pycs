@@ -90,7 +90,7 @@ def main(lensname,dataname,work_dir='./'):
         group.binslist = binslist
         group.plotcolor = colors[color_id]
         group.linearize(testmode=config.testmode)
-        group.labels = config.delay_labels
+        group.objects = config.lcs_label
         color_id += 1
         if color_id >= len(colors):
             print "Warning : I don't have enough colors in my list, I'll restart from the beginning."

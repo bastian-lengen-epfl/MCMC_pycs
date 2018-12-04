@@ -65,8 +65,10 @@ def main(lensname,dataname,work_dir='./',queue='s1'):
 
                         elif config.simoptfctkw == "regdiff":
                             os.system("srun -n 1 -c 1 -p %s -J %s -u -e %s -o %s python exec_regdiff.py %s %s %s %s &"%
-                                      (queue, lensname+'_copies_'+str(kn)+'-'+str(knml),os.path.join(main_path, 'cluster/slurm_regdiff_%i_copie.err'%pkl_n),
-                                       os.path.join(main_path, 'cluster/slurm_regdiff_%i_copie.out'%pkl_n) ,pkl_name_copie,'1', c_path, config_path ))
+                                      (queue, lensname+'_copies_'+str(kn)+'-'+str(knml),
+                                       os.path.join(main_path, 'cluster/slurm_regdiff_%s_%s_%i_copie.err'%(lensname,dataname,pkl_n)),
+                                       os.path.join(main_path, 'cluster/slurm_regdiff_%s_%s_%i_copie.out'%(lensname,dataname,pkl_n)),
+                                       pkl_name_copie,'1', c_path, config_path ))
                             print "Job launched on copies ! "
 
                             dir_link = os.path.join(c_path,"sims_%s_opt_%s" % (config.simset_copy, opts))
