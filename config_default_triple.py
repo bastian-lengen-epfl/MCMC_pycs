@@ -9,6 +9,7 @@ from module import util_func as ut
 #info about the lens :
 full_lensname =''
 lcs_label = ['A','B','C']
+delay_labels = ["AB", "AC", "BC",]
 #initial guess :
 timeshifts = ut.convert_delays2timeshifts([0.,0.]) #give here the AB and AC estimated delay.
 magshifts =  [0.,0.,0.]
@@ -25,7 +26,7 @@ optfctkw = "spl1" #function you used to optimise the curve at the 1st plase (in 
 simoptfctkw = "spl1" #function you want to use to optimise the mock curves, currently support spl1 and regdiff
 
 ### SPLINE PARAMETERS ###
-knotstep = [35,45,55,65] #give a list of the parameter you want
+knotstep = [25,35,45,55] #give a list of the parameter you want
 
 ### REGDIFF PARAMETERS ###
 #To use 5 set of parameters pre-selected :
@@ -118,7 +119,6 @@ errscale_marg = errscale
 
 #other parameteres for regdiff and spline marginalisation :
 testmode = True
-delay_labels = ["AB", "AC", "BC",]
 sigmathresh = 0.5   #sigma threshold for sigma clipping, 0 is a true marginalisation, choose 1000 to take the most precise.
 
 ###### MARGGINALISE SPLINE AND REGDIFF TOGETHER #######
