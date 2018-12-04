@@ -134,7 +134,7 @@ def group_estimate(path_list, name_list, delay_labels, colors, sigma_thresh, new
         group.plotcolor = colors[color_id]
         group.binslist = binslist
         group.linearize(testmode=testmode)
-        group.objects(object_name)
+        group.objects = object_name
         color_id += 1
         if color_id >= len(colors):
             print "Warning : I don't have enough colors in my list, I'll restart from the beginning."
