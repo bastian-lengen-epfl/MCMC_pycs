@@ -224,7 +224,8 @@ def main(lensname,dataname,work_dir='./'):
 
 
     ###################  MAKE THE FINAL REGDIFF ESTIMATE ####################
-    final_groups, final_combined = ut.group_estimate(path_list, name_list, config.delay_labels, colors, config.sigmathresh, config.name_marg_regdiff, testmode = config.testmode)
+    final_groups, final_combined = ut.group_estimate(path_list, name_list, config.delay_labels, colors, config.sigmathresh,
+                                                     config.name_marg_regdiff, testmode = config.testmode, object_name= config.lcs_label)
     radius_f = (final_combined.errors_down[0] + final_combined.errors_up[0]) / 2.0 * 2.5
     text = [
         (0.85, 0.90, r"$\mathrm{" + config.full_lensname + "}$" + "\n" + r"$\mathrm{PyCS\ estimates}$",
