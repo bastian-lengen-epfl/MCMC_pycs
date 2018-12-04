@@ -207,14 +207,20 @@ def main(lensname,dataname,work_dir='./'):
                 (0.85, 0.90, r"$\mathrm{"+config.full_lensname+"}$" + "\n" + r"$\mathrm{PyCS\ estimates}$",
                  {"fontsize": 26, "horizontalalignment": "center"})]
             radius = (np.max(errors_up_list) + np.max(errors_down_list)) / 2.0 * 3.5
+            ncurve = len(config.lcs_label)
+
+            if ncurve > 2 :
+                auto_radius = True
+            else :
+                auto_radius = False
 
             if config.display :
                 pycs.mltd.plot.delayplot(group_list+[combined], rplot=radius, refgroup=combined,
-                                         text=text, hidedetails=True, showbias=False, showran=False,
-                                         showlegend=True, figsize=(15, 10), horizontaldisplay=False, legendfromrefgroup=False)
+                                         text=text, hidedetails=True, showbias=False, showran=False,tick_step_auto= True,
+                                         showlegend=True, figsize=(15, 10), horizontaldisplay=False, legendfromrefgroup=False, auto_radius=auto_radius)
 
-            pycs.mltd.plot.delayplot(group_list+[combined], rplot=radius, refgroup=combined, text=text, hidedetails=True,
-                                     showbias=False, showran=False, showlegend=True, figsize=(15, 10), horizontaldisplay=False,
+            pycs.mltd.plot.delayplot(group_list+[combined], rplot=radius, refgroup=combined, text=text, hidedetails=True, tick_step_auto= True,
+                                     showbias=False, showran=False, showlegend=True, figsize=(15, 10), horizontaldisplay=False,auto_radius=auto_radius,
                                      legendfromrefgroup=False, filename = indiv_marg_dir + config.name_marg_regdiff + "_%s_%s.png"%(dickw['name'],noise))
 
             pkl.dump(group_list, open(marginalisation_dir + config.name_marg_regdiff +"_%s_%s"%(dickw['name'],noise) +'_goups.pkl', 'wb'))
@@ -232,13 +238,13 @@ def main(lensname,dataname,work_dir='./'):
          {"fontsize": 26, "horizontalalignment": "center"})]
 
     if config.display:
-        pycs.mltd.plot.delayplot(final_groups + [final_combined], rplot=radius_f, refgroup=final_combined,
-                                 text=text, hidedetails=True, showbias=False, showran=False,
+        pycs.mltd.plot.delayplot(final_groups + [final_combined], rplot=radius_f, refgroup=final_combined,tick_step_auto= True,
+                                 text=text, hidedetails=True, showbias=False, showran=False, auto_radius=auto_radius,
                                  showlegend=True, figsize=(15, 10), horizontaldisplay=False, legendfromrefgroup=False)
 
     pycs.mltd.plot.delayplot(final_groups + [final_combined], rplot=radius_f, refgroup=final_combined, text=text, hidedetails=True,
                              showbias=False, showran=False, showlegend=True, figsize=(15, 10), horizontaldisplay=False,
-                             legendfromrefgroup=False,
+                             legendfromrefgroup=False, auto_radius=auto_radius,tick_step_auto= True,
                              filename=indiv_marg_dir + config.name_marg_regdiff + "_sigma_%2.2f.png" % (config.sigmathresh))
 
     pkl.dump(final_groups, open(marginalisation_dir + config.name_marg_regdiff + "_sigma_%2.2f" % (config.sigmathresh) + '_goups.pkl', 'wb'))

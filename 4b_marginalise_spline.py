@@ -111,10 +111,20 @@ def main(lensname,dataname,work_dir='./'):
          {"fontsize": 26, "horizontalalignment": "center"})]
 
     radius = (np.max(errors_up_list) + np.max(errors_down_list))/2.0 *3.5
-    if config.display :
-        pycs.mltd.plot.delayplot(group_list+[combined], rplot=radius, refgroup=combined, text=text, hidedetails=True, showbias=False, showran=False, showlegend=True, figsize=(15, 10), horizontaldisplay=False, legendfromrefgroup=False)
+    ncurve = len(config.lcs_label)
 
-    pycs.mltd.plot.delayplot(group_list+[combined], rplot=radius, refgroup=combined, text=text, hidedetails=True, showbias=False, showran=False, showlegend=True, figsize=(15, 10), horizontaldisplay=False, legendfromrefgroup=False, filename = indiv_marg_dir + config.name_marg_spline +"_sigma_%2.2f.png"%config.sigmathresh)
+    if ncurve > 2:
+        auto_radius = True
+    else:
+        auto_radius = False
+
+    if config.display :
+        pycs.mltd.plot.delayplot(group_list+[combined], rplot=radius, refgroup=combined, text=text, hidedetails=True, showbias=False, showran=False, showlegend=True, figsize=(15, 10), horizontaldisplay=False, legendfromrefgroup=False, auto_radius=auto_radius,tick_step_auto= True)
+
+    pycs.mltd.plot.delayplot(group_list+[combined], rplot=radius, refgroup=combined, text=text,
+                             hidedetails=True, showbias=False, showran=False, showlegend=True, auto_radius=auto_radius,
+                             figsize=(15, 10), horizontaldisplay=False, legendfromrefgroup=False,tick_step_auto= True,
+                             filename = indiv_marg_dir + config.name_marg_spline +"_sigma_%2.2f.png"%config.sigmathresh)
 
     pkl.dump(group_list, open(marginalisation_dir + config.name_marg_spline +"_sigma_%2.2f"%config.sigmathresh +'_goups.pkl', 'wb'))
     pkl.dump(combined, open(marginalisation_dir + config.name_marg_spline + "_sigma_%2.2f"%config.sigmathresh + '_combined.pkl', 'wb'))
