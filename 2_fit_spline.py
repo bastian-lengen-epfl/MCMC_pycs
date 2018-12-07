@@ -24,7 +24,10 @@ def compute_dof_spline(rls, kn,knml):
     a = rls[0].jds[0]
     b = rls[0].jds[-1]
     nkn = int(float(b - a) / float(kn) - 2) #number of internal knot
-    nknml = int(float(b - a) / float(knml) - 2) #number of internal ml knot
+    if knml != 0 :
+        nknml = int(float(b - a) / float(knml) - 2) #number of internal ml knot
+    else :
+        nknml = 0
     return (2*nkn + n_curve) + n_curve*(2*nknml + n_curve) + n_curve
 
 def compute_chi2(rls, kn, knml):
