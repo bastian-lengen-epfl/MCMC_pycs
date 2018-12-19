@@ -160,5 +160,12 @@ def convert_delays2timeshifts(timedelay):
     timeshift[1:]=timedelay
     return timeshift
 
+def mkdir_recursive(path):
+    sub_path = os.path.dirname(path)
+    if not os.path.exists(sub_path):
+        mkdir_recursive(sub_path)
+    if not os.path.exists(path):
+        os.mkdir(path)
+
 
 
