@@ -148,35 +148,17 @@ if __name__ == '__main__':
                                description="Combine the data sets.",
                                formatter_class=ap.RawTextHelpFormatter)
     help_lensname = "name of the lens to process"
-    help_dataname = "list of the data set you want to combine, give a string separated with ',' "
-    help_work_dir = "name of the working directory"
-    help_list = "list of data set, ex : 'Euler, SMARTS, C2' "
-    help_spline = ""
-    help_regdiff = ""
-    help_hide_final = ""
+    help_work_dir = "name of the working directory. default : ./"
+
     parser.add_argument(dest='lensname', type=str,
                         metavar='lens_name', action='store',
                         help=help_lensname)
-    parser.add_argument(dest='dataname', type=str,
-                        metavar='dataname', action='store',
-                        help=help_dataname)
     parser.add_argument('--dir', dest='work_dir', type=str,
                         metavar='', action='store', default='./',
                         help=help_work_dir)
-
-    parser.add_argument('--show-spline', dest='show_spline', type=bool,
-                        metavar='', action='store', default=False,
-                        help=help_spline)
-    parser.add_argument('--show-regdiff', dest='show_regdiff', type=bool,
-                        metavar='', action='store', default=False,
-                        help=help_regdiff)
-    parser.add_argument('--hide-final', dest='hide_final', type=bool,
-                        metavar='', action='store', default=False,
-                        help=help_hide_final)
-
 
 
     args = parser.parse_args()
     dataset = [item for item in args.dataname.split(',')]
 
-    main(args.lensname, dataset, work_dir=args.work_dir, show_regdiff=args.show_regdiff, show_spline=args.show_spline)
+    main(args.lensname, work_dir=args.work_dir)
