@@ -8,13 +8,14 @@ from module import util_func as ut
 def main(lensname,work_dir='./'):
 
     combi_dir = os.path.join(os.path.join(work_dir,'Combination'),lensname)
+    simu_dir = os.path.join(work_dir,'Simulation')
     plot_dir = os.path.join(combi_dir, 'plots')
     if not os.path.exists(combi_dir):
         ut.mkdir_recursive(combi_dir)
     if not os.path.exists(plot_dir):
         ut.mkdir_recursive(plot_dir)
 
-    config_file = work_dir + "config/config_combination_" + lensname +'.py'
+    config_file = work_dir + "Combination/" + lensname + "/config_combination_" + lensname +'.py'
 
     if os.path.isfile(config_file):
         print "Combination config file already exists."
@@ -23,43 +24,51 @@ def main(lensname,work_dir='./'):
         print "Combination config file do not exist yet. I will create it."
         copyfile("config_combination_default.py", config_file)
         print "Please edit : ", config_file
+        print "and restart this script..." 
         exit()
 
 
-    sys.path.append(work_dir + "config/")
+    sys.path.append(combi_dir)
     config = importlib.import_module("config_combination_" + lensname)
 
     print "Working on :", lensname
-    print "Combining the following data sets :", config.datasets
+    print "Combining the following data sets :", config.data_sets
 
     ####ACCSSING THE GROUP FILE ####
-
-    path_list = [config.lens_directory + marg + '/' + marg +'_sigma_%2.2f'%sig + '_combined.pkl' for marg,sig in zip(config.marg_to_combine,config.sigma_to_combine)]
-    path_list_spline = [config.lens_directory + marg + '/' + marg +'_sigma_%2.2f'%sig + '_combined.pkl'
-                        for marg,sig in zip(config.marg_to_combine_spline,config.sigma_to_combine_spline)]
-    path_list_regdiff = [config.lens_directory + marg + '/' + marg +'_sigma_%2.2f'%sig + '_combined.pkl'
-                         for marg,sig in zip(config.marg_to_combine_regdiff,config.sigma_to_combine_regdiff)]
-    name_list = [d for d in config.datasets]
+    
+    lens_directory = [os.path.join(simu_dir,lensname + '_' + d)for d in config.data_sets]
+    path_list = [ldir +'/'+ marg + '/' + marg +'_sigma_%2.2f'%sig + '_combined.pkl' for marg,sig,ldir in zip(config.marg_to_combine,config.sigma_to_combine, lens_directory)]
+    path_list_spline = [ldir +'/'+ marg + '/' + marg +'_sigma_%2.2f'%sig + '_combined.pkl'
+                        for marg,sig,ldir in zip(config.marg_to_combine_spline,config.sigma_to_combine_spline, lens_directory)]
+    path_list_regdiff = [ldir +'/'+ marg + '/' + marg +'_sigma_%2.2f'%sig + '_combined.pkl'
+                         for marg,sig,ldir in zip(config.marg_to_combine_regdiff,config.sigma_to_combine_regdiff, lens_directory)]
+    name_list = [d for d in config.data_sets]
 
     combs = []
     combs_spline = []
     combs_regdiff = []
     for i,p in enumerate(path_list) :
-        comb = pkl.load(p)
-        comb.name = name_list[i]
-        combs.append(comb)
+        with open(p,'r') as q : 
+            comb = pkl.load(q)
+            comb.name = name_list[i]
+            print comb.binslist
+            combs.append(comb)
 
     for i,p in enumerate(path_list_spline) :
-        comb = pkl.load(p)
-        comb.name = "Spline " + name_list[i]
-        combs_spline.append(comb)
+        with open(p,'r') as q : 
+            comb =pkl.load(q)
+            print type(comb)
+            comb.name = "Spline " + name_list[i]
+            combs_spline.append(comb)
 
     for i,p in enumerate(path_list_regdiff) :
-        comb = pkl.load(p)
-        comb.name = "Regdiff " + name_list[i]
-        combs_spline.append(comb)
+        with open(p,'r') as q : 
+            comb = pkl.load(q)
+            print type(comb)
+            comb.name = "Regdiff " + name_list[i]
+            combs_spline.append(comb)
 
-
+    
     mult = pycs.mltd.comb.mult_estimates(combs)
     mult.name = "Mult"
     mult.plotcolor = "gray"
@@ -159,6 +168,5 @@ if __name__ == '__main__':
 
 
     args = parser.parse_args()
-    dataset = [item for item in args.dataname.split(',')]
 
     main(args.lensname, work_dir=args.work_dir)
