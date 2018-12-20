@@ -159,6 +159,5 @@ if __name__ == '__main__':
 
 
     args = parser.parse_args()
-    dataset = [item for item in args.dataname.split(',')]
 
     main(args.lensname, work_dir=args.work_dir)
