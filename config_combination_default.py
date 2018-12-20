@@ -15,5 +15,5 @@ marg_to_combine_spline =['marginalisation_spline' for sets in data_sets] #give t
 sigma_to_combine_spline=[0.5 for sets in data_sets]
 
 #Additionnal regdiff marginalisation to plots (only if show_spline = True):
-marg_to_combine_spline =['marginalisation_regdiff' for sets in data_sets] #give the name of the marginalisation to combine
-sigma_to_combine_spline=[0.5 for sets in data_sets]
+marg_to_combine_regdiff =['marginalisation_regdiff' for sets in data_sets] #give the name of the marginalisation to combine
+sigma_to_combine_regdiff=[0.5 for sets in data_sets]
