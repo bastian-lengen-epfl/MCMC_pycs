@@ -68,14 +68,17 @@ def main(lensname,work_dir='./'):
             comb.name = "Regdiff " + name_list[i]
             combs_spline.append(comb)
 
-    
+    colors = ["royalblue", "crimson", "seagreen", "darkorchid", "darkorange", 'indianred', 'purple', 'brown', 'black',
+              'violet', 'dodgerblue', 'palevioletred', 'olive',
+              'brown', 'salmon', 'chocolate', 'indigo', 'steelblue', 'cyan', 'gold' , 'lightcoral']
+
+    sum = ut.group_estimate(path_list, name_list, config.delay_labels, colors, config.sigma_thresh, "Sum", testmode = config.testmode)
+    sum.name = "Sum"
+    sum.plotcolor = "black"
+
     mult = pycs.mltd.comb.mult_estimates(combs)
     mult.name = "Mult"
     mult.plotcolor = "gray"
-
-    sum = pycs.mltd.comb.combine_estimates(combs, sigmathresh=0.0, testmode=config.testmode)
-    sum.name = "Sum"
-    sum.plotcolor = "black"
 
     radius = (sum.errors_down[0] + sum.errors_up[0]) / 2.0 * 2.5
     ncurve = len(config.lcs_label)
@@ -102,7 +105,7 @@ def main(lensname,work_dir='./'):
     pkl.dump([sum,mult], open(os.path.join(combi_dir, "sum-mult_"+config.combi_name + '.pkl'), 'wb'))
 
     ### Plot with the spline only ####
-    sum_spline = pycs.mltd.comb.combine_estimates(combs_spline, sigmathresh=0.0, testmode=config.testmode)
+    sum_spline = ut.group_estimate(path_list_spline, name_list, config.delay_labels, colors, config.sigma_thresh, "Sum", testmode = config.testmode)
     sum_spline.name = "Sum"
     sum_spline.plotcolor = "black"
     text = [
@@ -118,7 +121,7 @@ def main(lensname,work_dir='./'):
                              horizontaldisplay=False, legendfromrefgroup=False, filename = plot_dir + "combined_estimated_spline"+config.combi_name + ".png")
 
     ### Plot with regdiff only ####
-    sum_regdiff = pycs.mltd.comb.combine_estimates(combs_regdiff, sigmathresh=0.0, testmode=config.testmode)
+    sum_regdiff = ut.group_estimate(path_list_regdiff, name_list, config.delay_labels, colors, config.sigma_thresh, "Sum", testmode = config.testmode)
     sum_regdiff.name = "Sum"
     sum_regdiff.plotcolor = "black"
     text = [
