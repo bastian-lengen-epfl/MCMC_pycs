@@ -51,20 +51,17 @@ def main(lensname,work_dir='./'):
         with open(p,'r') as q : 
             comb = pkl.load(q)
             comb.name = name_list[i]
-            print comb.binslist
             combs.append(comb)
 
     for i,p in enumerate(path_list_spline) :
         with open(p,'r') as q : 
             comb =pkl.load(q)
-            print type(comb)
             comb.name = "Spline " + name_list[i]
             combs_spline.append(comb)
 
     for i,p in enumerate(path_list_regdiff) :
         with open(p,'r') as q : 
             comb = pkl.load(q)
-            print type(comb)
             comb.name = "Regdiff " + name_list[i]
             combs_spline.append(comb)
 
