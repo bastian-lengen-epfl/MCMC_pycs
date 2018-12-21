@@ -13,8 +13,8 @@ def main(lensname,dataname, data_dir = '../data/'):
 
     magerr = 5
 
-    if "mag_A" in header :
-        lcs.append(pycs.gen.lc.rdbimport(rdbfile, 'A', 'mag_A', 'magerr_A_%i'%magerr, dataname))
+    if "mag_A1" in header :
+        lcs.append(pycs.gen.lc.rdbimport(rdbfile, 'A1', 'mag_A1', 'magerr_A1_%i'%magerr, dataname))
     if "mag_B" in header :
         lcs.append(pycs.gen.lc.rdbimport(rdbfile, 'B', 'mag_B', 'magerr_B_%i'%magerr, dataname))
     if "mag_C" in header :

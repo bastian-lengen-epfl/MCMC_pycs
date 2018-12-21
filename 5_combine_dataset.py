@@ -37,36 +37,21 @@ def main(lensname,work_dir='./'):
     ####ACCSSING THE GROUP FILE ####
     
     lens_directory = [os.path.join(simu_dir,lensname + '_' + d)for d in config.data_sets]
+    lens_directory_extra = [os.path.join(simu_dir,lensname + '_' + d)for d in config.extra_data_sets]
     path_list = [ldir +'/'+ marg + '/' + marg +'_sigma_%2.2f'%sig + '_combined.pkl' for marg,sig,ldir in zip(config.marg_to_combine,config.sigma_to_combine, lens_directory)]
     path_list_spline = [ldir +'/'+ marg + '/' + marg +'_sigma_%2.2f'%sig + '_combined.pkl'
                         for marg,sig,ldir in zip(config.marg_to_combine_spline,config.sigma_to_combine_spline, lens_directory)]
     path_list_regdiff = [ldir +'/'+ marg + '/' + marg +'_sigma_%2.2f'%sig + '_combined.pkl'
                          for marg,sig,ldir in zip(config.marg_to_combine_regdiff,config.sigma_to_combine_regdiff, lens_directory)]
+    
+    path_list_extra = [ldir +'/'+ marg + '/' + marg +'_sigma_%2.2f'%sig + '_combined.pkl'
+                         for marg,sig,ldir in zip(config.extra_marg_to_combine,config.extra_sigma_to_combine, lens_directory_extra)]
+    path_list_extra_regdiff = [ldir +'/'+ marg + '/' + marg +'_sigma_%2.2f'%sig + '_combined.pkl'
+                         for marg,sig,ldir in zip(config.extra_marg_to_combine_regdiff,config.extra_sigma_to_combine_regdiff, lens_directory_extra)]
+    path_list_extra_spline = [ldir +'/'+ marg + '/' + marg +'_sigma_%2.2f'%sig + '_combined.pkl'
+                         for marg,sig,ldir in zip(config.extra_marg_to_combine_spline,config.extra_sigma_to_combine_spline, lens_directory_extra)]
     name_list = [d for d in config.data_sets]
-
-    groups = []
-    groups_spline = []
-    groups_regdiff = []
-    # for i,p in enumerate(path_list) :
-    #     with open(p,'r') as q :
-    #         comb = pkl.load(q)
-    #         comb.name = name_list[i]
-    #         print comb.binslist
-    #         groups.append(comb)
-    #
-    # for i,p in enumerate(path_list_spline) :
-    #     with open(p,'r') as q :
-    #         comb =pkl.load(q)
-    #         print type(comb)
-    #         comb.name = "Spline " + name_list[i]
-    #         groups_spline.append(comb)
-    #
-    # for i,p in enumerate(path_list_regdiff) :
-    #     with open(p,'r') as q :
-    #         comb = pkl.load(q)
-    #         print type(comb)
-    #         comb.name = "Regdiff " + name_list[i]
-    #         groups_regdiff.append(comb)
+    
 
     colors = ["royalblue", "crimson", "seagreen", "darkorchid", "darkorange", 'indianred', 'purple', 'brown', 'black',
               'violet', 'dodgerblue', 'palevioletred', 'olive',
@@ -79,6 +64,28 @@ def main(lensname,work_dir='./'):
     mult = pycs.mltd.comb.mult_estimates(groups)
     mult.name = "Mult"
     mult.plotcolor = "gray"
+    
+    groups_extra =[]
+    for i,p in enumerate(path_list_extra) :
+         with open(p,'r') as q :
+             g = pkl.load(q)
+             g.name = config.extra_data_sets[i] + "$^*$"
+             g.plotcolor = 'green'
+             groups_extra.append(g)
+    groups_extra_spline =[]
+    for i,p in enumerate(path_list_extra_spline) :
+         with open(p,'r') as q :
+             g = pkl.load(q)
+             g.name = "Spline " + config.extra_data_sets[i] + "$^*$"
+             g.plotcolor = 'silver'
+             groups_extra_spline.append(g)
+    groups_extra_regdiff =[]
+    for i,p in enumerate(path_list_extra_regdiff) :
+         with open(p,'r') as q :
+             g = pkl.load(q)
+             g.name = "Regdiff " + config.extra_data_sets[i] + "$^*$"
+             g.plotcolor = 'darkgrey'
+             groups_extra_regdiff.append(g)
 
     radius = (sum.errors_down[0] + sum.errors_up[0]) / 2.0 * 2.5
     ncurve = len(config.lcs_label)
@@ -91,7 +98,7 @@ def main(lensname,work_dir='./'):
         (0.85, 0.90, r"$\mathrm{"+config.full_lensname+"}$" + "\n" + r"$\mathrm{PyCS\ estimates}$",
          {"fontsize": 26, "horizontalalignment": "center"})]
 
-    toplot = groups + [sum]
+    toplot = groups + groups_extra+ [sum] +[mult] 
     if config.display :
         pycs.mltd.plot.delayplot(toplot, rplot=radius, refgroup=mult, text=text,
                                  hidedetails=True, showbias=False, showran=False, showlegend=True,tick_step_auto= True,
@@ -99,58 +106,72 @@ def main(lensname,work_dir='./'):
 
     pycs.mltd.plot.delayplot(toplot, rplot=radius, refgroup=mult, text=text,
                              hidedetails=True, showbias=False, showran=False, showlegend=True, figsize=(15, 10), auto_radius=auto_radius, tick_step_auto= True,
-                             horizontaldisplay=False, legendfromrefgroup=False, filename = plot_dir + "combined_estimated_"+config.combi_name + ".png")
+                             horizontaldisplay=False, legendfromrefgroup=False, filename = plot_dir + "/combined_estimated_"+config.combi_name + ".png")
 
     pkl.dump(groups, open(os.path.join(combi_dir, config.combi_name + '_goups.pkl'), 'wb'))
     pkl.dump([sum,mult], open(os.path.join(combi_dir, "sum-mult_"+config.combi_name + '.pkl'), 'wb'))
 
+    legendx = 0.82
+    legendy_offset = 0.17
     ### Plot with the spline only ####
     groups_spline, sum_spline = ut.group_estimate(path_list_spline, name_list, config.delay_labels, colors, config.sigma_thresh, "Sum", testmode = config.testmode)
     sum_spline.name = "Sum"
     sum_spline.plotcolor = "black"
     text = [
-        (0.85, 0.90, r"$\mathrm{"+config.full_lensname+"}$" + "\n" + r"$\mathrm{PyCS\ Free-knot Spline}$",
+        (0.82, 0.85, r"$\mathrm{"+config.full_lensname+"}$" + "\n" + r"$\mathrm{PyCS}$" +'\n'+ r"$\mathrm{Free-knot\ Spline}$",
          {"fontsize": 26, "horizontalalignment": "center"})]
     if config.display :
-        pycs.mltd.plot.delayplot(groups_spline + [sum_spline], rplot=radius, refgroup=sum_spline, text=text,
+        pycs.mltd.plot.delayplot(groups_spline + groups_extra_spline + [sum_spline], rplot=radius, refgroup=sum_spline, text=text,
                                  hidedetails=True, showbias=False, showran=False, showlegend=True,tick_step_auto= True,
-                                 figsize=(15, 10), horizontaldisplay=False, legendfromrefgroup=False, auto_radius=auto_radius)
+                                 figsize=(15, 10), horizontaldisplay=False, legendfromrefgroup=False, auto_radius=auto_radius,
+                                 legendx = legendx, legendy_offset = legendy_offset)
 
-    pycs.mltd.plot.delayplot(groups_spline + [sum_spline], rplot=radius, refgroup=sum_spline, text=text,
+    pycs.mltd.plot.delayplot(groups_spline + groups_extra_spline +  [sum_spline], rplot=radius, refgroup=sum_spline, text=text,
                              hidedetails=True, showbias=False, showran=False, showlegend=True, figsize=(15, 10), auto_radius=auto_radius, tick_step_auto= True,
-                             horizontaldisplay=False, legendfromrefgroup=False, filename = plot_dir + "combined_estimated_spline"+config.combi_name + ".png")
+                             horizontaldisplay=False, legendfromrefgroup=False, filename = plot_dir + "/combined_estimated_spline"+config.combi_name + ".png",
+                             legendx = legendx, legendy_offset = legendy_offset)
 
     ### Plot with regdiff only ####
     groups_regdiff, sum_regdiff = ut.group_estimate(path_list_regdiff, name_list, config.delay_labels, colors, config.sigma_thresh, "Sum", testmode = config.testmode)
     sum_regdiff.name = "Sum"
     sum_regdiff.plotcolor = "black"
     text = [
-        (0.85, 0.90, r"$\mathrm{"+config.full_lensname+"}$" + "\n" + r"$\mathrm{PyCS\ Regression Difference}$",
+        (0.82, 0.85, r"$\mathrm{"+config.full_lensname+"}$" + "\n" + r"$\mathrm{PyCS}$" +'\n'+  r"$\mathrm{Regression\ Difference}$",
          {"fontsize": 26, "horizontalalignment": "center"})]
     if config.display :
-        pycs.mltd.plot.delayplot(groups_regdiff + [sum_regdiff], rplot=radius, refgroup=sum_regdiff, text=text,
+        pycs.mltd.plot.delayplot(groups_regdiff + groups_extra_regdiff +[sum_regdiff], rplot=radius, refgroup=sum_regdiff, text=text,
                                  hidedetails=True, showbias=False, showran=False, showlegend=True,tick_step_auto= True,
-                                 figsize=(15, 10), horizontaldisplay=False, legendfromrefgroup=False, auto_radius=auto_radius)
+                                 figsize=(15, 10), horizontaldisplay=False, legendfromrefgroup=False, auto_radius=auto_radius,
+                                 legendx = legendx, legendy_offset = legendy_offset)
 
-    pycs.mltd.plot.delayplot(groups_regdiff + [sum_regdiff], rplot=radius, refgroup=sum_regdiff, text=text,
+    pycs.mltd.plot.delayplot(groups_regdiff + groups_extra_regdiff +[sum_regdiff], rplot=radius, refgroup=sum_regdiff, text=text,
                              hidedetails=True, showbias=False, showran=False, showlegend=True, figsize=(15, 10), auto_radius=auto_radius, tick_step_auto= True,
-                             horizontaldisplay=False, legendfromrefgroup=False, filename = plot_dir + "combined_estimated_regdiff"+config.combi_name + ".png")
+                             horizontaldisplay=False, legendfromrefgroup=False, filename = plot_dir + "/combined_estimated_regdiff"+config.combi_name + ".png",
+                             legendx = legendx, legendy_offset = legendy_offset)
 
     ### Plot with regdiff and spline together ####
-    sum_all = pycs.mltd.comb.combine_estimates([groups_regdiff]+[groups_spline], sigmathresh=0.0, testmode=config.testmode)
+    name_list_all = []
+    for i,p in enumerate(path_list_regdiff): 
+        name_list_all.append("Regdiff %s"%config.data_sets[i])
+    for i,p in enumerate(path_list_spline): 
+        name_list_all.append("Spline %s"%config.data_sets[i])
+        
+    groups_all, sum_all = ut.group_estimate(path_list_regdiff + path_list_spline, name_list_all, config.delay_labels, colors, config.sigma_thresh, "Sum", testmode = config.testmode)
     sum_all.name = "Sum"
     sum_all.plotcolor = "black"
     text = [
-        (0.85, 0.90, r"$\mathrm{"+config.full_lensname+"}$" + "\n" + r"$\mathrm{PyCS\ Regression Difference and Spline}$",
-         {"fontsize": 26, "horizontalalignment": "center"})]
+        (0.85, 0.90, r"$\mathrm{"+config.full_lensname+"}$" + "\n" + r"$\mathrm{PyCS}$",
+         {"fontsize": 24, "horizontalalignment": "center"})]
     if config.display :
-        pycs.mltd.plot.delayplot([groups_regdiff]+[groups_spline] + [sum_all], rplot=radius, refgroup=sum_all, text=text,
+        pycs.mltd.plot.delayplot(groups_all + groups_extra_spline + groups_extra_regdiff + [sum_all], rplot=radius, refgroup=sum_all, text=text,
                                  hidedetails=True, showbias=False, showran=False, showlegend=True,tick_step_auto= True,
-                                 figsize=(15, 10), horizontaldisplay=False, legendfromrefgroup=False, auto_radius=auto_radius)
+                                 figsize=(15, 10), horizontaldisplay=False, legendfromrefgroup=False, auto_radius=auto_radius,
+                                 legendx = 0.85, legendy_offset = 0.12)
 
-    pycs.mltd.plot.delayplot([groups_regdiff]+[groups_spline] + [sum_all], rplot=radius, refgroup=sum_all, text=text,
+    pycs.mltd.plot.delayplot(groups_all + groups_extra_spline + groups_extra_regdiff + [sum_all], rplot=radius, refgroup=sum_all, text=text,
                              hidedetails=True, showbias=False, showran=False, showlegend=True, figsize=(15, 10), auto_radius=auto_radius, tick_step_auto= True,
-                             horizontaldisplay=False, legendfromrefgroup=False, filename = plot_dir + "combined_estimated_regdiff-spline"+config.combi_name + ".png")
+                             horizontaldisplay=False, legendfromrefgroup=False, filename = plot_dir + "/combined_estimated_regdiff-spline"+config.combi_name + ".png",
+                             legendx = 0.85, legendy_offset = 0.12)
 
 
 

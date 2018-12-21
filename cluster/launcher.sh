@@ -9,7 +9,7 @@ export SERVER_NAME="lesta"  # on Regor : 'r3', 'r4' ; otherwise 'deneb' or 'fidi
 export QUEUE_NAME="p4"  # on Regor : 'r3', 'r4' ; on deneb "debug" or "serial"
 
 export OBJECT_NAME='WFI2033'
-export DATA_NAME='SMARTS'
+export DATA_NAME='Euler'
 export NUM_CORE="12"
 export WORK_DIR='./'
 
