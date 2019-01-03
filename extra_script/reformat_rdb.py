@@ -4,6 +4,7 @@ import pycs
 
 def main(lensname,dataname, data_dir = '../data/'):
     rdbfile = data_dir + lensname + '_' + dataname+ '.rdb'
+    print rdbfile
 
     with open(rdbfile, 'r') as f:
         header = f.readline()
@@ -11,10 +12,10 @@ def main(lensname,dataname, data_dir = '../data/'):
     header = header.split('\t')
     lcs = []
 
-    magerr = 5
+    magerr = 4
 
-    if "mag_A1" in header :
-        lcs.append(pycs.gen.lc.rdbimport(rdbfile, 'A1', 'mag_A1', 'magerr_A1_%i'%magerr, dataname))
+    if "mag_A" in header :
+        lcs.append(pycs.gen.lc.rdbimport(rdbfile, 'A', 'mag_A', 'magerr_A_%i'%magerr, dataname))
     if "mag_B" in header :
         lcs.append(pycs.gen.lc.rdbimport(rdbfile, 'B', 'mag_B', 'magerr_B_%i'%magerr, dataname))
     if "mag_C" in header :

@@ -216,10 +216,10 @@ def main(lensname,dataname,work_dir='./'):
 
             if config.display :
                 pycs.mltd.plot.delayplot(group_list+[combined], rplot=radius, refgroup=combined,
-                                         text=text, hidedetails=True, showbias=False, showran=False,tick_step_auto= True,
+                                         text=text, hidedetails=True, showbias=False, showran=False,tick_step_auto= True,autoobj = config.lcs_label,
                                          showlegend=True, figsize=(15, 10), horizontaldisplay=False, legendfromrefgroup=False, auto_radius=auto_radius)
 
-            pycs.mltd.plot.delayplot(group_list+[combined], rplot=radius, refgroup=combined, text=text, hidedetails=True, tick_step_auto= True,
+            pycs.mltd.plot.delayplot(group_list+[combined], rplot=radius, refgroup=combined, text=text, hidedetails=True, tick_step_auto= True,autoobj = config.lcs_label,
                                      showbias=False, showran=False, showlegend=True, figsize=(15, 10), horizontaldisplay=False,auto_radius=auto_radius,
                                      legendfromrefgroup=False, filename = indiv_marg_dir + config.name_marg_regdiff + "_%s_%s.png"%(dickw['name'],noise))
 
@@ -239,11 +239,11 @@ def main(lensname,dataname,work_dir='./'):
 
     if config.display:
         pycs.mltd.plot.delayplot(final_groups + [final_combined], rplot=radius_f, refgroup=final_combined,tick_step_auto= True,
-                                 text=text, hidedetails=True, showbias=False, showran=False, auto_radius=auto_radius,
+                                 text=text, hidedetails=True, showbias=False, showran=False, auto_radius=auto_radius,autoobj = config.lcs_label,
                                  showlegend=True, figsize=(15, 10), horizontaldisplay=False, legendfromrefgroup=False)
 
     pycs.mltd.plot.delayplot(final_groups + [final_combined], rplot=radius_f, refgroup=final_combined, text=text, hidedetails=True,
-                             showbias=False, showran=False, showlegend=True, figsize=(15, 10), horizontaldisplay=False,
+                             showbias=False, showran=False, showlegend=True, figsize=(15, 10), horizontaldisplay=False, autoobj = config.lcs_label,
                              legendfromrefgroup=False, auto_radius=auto_radius,tick_step_auto= True,
                              filename=indiv_marg_dir + config.name_marg_regdiff + "_sigma_%2.2f.png" % (config.sigmathresh))
 

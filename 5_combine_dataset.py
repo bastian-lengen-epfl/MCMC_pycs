@@ -53,9 +53,9 @@ def main(lensname,work_dir='./'):
     name_list = [d for d in config.data_sets]
     
 
-    colors = ["royalblue", "crimson", "seagreen", "darkorchid", "darkorange", 'indianred', 'purple', 'brown', 'black',
+    colors = ["royalblue", "crimson",  "darkorchid", "darkorange", 'indianred', 'purple', 'brown', 'black',
               'violet', 'dodgerblue', 'palevioletred', 'olive',
-              'brown', 'salmon', 'chocolate', 'indigo', 'steelblue', 'cyan', 'gold' , 'lightcoral']
+              'brown', 'salmon', "seagreen",'chocolate', 'indigo', 'steelblue', 'cyan', 'gold' , 'lightcoral']
 
     groups, sum = ut.group_estimate(path_list, name_list, config.delay_labels, colors, config.sigma_thresh, "Sum", testmode = config.testmode)
     sum.name = "Sum"
@@ -106,7 +106,7 @@ def main(lensname,work_dir='./'):
 
     pycs.mltd.plot.delayplot(toplot, rplot=radius, refgroup=mult, text=text,
                              hidedetails=True, showbias=False, showran=False, showlegend=True, figsize=(15, 10), auto_radius=auto_radius, tick_step_auto= True,
-                             horizontaldisplay=False, legendfromrefgroup=False, filename = plot_dir + "/combined_estimated_"+config.combi_name + ".png")
+                             horizontaldisplay=False, legendfromrefgroup=False, filename = plot_dir + "/combined_estimate_"+config.combi_name + ".png")
 
     pkl.dump(groups, open(os.path.join(combi_dir, config.combi_name + '_goups.pkl'), 'wb'))
     pkl.dump([sum,mult], open(os.path.join(combi_dir, "sum-mult_"+config.combi_name + '.pkl'), 'wb'))
@@ -128,7 +128,7 @@ def main(lensname,work_dir='./'):
 
     pycs.mltd.plot.delayplot(groups_spline + groups_extra_spline +  [sum_spline], rplot=radius, refgroup=sum_spline, text=text,
                              hidedetails=True, showbias=False, showran=False, showlegend=True, figsize=(15, 10), auto_radius=auto_radius, tick_step_auto= True,
-                             horizontaldisplay=False, legendfromrefgroup=False, filename = plot_dir + "/combined_estimated_spline"+config.combi_name + ".png",
+                             horizontaldisplay=False, legendfromrefgroup=False, filename = plot_dir + "/combined_estimate_spline"+config.combi_name + ".png",
                              legendx = legendx, legendy_offset = legendy_offset)
 
     ### Plot with regdiff only ####
@@ -146,7 +146,7 @@ def main(lensname,work_dir='./'):
 
     pycs.mltd.plot.delayplot(groups_regdiff + groups_extra_regdiff +[sum_regdiff], rplot=radius, refgroup=sum_regdiff, text=text,
                              hidedetails=True, showbias=False, showran=False, showlegend=True, figsize=(15, 10), auto_radius=auto_radius, tick_step_auto= True,
-                             horizontaldisplay=False, legendfromrefgroup=False, filename = plot_dir + "/combined_estimated_regdiff"+config.combi_name + ".png",
+                             horizontaldisplay=False, legendfromrefgroup=False, filename = plot_dir + "/combined_estimate_regdiff"+config.combi_name + ".png",
                              legendx = legendx, legendy_offset = legendy_offset)
 
     ### Plot with regdiff and spline together ####
@@ -170,7 +170,7 @@ def main(lensname,work_dir='./'):
 
     pycs.mltd.plot.delayplot(groups_all + groups_extra_spline + groups_extra_regdiff + [sum_all], rplot=radius, refgroup=sum_all, text=text,
                              hidedetails=True, showbias=False, showran=False, showlegend=True, figsize=(15, 10), auto_radius=auto_radius, tick_step_auto= True,
-                             horizontaldisplay=False, legendfromrefgroup=False, filename = plot_dir + "/combined_estimated_regdiff-spline"+config.combi_name + ".png",
+                             horizontaldisplay=False, legendfromrefgroup=False, filename = plot_dir + "/combined_estimate_regdiff-spline"+config.combi_name + ".png",
                              legendx = 0.85, legendy_offset = 0.12)
 
 

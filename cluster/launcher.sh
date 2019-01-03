@@ -8,8 +8,8 @@ export JOB_BASENAME="3all"
 export SERVER_NAME="lesta"  # on Regor : 'r3', 'r4' ; otherwise 'deneb' or 'fidis'
 export QUEUE_NAME="p4"  # on Regor : 'r3', 'r4' ; on deneb "debug" or "serial"
 
-export OBJECT_NAME='WFI2033'
-export DATA_NAME='Euler'
+export OBJECT_NAME='J0246'
+export DATA_NAME='ECAM'
 export NUM_CORE="12"
 export WORK_DIR='./'
 

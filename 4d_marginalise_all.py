@@ -50,11 +50,11 @@ def main(lensname,dataname,work_dir='./'):
         auto_radius = False
 
     if config.display :
-        pycs.mltd.plot.delayplot(group_list+[combined], rplot=radius, refgroup=combined, text=text,
+        pycs.mltd.plot.delayplot(group_list+[combined], rplot=radius, refgroup=combined, text=text,autoobj = config.lcs_label,
                                  hidedetails=True, showbias=False, showran=False, showlegend=True,tick_step_auto= True,
                                  figsize=(15, 10), horizontaldisplay=False, legendfromrefgroup=False, auto_radius=auto_radius)
 
-    pycs.mltd.plot.delayplot(group_list+[combined], rplot=radius, refgroup=combined, text=text,
+    pycs.mltd.plot.delayplot(group_list+[combined], rplot=radius, refgroup=combined, text=text,autoobj = config.lcs_label,
                              hidedetails=True, showbias=False, showran=False, showlegend=True, figsize=(15, 10),auto_radius=auto_radius, tick_step_auto= True,
                              horizontaldisplay=False, legendfromrefgroup=False, filename = indiv_marg_dir +  config.new_name_marg +"_sigma_%2.2f.png"%config.sigmathresh_final)
 
