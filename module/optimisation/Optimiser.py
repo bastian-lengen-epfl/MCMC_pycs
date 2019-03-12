@@ -158,10 +158,6 @@ class Optimiser(object):
                 print "Error : you must give a knotstep to recompute the spline"
             try :
                 spline_on_mock = pycs.spl.topopt.opt_fine(mocklc, nit=5, knotstep=self.knotstep, verbose=False)
-                import scipy
-                scipy.random.seed()
-                if np.random.uniform(0,1) > 0.5 :
-                    raise RuntimeError('fake error')
                 mockrls = pycs.gen.stat.subtract(mocklc, spline_on_mock)
                 stat = pycs.gen.stat.mapresistats(mockrls)
             except Exception as e:
