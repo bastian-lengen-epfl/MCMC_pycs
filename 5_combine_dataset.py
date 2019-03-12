@@ -100,13 +100,13 @@ def main(lensname,work_dir='./'):
 
     toplot = groups + groups_extra+ [sum] +[mult] 
     if config.display :
-        pycs.mltd.plot.delayplot(toplot, rplot=radius, refgroup=mult, text=text,
+        pycs.mltd.plot.delayplot(toplot, rplot=radius, refgroup=mult, text=text,autoobj = config.lcs_label,
                                  hidedetails=True, showbias=False, showran=False, showlegend=True,tick_step_auto= True,
                                  figsize=(15, 10), horizontaldisplay=False, legendfromrefgroup=False, auto_radius=auto_radius)
 
-    pycs.mltd.plot.delayplot(toplot, rplot=radius, refgroup=mult, text=text,
+    pycs.mltd.plot.delayplot(toplot, rplot=radius, refgroup=mult, text=text,autoobj = config.lcs_label,
                              hidedetails=True, showbias=False, showran=False, showlegend=True, figsize=(15, 10), auto_radius=auto_radius, tick_step_auto= True,
-                             horizontaldisplay=False, legendfromrefgroup=False, filename = plot_dir + "/combined_estimate_"+config.combi_name + ".png")
+                             horizontaldisplay=False, legendfromrefgroup=False, filename = plot_dir + "/" + lensname + "_combined_estimate_"+config.combi_name + ".png")
 
     pkl.dump(groups, open(os.path.join(combi_dir, config.combi_name + '_goups.pkl'), 'wb'))
     pkl.dump([sum,mult], open(os.path.join(combi_dir, "sum-mult_"+config.combi_name + '.pkl'), 'wb'))
@@ -124,12 +124,12 @@ def main(lensname,work_dir='./'):
         pycs.mltd.plot.delayplot(groups_spline + groups_extra_spline + [sum_spline], rplot=radius, refgroup=sum_spline, text=text,
                                  hidedetails=True, showbias=False, showran=False, showlegend=True,tick_step_auto= True,
                                  figsize=(15, 10), horizontaldisplay=False, legendfromrefgroup=False, auto_radius=auto_radius,
-                                 legendx = legendx, legendy_offset = legendy_offset)
+                                 legendx = legendx, legendy_offset = legendy_offset,autoobj = config.lcs_label,)
 
     pycs.mltd.plot.delayplot(groups_spline + groups_extra_spline +  [sum_spline], rplot=radius, refgroup=sum_spline, text=text,
                              hidedetails=True, showbias=False, showran=False, showlegend=True, figsize=(15, 10), auto_radius=auto_radius, tick_step_auto= True,
                              horizontaldisplay=False, legendfromrefgroup=False, filename = plot_dir + "/combined_estimate_spline"+config.combi_name + ".png",
-                             legendx = legendx, legendy_offset = legendy_offset)
+                             legendx = legendx, legendy_offset = legendy_offset,autoobj = config.lcs_label,)
 
     ### Plot with regdiff only ####
     groups_regdiff, sum_regdiff = ut.group_estimate(path_list_regdiff, name_list, config.delay_labels, colors, config.sigma_thresh, "Sum", testmode = config.testmode)
@@ -142,12 +142,12 @@ def main(lensname,work_dir='./'):
         pycs.mltd.plot.delayplot(groups_regdiff + groups_extra_regdiff +[sum_regdiff], rplot=radius, refgroup=sum_regdiff, text=text,
                                  hidedetails=True, showbias=False, showran=False, showlegend=True,tick_step_auto= True,
                                  figsize=(15, 10), horizontaldisplay=False, legendfromrefgroup=False, auto_radius=auto_radius,
-                                 legendx = legendx, legendy_offset = legendy_offset)
+                                 legendx = legendx, legendy_offset = legendy_offset,autoobj = config.lcs_label,)
 
     pycs.mltd.plot.delayplot(groups_regdiff + groups_extra_regdiff +[sum_regdiff], rplot=radius, refgroup=sum_regdiff, text=text,
                              hidedetails=True, showbias=False, showran=False, showlegend=True, figsize=(15, 10), auto_radius=auto_radius, tick_step_auto= True,
                              horizontaldisplay=False, legendfromrefgroup=False, filename = plot_dir + "/combined_estimate_regdiff"+config.combi_name + ".png",
-                             legendx = legendx, legendy_offset = legendy_offset)
+                             legendx = legendx, legendy_offset = legendy_offset,autoobj = config.lcs_label,)
 
     ### Plot with regdiff and spline together ####
     name_list_all = []
@@ -166,12 +166,12 @@ def main(lensname,work_dir='./'):
         pycs.mltd.plot.delayplot(groups_all + groups_extra_spline + groups_extra_regdiff + [sum_all], rplot=radius, refgroup=sum_all, text=text,
                                  hidedetails=True, showbias=False, showran=False, showlegend=True,tick_step_auto= True,
                                  figsize=(15, 10), horizontaldisplay=False, legendfromrefgroup=False, auto_radius=auto_radius,
-                                 legendx = 0.85, legendy_offset = 0.12)
+                                 legendx = 0.85, legendy_offset = 0.12,autoobj = config.lcs_label,)
 
     pycs.mltd.plot.delayplot(groups_all + groups_extra_spline + groups_extra_regdiff + [sum_all], rplot=radius, refgroup=sum_all, text=text,
                              hidedetails=True, showbias=False, showran=False, showlegend=True, figsize=(15, 10), auto_radius=auto_radius, tick_step_auto= True,
                              horizontaldisplay=False, legendfromrefgroup=False, filename = plot_dir + "/combined_estimate_regdiff-spline"+config.combi_name + ".png",
-                             legendx = 0.85, legendy_offset = 0.12)
+                             legendx = 0.85, legendy_offset = 0.12,autoobj = config.lcs_label,)
 
 
 

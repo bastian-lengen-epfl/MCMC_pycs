@@ -34,6 +34,7 @@ def main(lensname,dataname, work_dir = './'):
         os.mkdir(lens_directory)
 
     rdbfile = 'data/' + lensname + "_" + dataname + '.rdb'
+    #d = np.loadtxt(rdbfile, skiprows=2, usecols=(0,1,2,3,4))
     d = np.loadtxt(rdbfile, skiprows=2)
     n_curve = (len(d[0,:]) -1) / 2
 
