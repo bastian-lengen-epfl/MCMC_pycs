@@ -79,6 +79,7 @@ class Optimiser(object):
         self.verbose = verbose
         self.grid = None
         self.message = '\n'
+        self.error_message = []
         self.tolerance = 0.75 # tolerance in unit of sigma for the fit
 
     def make_mocks_para(self, theta):
@@ -91,14 +92,16 @@ class Optimiser(object):
 
         job_args = [(theta) for j in range(self.n_curve_stat)]
 
-        stat_out = pool.map(self.fct_para, job_args)
+        out = pool.map(self.fct_para, job_args)
         pool.close()
         pool.join()
 
-        stat_out = np.asarray(stat_out)
-        zruns = np.asarray([[stat_out[i,j]['zruns'] for j in range(self.ncurve)] for i in range(self.n_curve_stat)])
-        sigmas = np.asarray([[stat_out[i,j]['std'] for j in range(self.ncurve)] for i in range(self.n_curve_stat)])
-        nruns = np.asarray([[stat_out[i,j]['nruns'] for j in range(self.ncurve)] for i in range(self.n_curve_stat)])
+        stat_out = np.asarray([x['stat'] for x in out if x['stat'] is not None]) #clean failed optimisation
+        message_out = np.asarray([x['error'] for x in out if x['error'] is not None]) #clean failed optimisation
+        self.error_message.append(message_out)
+        zruns = np.asarray([[stat_out[i,j]['zruns'] for j in range(self.ncurve)] for i in range(len(stat_out))])
+        sigmas = np.asarray([[stat_out[i,j]['std'] for j in range(self.ncurve)] for i in range(len(stat_out))])
+        nruns = np.asarray([[stat_out[i,j]['nruns'] for j in range(self.ncurve)] for i in range(len(stat_out))])
 
         mean_zruns = []
         std_zruns = []
@@ -153,13 +156,25 @@ class Optimiser(object):
         if self.recompute_spline:
             if self.knotstep == None:
                 print "Error : you must give a knotstep to recompute the spline"
-            spline_on_mock = pycs.spl.topopt.opt_fine(mocklc, nit=5, knotstep=self.knotstep, verbose=False)
-            mockrls = pycs.gen.stat.subtract(mocklc, spline_on_mock)
+            try :
+                spline_on_mock = pycs.spl.topopt.opt_fine(mocklc, nit=5, knotstep=self.knotstep, verbose=False)
+                import scipy
+                scipy.random.seed()
+                if np.random.uniform(0,1) > 0.5 :
+                    raise RuntimeError('fake error')
+                mockrls = pycs.gen.stat.subtract(mocklc, spline_on_mock)
+                stat = pycs.gen.stat.mapresistats(mockrls)
+            except Exception as e:
+                print 'Warning : light curves could not be optimised for parameter :', theta
+                error_message = 'The following error occured : %s for parameters %s \n' %(e, str(theta))
+                return {'stat' : None, 'error' : error_message }
+            else :
+                return {'stat' : stat, 'error' : None }
         else:
             mockrls = pycs.gen.stat.subtract(mocklc, self.spline)
+            stat = pycs.gen.stat.mapresistats(mockrls)
+            return {'stat' : stat, 'error' : None }
 
-        stat = pycs.gen.stat.mapresistats(mockrls)
-        return stat
 
     def get_tweakml_list(self, theta):
         tweak_list = []
@@ -281,6 +296,12 @@ class Optimiser(object):
             f.write('\n')
         f.write('Optimisation done in %4.4f seconds on %i cores'%((self.time_stop - self.time_start),self.max_core))
         f.close()
+
+        #Write the error report :
+        g = open(self.savedirectory + 'errors_tweakml_optimisation.txt', 'a')
+        for mes in self.error_message:
+            g.write(mes)
+        g.close()
 
     def reset_report(self):
         if os.path.isfile(self.savedirectory + 'report_tweakml_optimisation.txt'):

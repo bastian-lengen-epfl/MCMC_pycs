@@ -5,7 +5,6 @@ import numpy as np
 import argparse as ap
 from module import util_func as ut
 
-#TODO : code something to give a delay and not a time shift
 def applyshifts(lcs,timeshifts,magshifts):
 
     if not len(lcs) == len(timeshifts) and len(lcs) == len(magshifts):
@@ -54,7 +53,6 @@ def main(lensname,dataname,work_dir='./'):
     if not os.path.isdir(figure_directory):
         os.mkdir(figure_directory)
 
-    lcs = pycs.gen.util.readpickle(config.data)
     for i,lc in enumerate(config.lcs_label):
         print "I will aplly a initial shift of : %2.4f days, %2.4f mag for %s" %(config.timeshifts[i],config.magshifts[i],config.lcs_label[i])
 
