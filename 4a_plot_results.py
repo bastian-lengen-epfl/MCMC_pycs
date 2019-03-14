@@ -18,6 +18,9 @@ def main(lensname,dataname,work_dir='./'):
     if not os.path.isdir(regdiff_dir):
         os.mkdir(regdiff_dir)
 
+    binclip = True
+    binclipr = 20.0
+
     for a,kn in enumerate(config.knotstep) :
         for  b, knml in enumerate(config.mlknotsteps):
             for o, opt in enumerate(config.optset):
@@ -46,7 +49,7 @@ def main(lensname,dataname,work_dir='./'):
                         os.mkdir(regdiff_mocks_dir)
                     pycs.sim.plot.measvstrue(simres, r=2 * config.truetsr, nbins=1, plotpoints=True,
                                              ploterrorbars=True, sidebyside=True,
-                                             errorrange=5., binclip=True, binclipr=20.0, dataout=True,
+                                             errorrange=5., binclip=binclip, binclipr=binclipr, dataout=True,
                                              figsize=(12, 8),
                                              filename=figure_directory + 'deviation_hist_%i-%i_sims_%s_opt_%s.png' % (
                                              kn, knml, config.simset_copy, opt),
@@ -66,7 +69,7 @@ def main(lensname,dataname,work_dir='./'):
                                         outdir = config.lens_directory + config.combkw[a, b] + '/sims_%s_opt_%s/' %(config.simset_copy, opt))
                     pycs.sim.plot.measvstrue(simres, r=2 * config.truetsr , nbins=1, plotpoints=True,
                                              ploterrorbars=True, sidebyside=True,
-                                             errorrange=10., binclip=True, binclipr=20.0, dataout=True, figsize=(12, 8),
+                                             errorrange=10., binclip=binclip, binclipr=binclipr, dataout=True, figsize=(12, 8),
                                              filename=figure_directory + 'deviation_hist_%i-%i_sims_%s_opt_%s.png' % (
                                              kn, knml, config.simset_copy, opt),
                                              outdir=config.lens_directory + config.combkw[a, b] + '/sims_%s_opt_%s/' % (
