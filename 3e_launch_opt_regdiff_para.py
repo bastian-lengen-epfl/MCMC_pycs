@@ -1,4 +1,3 @@
-##### Now, we can analyse these results with the method of our choice. WARNING : this may take loooooooong
 import sys
 import pycs
 import time
@@ -26,9 +25,21 @@ def main(lensname,dataname,work_dir='./',queue='s1'):
     config = importlib.import_module("config_" + lensname + "_" + dataname)
     base_lcs = pycs.gen.util.readpickle(config.data)
     pkl_n = 0
+    if config.mltype == "splml":
+        if config.forcen :
+            ml_param = config.nmlspl
+            string_ML ="nmlspl"
+        else :
+            ml_param = config.mlknotsteps
+            string_ML = "knml"
+    elif config.mltype == "polyml" :
+        ml_param = config.degree
+        string_ML = "deg"
+    else :
+        raise RuntimeError('I dont know your microlensing type. Choose "polyml" or "spml".')
 
     for a,kn in enumerate(config.knotstep) :
-        for  b, knml in enumerate(config.mlknotsteps):
+        for  b, ml in enumerate(ml_param):
 
             print config.combkw[a,b]
             os.chdir(config.lens_directory + config.combkw[a, b]) # Because carrot
@@ -40,7 +51,7 @@ def main(lensname,dataname,work_dir='./',queue='s1'):
             applyshifts(lcs, config.timeshifts, config.magshifts)
 
             # We also give them a microlensing model (here, similar to Courbin 2011)
-            config.attachml(lcs,knml)
+            config.attachml(lcs,ml)
 
             for c, opts in enumerate(config.optset):
                 pkl_n += 1
@@ -65,7 +76,7 @@ def main(lensname,dataname,work_dir='./',queue='s1'):
 
                         elif config.simoptfctkw == "regdiff":
                             os.system("srun -n 1 -c 1 -p %s -J %s -u -e %s -o %s python exec_regdiff.py %s %s %s %s &"%
-                                      (queue, lensname+'_copies_'+str(kn)+'-'+str(knml),
+                                      (queue, lensname+'_copies_'+str(kn)+'-'+str(ml),
                                        os.path.join(main_path, 'cluster/slurm_regdiff_%s_%s_%i_copie.err'%(lensname,dataname,pkl_n)),
                                        os.path.join(main_path, 'cluster/slurm_regdiff_%s_%s_%i_copie.out'%(lensname,dataname,pkl_n)),
                                        pkl_name_copie,'1', c_path, config_path ))
@@ -83,7 +94,7 @@ def main(lensname,dataname,work_dir='./',queue='s1'):
                         print "Not implemented yet, please use regdiff"
                     elif config.simoptfctkw == "regdiff":
                         os.system("srun -n 1 -c 1 -p %s -J %s -u -e %s -o %s python exec_regdiff.py %s %s %s %s &" %
-                                  (queue, lensname+'_mocks_'+str(kn)+'-'+str(knml),os.path.join(main_path, 'cluster/slurm_regdiff_%i_mocks.err' % pkl_n),
+                                  (queue, lensname+'_mocks_'+str(kn)+'-'+str(ml),os.path.join(main_path, 'cluster/slurm_regdiff_%i_mocks.err' % pkl_n),
                                    os.path.join(main_path, 'cluster/slurm_regdiff_%i_mocks.out' % pkl_n), pkl_name_mocks, '0',
                                    c_path, config_path))
                         print "Job launched on mocks ! "
@@ -91,7 +102,7 @@ def main(lensname,dataname,work_dir='./',queue='s1'):
 
 if __name__ == '__main__':
     parser = ap.ArgumentParser(prog="python {}".format(os.path.basename(__file__)),
-                               description="Shift the mock curves and the copies.",
+                               description="Shift the mock curves and the copies. As regdiff can not be launched in multithread, we create a srun job for each pkl.",
                                formatter_class=ap.RawTextHelpFormatter)
     help_lensname = "name of the lens to process"
     help_dataname = "name of the data set to process (Euler, SMARTS, ... )"

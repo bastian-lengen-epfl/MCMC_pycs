@@ -40,12 +40,26 @@ def main(lensname,dataname,work_dir='./'):
     simset_mock_ava = ["mocks_n%it%i_%s" % (int(config.nsim * config.nsimpkls), config.truetsr,i) for i in config.tweakml_name_marg_spline]
     opt = 'spl1'
 
-    combkw_marg = [["%s_ks%i_%s_ksml_%i" % (config.optfctkw, config.knotstep_marg[i], config.mlname, config.mlknotsteps_marg[j])
-               for j in range(len(config.mlknotsteps_marg))] for i in range(len(config.knotstep_marg))]
+    if config.mltype == "splml":
+        if config.forcen :
+            ml_param = config.nmlspl
+            string_ML ="nmlspl"
+        else :
+            ml_param = config.mlknotsteps
+            string_ML = "knml"
+    elif config.mltype == "polyml" :
+        ml_param = config.degree
+        string_ML = "deg"
+    else :
+        raise RuntimeError('I dont know your microlensing type. Choose "polyml" or "spml".')
+
+    #Redefine the keyword here because you don't necessary want to marginalise over everything
+    combkw_marg = [["%s_ks%i_%s_%s_%i" % (config.optfctkw, config.knotstep_marg[i], config.mlname, string_ML, config.ml_marg[j])
+               for j in range(len(config.ml_marg))] for i in range(len(config.knotstep_marg))]
     combkw_marg = np.asarray(combkw_marg)
 
     for a,kn in enumerate(config.knotstep_marg):
-        for b, knml in enumerate(config.mlknotsteps_marg):
+        for b, ml in enumerate(ml_param):
             for n, noise in enumerate(config.tweakml_name_marg_spline):
                 result_file_delay = config.lens_directory + combkw_marg[a, b] + '/sims_%s_opt_%st%i/' % (config.simset_copy, opt, int(config.tsrand)) \
                                     + 'sims_%s_opt_%s' % (config.simset_copy, opt) + 't%i_delays.pkl'%int(config.tsrand)
@@ -57,9 +71,9 @@ def main(lensname,dataname,work_dir='./'):
                     f.write('Error I cannot find the files %s or %s. \n' % (result_file_delay, result_file_errorbars))
                     continue
 
-                name = "%s_ks%i_%s_%s" % (dataname,kn,knml, noise)
+                name = "%s_ks%i_%s_%s_%s" % (dataname,kn,string_ML,ml, noise)
                 group_list.append(pycs.mltd.comb.getresults(
-                    pycs.mltd.comb.CScontainer(data=dataname, knots=kn, ml=knml, name=name,
+                    pycs.mltd.comb.CScontainer(data=dataname, knots=kn, ml=ml, name=name,
                                                drawopt=config.optfctkw, runopt=opt, ncopy=config.ncopy*config.ncopypkls, nmocks=config.nsim*config.nsimpkls, truetsr=config.truetsr,
                                                colour=colors[color_id], result_file_delays= result_file_delay, result_file_errorbars = result_file_errorbars)))
                 medians_list.append(group_list[-1].medians)
@@ -70,7 +84,7 @@ def main(lensname,dataname,work_dir='./'):
                     print "Warning : I don't have enough colors in my list, I'll restart from the beginning."
                     color_id = 0 #reset the color form the beginning
 
-                f.write('Set %s, knotstep : %2.2f, mlknotstep : %2.2f \n' %(name, kn, knml))
+                f.write('Set %s, knotstep : %2.2f, %s : %2.2f \n' %(name, kn,string_ML, ml))
                 f.write('Tweak ml name : %s \n' % noise)
                 f.write('------------------------------------------------ \n')
 

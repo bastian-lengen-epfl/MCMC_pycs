@@ -17,10 +17,23 @@ def main(lensname,dataname,work_dir='./'):
     if not os.path.isdir(check_stat_plot_dir):
         os.mkdir(check_stat_plot_dir)
 
+    if config.mltype == "splml":
+        if config.forcen :
+            ml_param = config.nmlspl
+            string_ML ="nmlspl"
+        else :
+            ml_param = config.mlknotsteps
+            string_ML = "knml"
+    elif config.mltype == "polyml" :
+        ml_param = config.degree
+        string_ML = "deg"
+    else :
+        raise RuntimeError('I dont know your microlensing type. Choose "polyml" or "spml".')
+
     for i,kn in enumerate(config.knotstep) :
-        for j, knml in enumerate(config.mlknotsteps):
+        for j, ml in enumerate(ml_param):
             simset_available = glob.glob(config.lens_directory + config.combkw[i, j] + '/sims_mocks_*')
-            lcs, spline = pycs.gen.util.readpickle(config.lens_directory + config.combkw[i, j] + '/initopt_%s_ks%i_ksml%i.pkl' % (dataname, kn, knml))
+            lcs, spline = pycs.gen.util.readpickle(config.lens_directory + config.combkw[i, j] + '/initopt_%s_ks%i_%s%i.pkl' % (dataname, kn,string_ML, ml))
 
             for a in simset_available :
                 a = a.split('/')[-1]

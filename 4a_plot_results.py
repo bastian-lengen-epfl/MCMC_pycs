@@ -18,11 +18,23 @@ def main(lensname,dataname,work_dir='./'):
     if not os.path.isdir(regdiff_dir):
         os.mkdir(regdiff_dir)
 
-    binclip = True
-    binclipr = 20.0
+    binclip = True #be carefull this could be dangerous, make sure you kick out only outlier otherwise errror bar will be underestimated.
+    binclipr = 40.0 #rather conservative value
+    if config.mltype == "splml":
+        if config.forcen :
+            ml_param = config.nmlspl
+            string_ML ="nmlspl"
+        else :
+            ml_param = config.mlknotsteps
+            string_ML = "knml"
+    elif config.mltype == "polyml" :
+        ml_param = config.degree
+        string_ML = "deg"
+    else :
+        raise RuntimeError('I dont know your microlensing type. Choose "polyml" or "spml".')
 
     for a,kn in enumerate(config.knotstep) :
-        for  b, knml in enumerate(config.mlknotsteps):
+        for  b, ml in enumerate(ml_param):
             for o, opt in enumerate(config.optset):
 
                 #simulations
@@ -41,10 +53,10 @@ def main(lensname,dataname,work_dir='./'):
                         copiesres = [pycs.sim.run.collect(dir_link, 'blue',
                                                           dataname + "_regdiff_%s"%kwargs['name'])]
                         pycs.sim.plot.hists(copiesres, r=50.0, nbins=100, dataout=True,
-                                            filename=figure_directory+'delay_hist_%i-%i_sims_%s_opt_%s.png'%(kn,knml,config.simset_copy, opt),
+                                            filename=figure_directory+'delay_hist_%i-%i_sims_%s_opt_%s.png'%(kn,ml,config.simset_copy, opt),
                                             outdir = regdiff_copie_dir)
 
-                    regdiff_mocks_dir = os.path.join(regdiff_dir, "mocks_knt%i_mlknt%i/"%(kn,knml))
+                    regdiff_mocks_dir = os.path.join(regdiff_dir, "mocks_knt%i_mlknt%i/"%(kn,ml))
                     if not os.path.isdir(regdiff_mocks_dir):
                         os.mkdir(regdiff_mocks_dir)
                     pycs.sim.plot.measvstrue(simres, r=2 * config.truetsr, nbins=1, plotpoints=True,
@@ -52,7 +64,7 @@ def main(lensname,dataname,work_dir='./'):
                                              errorrange=5., binclip=binclip, binclipr=binclipr, dataout=True,
                                              figsize=(12, 8),
                                              filename=figure_directory + 'deviation_hist_%i-%i_sims_%s_opt_%s.png' % (
-                                             kn, knml, config.simset_copy, opt),
+                                             kn, ml, config.simset_copy, opt),
                                              outdir=regdiff_mocks_dir)
                     spl = (pycs.gen.util.readpickle(regdiff_copie_dir + 'sims_%s_opt_%s_delays.pkl' % (
                                                     config.simset_copy, opt)),
@@ -65,13 +77,13 @@ def main(lensname,dataname,work_dir='./'):
                                                       dataname + "_" + config.combkw[a, b])]
 
                     pycs.sim.plot.hists(copiesres, r=50.0, nbins=100, dataout=True,
-                                        filename=figure_directory+'delay_hist_%i-%i_sims_%s_opt_%s.png'%(kn,knml,config.simset_copy, opt),
+                                        filename=figure_directory+'delay_hist_%i-%i_sims_%s_opt_%s.png'%(kn,ml,config.simset_copy, opt),
                                         outdir = config.lens_directory + config.combkw[a, b] + '/sims_%s_opt_%s/' %(config.simset_copy, opt))
                     pycs.sim.plot.measvstrue(simres, r=2 * config.truetsr , nbins=1, plotpoints=True,
                                              ploterrorbars=True, sidebyside=True,
                                              errorrange=10., binclip=binclip, binclipr=binclipr, dataout=True, figsize=(12, 8),
                                              filename=figure_directory + 'deviation_hist_%i-%i_sims_%s_opt_%s.png' % (
-                                             kn, knml, config.simset_copy, opt),
+                                             kn, ml, config.simset_copy, opt),
                                              outdir=config.lens_directory + config.combkw[a, b] + '/sims_%s_opt_%s/' % (
                                              config.simset_copy, opt))
                     spl = (pycs.gen.util.readpickle(config.lens_directory + config.combkw[a, b] +
@@ -87,7 +99,7 @@ def main(lensname,dataname,work_dir='./'):
                     plt.show()
 
                 # pycs.sim.plot.hists(simres,  r=2*truetsr, nbins=50, dataout=True,
-                #                     filename=figure_directory+'delay_hists_mocks_%i-%i_sims_%s_opt_%s.png'%(kn,knml,simset_mock, opt),
+                #                     filename=figure_directory+'delay_hists_mocks_%i-%i_sims_%s_opt_%s.png'%(kn,ml,simset_mock, opt),
                 #                     outdir = lens_directory + combkw[a, b] + '/sims_%s_opt_%s/' %(simset_copy, opt))
 
                 toplot.append(spl)
@@ -95,7 +107,7 @@ def main(lensname,dataname,work_dir='./'):
                 text = [(0.43, 0.85, r"$\mathrm{" + config.full_lensname + "}$", {"fontsize": 18})]
 
                 pycs.sim.plot.newdelayplot(toplot, rplot=10.0, displaytext=True, text=text,
-                                           filename=figure_directory+"fig_delays__%i-%i_%s_%s.png" % (kn,knml,config.simset_mock, opt))
+                                           filename=figure_directory+"fig_delays__%i-%i_%s_%s.png" % (kn,ml,config.simset_mock, opt))
 
                 if config.display:
                     plt.show()

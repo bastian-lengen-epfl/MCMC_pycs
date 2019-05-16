@@ -30,7 +30,7 @@ knotstep = [25,35,45,55] #give a list of the parameter you want
 
 ### REGDIFF PARAMETERS ###
 #To use 5 set of parameters pre-selected :
-use_preselected_regdiff = True
+use_preselected_regdiff = True #highly recommended, set to True
 preselection_file = 'CHANGE PATH HERE' #'config/preset_regdiff_ECAM.txt'
 #You can give your own grid here if use_preselected_regdiff == False :
 covkernel = ['matern']  # can be matern, pow_exp or gaussian
@@ -39,14 +39,6 @@ pow = [2.2]
 amp = [0.5]
 scale = [200.0]
 errscale = [25.0]
-
-### SPLDIFF parameters ###
-#TODO : repair this
-# spldiff
-pointdensity_spldiff = 4
-knotstep_spldiff = 25
-# dispersion
-interpdist = 30
 
 ### RUN PARAMETERS #####
 #change here the number of copie and mock curve you want to draw :
@@ -72,8 +64,11 @@ mlname = 'splml'
 mlknotsteps = [150,300,450,600]# 0 means no microlensing...
 #To force the spacing  :
 forcen = False # if true I doesn't use mlknotstep
-nmlspl = 2  #nb_knot - 1, used only if forcen == True
-mlbokeps = 88 #  min spacing between ml knots, used only if forcen == True
+nmlspl = [0,1,2]  #nb_knot - 1, used only if forcen == True, 0, means no microlensing
+#mlbokeps = 88 #  min spacing between ml knots, used only if forcen == True
+
+#polyml parameters :
+degree = [0,1,2,3,4] # degree - 1, used only if mltype = "polyml",  0, means no microlensing
 
 
 ###### TWEAK ML #####
@@ -88,7 +83,7 @@ PS_param_B = [[1.0],[1.0]] #if you don't want the algorithm fine tune the high c
 
 #if you chose to optimise the tweakml automatically, you might want to change this
 optimiser = 'DIC' # choose between PSO, MCMC or GRID or DIC
-n_curve_stat =32# Number of curve to compute the statistics on, (the larger the better but it takes longer... 16 or 32 are good, 8 is still OK) .
+n_curve_stat =24# Number of curve to compute the statistics on, (the larger the better but it takes longer... 16 or 32 are good, 8 is still OK) .
 n_particles = 50 #this is use only in PSO optimser
 n_iter = 80 #number of iteration in PSO or MCMC
 mpi = False # if you want to use MPI for the PSO
@@ -105,17 +100,11 @@ mlknotsteps_marg = mlknotsteps
 
 ###### REGDIFF MARGINALISATION #########
 # Chose the parameters you want to marginalise on for the regdiff optimiser. Script 4c.
+# We will marginalise over the set of parameters in your preselection_file, you have to create one at this step.
 name_marg_regdiff = 'marginalisation_regdiff'
 tweakml_name_marg_regdiff = ['PS']
-auto_marginalisation = True #set this flag to True (recommanded) and it will use all the available regdiff simulation (all of the line below are ignored)
-knotstep_marg_regdiff = knotstep
-mlknotsteps_marg_regdiff = mlknotsteps
-covkernel_marg = covkernel #parameters to marginalise over, give a list or just select the same that you used above to marginalise over all the available parameters
-pointdensity_marg = pointdensity
-pow_marg = pow
-amp_marg = amp
-scale_marg = scale
-errscale_marg = errscale
+knotstep_marg_regdiff = knotstep #choose the knotstep range you want to marginalise over, by default it is recommanded to take the same as knotstep
+mlknotsteps_marg_regdiff = mlknotsteps #mlknotsteps or nmlspl if use forcen == True or degree if you use polyml.
 
 #other parameteres for regdiff and spline marginalisation :
 testmode = True # number of bin to use for the mar
@@ -142,43 +131,38 @@ def regdiff(lcs, **kwargs):
 	return pycs.regdiff.multiopt.opt_ts(lcs, pd=kwargs['pointdensity'], covkernel=kwargs['covkernel'], pow=kwargs['pow'],
 										amp=kwargs['amp'], scale=kwargs['scale'], errscale=kwargs['errscale'], verbose=True, method="weights")
 
-def spldiff(lcs, kn):
-	return pycs.spldiff.multiopt.opt_ts(lcs, pd=pointdensity, knotstep=kn, bokeps=kn/3.0)
 
+###### DON'T CHANGE ANYTHING BELOW THAT LINE ######
 rawdispersionmethod = lambda lc1, lc2 : pycs.disp.disps.linintnp(lc1, lc2, interpdist=interpdist)
 dispersionmethod = lambda lc1, lc2 : pycs.disp.disps.symmetrize(lc1, lc2, rawdispersionmethod)
 def disp(lcs):
 	return pycs.disp.topopt.opt_full(lcs, rawdispersionmethod, nit=3, verbose=True)
 
-
-def attachml(lcs,knml):
-	if knml == 0 : #I do nothing if there is no microlensing to attach.
+def attachml(lcs, ml):
+	if ml == 0 : #I do nothing if there is no microlensing to attach.
 		return
 	lcmls = [lcs[ind] for ind in mllist]
-	knmlvec = [knml for ind in mllist]
+	mlvec = [ml for ind in mllist] # this is either the number of knot, either a knot step depending if forcen is True or False
 	if mltype == 'splml':
 		if forcen:
-			for lcml, mlknotstep in zip(lcmls, knmlvec):
-				pycs.gen.splml.addtolc(lcml, n=nmlspl, bokeps=mlbokeps)
+			for lcml, nml in zip(lcmls, mlvec):
+				curve_length = lcml.jds[-1] - lcml.jds[0]
+				mlbokeps = np.floor(curve_length / nml)
+
+				if nml == 1 : #spline cannot have 0 internal knot, then we use a polynome of degree 2 to represents a spline with only two external knot
+					pycs.gen.polyml.addtolc(lcml,  nparams=3 )
+				else :
+					pycs.gen.splml.addtolc(lcml, n=nml, bokeps=mlbokeps)
 		else:
-			for lcml, mlknotstep in zip(lcmls, knmlvec):
+			for lcml, mlknotstep in zip(lcmls, mlvec):
 				mlbokeps_ad = mlknotstep / 3.0   #maybe change this
 				pycs.gen.splml.addtolc(lcml, knotstep=mlknotstep, bokeps=mlbokeps_ad)
 
 	# polynomial microlensing
+	nparams = [ml for ind in mllist]
 	if mltype == 'polyml':
-		if len(mllist) != len(nparams):
-			print "Give me enough nparams, one per lc in mllist!"
-
-			sys.exit()
-		if len(mllist) != len(autoseasonsgaps):
-			print "Give me enough autoseasongaps, one per lc in mllist!"
-			sys.exit()
 		for ind, lcml in enumerate(lcmls):
-			pycs.gen.polyml.addtolc(lcml, autoseasonsgap=autoseasonsgaps[ind], nparams=nparams[ind])
-
-
-###### DON'T CHANGE ANYTHING BELOW THAT LINE ######
+			pycs.gen.polyml.addtolc(lcml, nparams=nparams[ind], autoseasonsgap = 60.0)
 
 if optfctkw == "spl1":
 	optfct = spl1
@@ -199,7 +183,15 @@ if simoptfctkw == "regdiff":
 		regdiffparamskw = ut.generate_regdiffparamskw(pointdensity,covkernel, pow, amp, scale, errscale)
 
 
-combkw = [["%s_ks%i_%s_ksml_%i" %(optfctkw, knotstep[i], mlname,mlknotsteps[j]) for j in range(len(mlknotsteps))]for i in range(len(knotstep))]
+if mltype == "splml" :
+	if forcen == False :
+		combkw = [["%s_ks%i_%s_ksml_%i" %(optfctkw, knotstep[i], mlname, mlknotsteps[j]) for j in range(len(mlknotsteps))]for i in range(len(knotstep))]
+	else :
+		combkw = [["%s_ks%i_%s_nmlspl_%i" % (optfctkw, knotstep[i], mlname, nmlspl[j]) for j in range(len(nmlspl))]for i in range(len(knotstep))]
+elif mltype == "polyml":
+	combkw = [["%s_ks%i_%s_deg_%i" % (optfctkw, knotstep[i], mlname, degree[j]) for j in range(len(degree))] for i in range(len(knotstep))]
+else :
+	raise RuntimeError('I dont know your microlensing type. Choose "polyml" or "spml".')
 combkw = np.asarray(combkw)
 
 simset_copy = "copies_n%i" % (int(ncopy * ncopypkls))

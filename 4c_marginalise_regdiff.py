@@ -38,9 +38,19 @@ def main(lensname,dataname,work_dir='./'):
     f = open(marginalisation_dir + 'report_%s_sigma%2.1f.txt' % (config.name_marg_regdiff, config.sigmathresh), 'w')
     path_list = []
     name_list = []
-    combkw_marg = [["%s_ks%i_%s_ksml_%i" % (config.optfctkw, config.knotstep_marg[i], config.mlname, config.mlknotsteps_marg[j])
-               for j in range(len(config.mlknotsteps_marg))] for i in range(len(config.knotstep_marg))]
-    combkw_marg = np.asarray(combkw_marg)
+    if config.mltype == "splml":
+        if config.forcen:
+            ml_param = config.nmlspl
+            string_ML = "nmlspl"
+        else:
+            ml_param = config.mlknotsteps
+            string_ML = "knml"
+    elif config.mltype == "polyml":
+        ml_param = config.degree
+        string_ML = "deg"
+    else:
+        raise RuntimeError('I dont know your microlensing type. Choose "polyml" or "spml".')
+
 
     kw_list = ut.read_preselected_regdiffparamskw(config.preselection_file)
     kw_dic = ut.get_keyword_regdiff_from_file(config.preselection_file)
@@ -61,117 +71,63 @@ def main(lensname,dataname,work_dir='./'):
             simset_mock_ava = ["mocks_n%it%i_%s" % (int(config.nsim * config.nsimpkls), config.truetsr,twk) for twk in config.tweakml_name_marg_regdiff]
             opt = 'regdiff'
 
-            if config.auto_marginalisation:
-                if config.use_preselected_regdiff == False :
-                    raise RuntimeError("Turn the use_preselected_regdiff to True and set your preselection_file before using auto_marginalisation.")
+            if config.use_preselected_regdiff == False :
+                raise RuntimeError("Turn the use_preselected_regdiff to True and set your preselection_file before using this script.")
 
-                for a, kn in enumerate(config.knotstep_marg_regdiff):
-                    for b, knml in enumerate(config.mlknotsteps_marg_regdiff):
+            for a, kn in enumerate(config.knotstep_marg_regdiff):
+                for b, ml in enumerate(config.mlknotsteps_marg_regdiff):
 
-                        regdiff_mocks_dir = os.path.join(regdiff_dir, "mocks_knt%i_mlknt%i/" %(kn, knml))
+                    regdiff_mocks_dir = os.path.join(regdiff_dir, "mocks_knt%i_mlknt%i/" %(kn, ml))
 
-                        result_file_delay = regdiff_copie_dir + 'sims_%s_opt_regdiff%s' % (config.simset_copy, paramskw) \
-                                            + 't%i_delays.pkl' % int(config.tsrand)
-                        result_file_errorbars = regdiff_mocks_dir \
-                                                + 'sims_%s_opt_regdiff%s' % (simset_mock_ava[n], paramskw) + \
-                                                't%i_errorbars.pkl' % int(config.tsrand)
+                    result_file_delay = regdiff_copie_dir + 'sims_%s_opt_regdiff%s' % (config.simset_copy, paramskw) \
+                                        + 't%i_delays.pkl' % int(config.tsrand)
+                    result_file_errorbars = regdiff_mocks_dir \
+                                            + 'sims_%s_opt_regdiff%s' % (simset_mock_ava[n], paramskw) + \
+                                            't%i_errorbars.pkl' % int(config.tsrand)
 
-                        if not os.path.isfile(result_file_delay) or not os.path.isfile(result_file_errorbars):
-                            print 'Error I cannot find the files %s or %s. ' \
-                                  'Did you run the 3c and 4a?' % (result_file_delay, result_file_errorbars)
-                            f.write('Error I cannot find the files %s or %s. \n' % (
-                            result_file_delay, result_file_errorbars))
-                            continue
+                    if not os.path.isfile(result_file_delay) or not os.path.isfile(result_file_errorbars):
+                        print 'Error I cannot find the files %s or %s. ' \
+                              'Did you run the 3c and 4a?' % (result_file_delay, result_file_errorbars)
+                        f.write('Error I cannot find the files %s or %s. \n' % (
+                        result_file_delay, result_file_errorbars))
+                        continue
 
-                        group_list.append(pycs.mltd.comb.getresults(
-                            pycs.mltd.comb.CScontainer(data=dataname, knots=kn, ml=knml,
-                                                       name="knstp %i mlknstp %i"%(kn,knml),
-                                                       drawopt=config.optfctkw, runopt=opt,
-                                                       ncopy=config.ncopy * config.ncopypkls,
-                                                       nmocks=config.nsim * config.nsimpkls, truetsr=config.truetsr,
-                                                       colour=colors[color_id],
-                                                       result_file_delays=result_file_delay,
-                                                       result_file_errorbars=result_file_errorbars)))
-                        medians_list.append(group_list[-1].medians)
-                        errors_up_list.append(group_list[-1].errors_up)
-                        errors_down_list.append(group_list[-1].errors_down)
+                    group_list.append(pycs.mltd.comb.getresults(
+                        pycs.mltd.comb.CScontainer(data=dataname, knots=kn, ml=ml,
+                                                   name="knstp %i mlknstp %i"%(kn,ml),
+                                                   drawopt=config.optfctkw, runopt=opt,
+                                                   ncopy=config.ncopy * config.ncopypkls,
+                                                   nmocks=config.nsim * config.nsimpkls, truetsr=config.truetsr,
+                                                   colour=colors[color_id],
+                                                   result_file_delays=result_file_delay,
+                                                   result_file_errorbars=result_file_errorbars)))
+                    medians_list.append(group_list[-1].medians)
+                    errors_up_list.append(group_list[-1].errors_up)
+                    errors_down_list.append(group_list[-1].errors_down)
 
-                        if np.isnan(medians_list[-1]).any() or np.isnan(errors_up_list[-1]).any() or np.isnan(errors_down_list[-1]).any():
-                            print "There is some Nan value in %s, for noise %s, kn %i, knml%i"%(dickw['name'], noise, kn,knml)
-                            print "I could erase this entry and continue the marginalisation. "
-                            ut.proquest(True)
-                            medians_list = medians_list[:-1]
-                            errors_down_list = errors_down_list[:-1]
-                            errors_up_list = errors_down_list[:-1]
-                            group_list = group_list[:-1]
-                            continue
-                        color_id += 1
-                        count +=1
-                        if color_id >= len(colors):
-                            print "Warning : I don't have enough colors in my list, I'll restart from the beginning."
-                            color_id = 0  # reset the color form the beginning
+                    if np.isnan(medians_list[-1]).any() or np.isnan(errors_up_list[-1]).any() or np.isnan(errors_down_list[-1]).any():
+                        print "There is some Nan value in %s, for noise %s, kn %i, %s%i"%(dickw['name'], noise, kn,string_ML,ml)
+                        print "I could erase this entry and continue the marginalisation. "
+                        ut.proquest(True)
+                        medians_list = medians_list[:-1]
+                        errors_down_list = errors_down_list[:-1]
+                        errors_up_list = errors_down_list[:-1]
+                        group_list = group_list[:-1]
+                        continue
+                    color_id += 1
+                    count +=1
+                    if color_id >= len(colors):
+                        print "Warning : I don't have enough colors in my list, I'll restart from the beginning."
+                        color_id = 0  # reset the color form the beginning
 
-                        f.write('Set %i, knotstep : %2.2f, mlknotstep : %2.2f \n' % (count, kn, knml))
-                        f.write('covkernel : %s, point density: %2.2f, pow : %2.2f, amp : %2.2f, '
-                                'scale:%2.2f, errscale:%2.2f \n' % (dickw["covkernel"], dickw["pointdensity"],
-                                                                    dickw["pow"],dickw["amp"],dickw["scale"],
-                                                                    dickw["errscale"]))
-                        f.write('Tweak ml name : %s \n' % noise)
-                        f.write('------------------------------------------------ \n')
+                    f.write('Set %i, knotstep : %2.2f, %s : %2.2f \n' % (count, kn,string_ML,ml))
+                    f.write('covkernel : %s, point density: %2.2f, pow : %2.2f, amp : %2.2f, '
+                            'scale:%2.2f, errscale:%2.2f \n' % (dickw["covkernel"], dickw["pointdensity"],
+                                                                dickw["pow"],dickw["amp"],dickw["scale"],
+                                                                dickw["errscale"]))
+                    f.write('Tweak ml name : %s \n' % noise)
+                    f.write('------------------------------------------------ \n')
 
-
-            else :
-                print "This is deprecated sorry... Use auto_marginalisation in your config file ! " #TODO : supress this option !
-                exit()
-                # count = 0
-                # for c in config.covkernel_marg:
-                #     for pts in config.pointdensity_marg:
-                #         for p in config.pow_marg:
-                #             for am in config.amp_marg:
-                #                 for s in config.scale_marg:
-                #                     for e in config.errscale_marg:
-                #                         for n, noise in enumerate(config.tweakml_name_marg_regdiff):
-                #                             count +=1
-                #                             if c == 'gaussian' :
-                #                                 paramskw = "regdiff_pd%i_ck%s_amp%.1f_sc%i_errsc%i_" % (pts, c, am, s, e)
-                #                             else :
-                #                                 paramskw = "regdiff_pd%i_ck%s_pow%.1f_amp%.1f_sc%i_errsc%i_" % (pts, c, p, am, s, e)
-                #                             print count
-                #                             result_file_delay = config.lens_directory + combkw_marg[a, b] + '/sims_%s_opt_%st%i/' \
-                #                                                 %(config.simset_copy, paramskw, int(config.tsrand)) \
-                #                                                 + 'sims_%s_opt_%s' % (config.simset_copy, paramskw) + 't%i_delays.pkl'%int(config.tsrand)
-                #                             result_file_errorbars = config.lens_directory + combkw_marg[a, b] + '/sims_%s_opt_%st%i/' \
-                #                                                     % (config.simset_copy, paramskw, int(config.tsrand))\
-                #                                                     + 'sims_%s_opt_%s' % (simset_mock_ava[n], paramskw) + \
-                #                                                     't%i_errorbars.pkl'%int(config.tsrand)
-                #
-                #                             if not os.path.isfile(result_file_delay) or not os.path.isfile(result_file_errorbars):
-                #                                 print 'Error I cannot find the files %s or %s. ' \
-                #                                       'Did you run the 3c and 4a?'%(result_file_delay, result_file_errorbars)
-                #                                 f.write('Error I cannot find the files %s or %s. \n'%(result_file_delay, result_file_errorbars))
-                #                                 continue
-                #
-                #                             group_list.append(pycs.mltd.comb.getresults(
-                #                                 pycs.mltd.comb.CScontainer(data=dataname, knots=kn, ml=knml,
-                #                                                            name="set %i" %(count+1),
-                #                                                            drawopt=config.optfctkw, runopt=opt, ncopy=config.ncopy*config.ncopypkls,
-                #                                                            nmocks=config.nsim*config.nsimpkls, truetsr=config.truetsr,
-                #                                                            colour=colors[color_id],
-                #                                                            result_file_delays= result_file_delay,
-                #                                                            result_file_errorbars = result_file_errorbars)))
-                #                             medians_list.append(group_list[-1].medians)
-                #                             errors_up_list.append(group_list[-1].errors_up)
-                #                             errors_down_list.append(group_list[-1].errors_down)
-                #                             color_id +=1
-                #                             if color_id >= len(colors):
-                #                                 print "Warning : I don't have enough colors in my list, I'll restart from the beginning."
-                #                                 color_id = 0 #reset the color form the beginning
-                #
-                #                             f.write('Set %i, knotstep : %2.2f, mlknotstep : %2.2f \n'%(count,kn,knml))
-                #                             f.write('covkernel : %s, point density: %2.2f, pow : %2.2f, amp : %2.2f, '
-                #                                     'scale:%2.2f, errscale:%2.2f \n'%(c,pts,p,am,s,e))
-                #                             f.write('Tweak ml name : %s \n'%noise)
-                #                             f.write('------------------------------------------------ \n')
 
             #build the bin list :
             medians_list = np.asarray(medians_list)
