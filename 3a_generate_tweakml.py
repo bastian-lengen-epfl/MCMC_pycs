@@ -1,5 +1,3 @@
-import matplotlib as mpl
-import matplotlib.pyplot as plt
 import pycs
 from module import tweakml_PS_from_data as twk
 from module.optimisation import Optimiser as mcmc

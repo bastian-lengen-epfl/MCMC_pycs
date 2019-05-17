@@ -96,7 +96,7 @@ max_iter = 15 # this is used in the DIC optimiser, 10 is usually enough.
 name_marg_spline = 'marginalisation_spline' #choose a name for your marginalisation
 tweakml_name_marg_spline = ['PS']
 knotstep_marg = knotstep #parameters to marginalise over, give a list or just select the same that you used above to marginalise over all the available parameters
-mlknotsteps_marg = mlknotsteps
+mlknotsteps_marg = mlknotsteps #mlknotsteps or nmlspl if use forcen == True or degree if you use polyml.
 
 ###### REGDIFF MARGINALISATION #########
 # Chose the parameters you want to marginalise on for the regdiff optimiser. Script 4c.
