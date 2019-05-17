@@ -750,7 +750,7 @@ class Dic_Optimiser(Optimiser):
                 elif self.step[i] > 0.6 : #max step size
                     self.step[i] = 0.6
 
-                elif B[i][0] <= 0.4 and self.step[i] <= -0.2 : #condition to reach 0.2 aymptotically
+                elif B[i][0] <= 0.4 and self.step[i] <= -0.2 : #condition to reach 0.1 aymptotically
 
                     self.step = self.step/ 2.0
 
@@ -762,7 +762,7 @@ class Dic_Optimiser(Optimiser):
 
             for i in range(self.ncurve):
                 B[i][0] += self.step[i]
-                if B[i][0] <= 0.10 : B[i][0] = 0.10 #minimum for B
+                if B[i][0] <= 0.05 : B[i][0] = 0.05 #minimum for B
 
             if self.iteration%5 == 0:
                 self.A_correction, _, _, _, _ = self.compute_set_A_correction(B) #recompute A correction every 5 iterations.

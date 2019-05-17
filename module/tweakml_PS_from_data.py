@@ -32,6 +32,8 @@ def tweakml_PS(lcs, spline, B, f_min = 1/300.0,psplot=False, save_figure_folder 
         if B >= 1 : sample_per_day = 7
         if B >= 1.5 : sample_per_day = 10
         if B >= 2. : sample_per_day = 15
+        if B >= 2.5 : sample_per_day = 20
+        if B >= 3.0 : sample_per_day = 30 #this is empirical... it should be a way to compute this, this is just not to cut high frequency when resampling the noise
 
         samples =  int(span) * sample_per_day
         if samples%2 ==1 :
