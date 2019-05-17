@@ -1,5 +1,11 @@
+import os
+import matplotlib as mpl
+if os.environ.get('DISPLAY','') == '':
+    print('no display found. Using non-interactive Agg backend')
+    mpl.use('Agg')
+import matplotlib.pyplot as plt
 import pycs
-import os,sys, glob
+import sys, glob
 import argparse as ap
 import multiprocess
 

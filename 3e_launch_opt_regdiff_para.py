@@ -1,7 +1,12 @@
+import os
+import matplotlib as mpl
+if os.environ.get('DISPLAY','') == '':
+    print('no display found. Using non-interactive Agg backend')
+    mpl.use('Agg')
 import sys
 import pycs
 import time
-import os, copy
+import copy
 import argparse as ap
 import importlib
 import numpy

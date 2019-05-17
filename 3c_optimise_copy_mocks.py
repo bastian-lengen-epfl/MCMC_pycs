@@ -1,10 +1,15 @@
 ##### Now, we can analyse these results with the method of our choice. WARNING : this may take loooooooong
 ##### I'm not re-running on already optimized lcs !
+import os
+import matplotlib as mpl
+if os.environ.get('DISPLAY','') == '':
+    print('no display found. Using non-interactive Agg backend')
+    mpl.use('Agg')
 import sys
 import pycs
 import time
 from multiprocess import Pool, Lock, cpu_count
-import os, copy
+import copy
 import argparse as ap
 import importlib
 import numpy
