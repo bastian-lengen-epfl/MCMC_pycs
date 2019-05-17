@@ -1,7 +1,12 @@
+import os
+import matplotlib as mpl
+if os.environ.get('DISPLAY','') == '':
+    print('no display found. Using non-interactive Agg backend')
+    mpl.use('Agg')
+import matplotlib.pyplot as plt
 import pycs
 from module import tweakml_PS_from_data as twk
 from module.optimisation import Optimiser as mcmc
-import os
 import module.util_func as util
 import sys
 import numpy as np

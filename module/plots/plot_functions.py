@@ -1,8 +1,11 @@
-import numpy as np
+import os
 import matplotlib as mpl
-mpl.use('Agg')
+if os.environ.get('DISPLAY','') == '':
+    print('no display found. Using non-interactive Agg backend')
+    mpl.use('Agg')
 import matplotlib.pyplot as plt
 import corner
+import numpy as np
 
 def plot_chain_PSO(chain, param_list):
     X2_list, pos_list, vel_list = chain
