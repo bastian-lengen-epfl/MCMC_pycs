@@ -8,7 +8,7 @@ from module import util_func as ut
 
 #info about the lens :
 full_lensname =''
-lcs_label = ['A','B']
+lcs_label = ['A','B','C','D']
 delay_labels = ['AB', 'AC', 'AD', 'BC', 'BD', 'CD']
 #initial guess :
 timeshifts = ut.convert_delays2timeshifts([0.,0.,0.])#give the estimated AB delay
