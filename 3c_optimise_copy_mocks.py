@@ -65,16 +65,31 @@ def main(lensname,dataname,work_dir='./'):
     config = importlib.import_module("config_" + lensname + "_" + dataname)
     base_lcs = pycs.gen.util.readpickle(config.data)
     f = open(os.path.join(config.report_directory, 'report_optimisation_%s.txt'%config.simoptfctkw), 'w')
+
+    if config.mltype == "splml":
+        if config.forcen :
+            ml_param = config.nmlspl
+            string_ML ="nmlspl"
+        else :
+            ml_param = config.mlknotsteps
+            string_ML = "knml"
+    elif config.mltype == "polyml" :
+        ml_param = config.degree
+        string_ML = "deg"
+    else :
+        raise RuntimeError('I dont know your microlensing type. Choose "polyml" or "spml".')
+
     for a,kn in enumerate(config.knotstep) :
-        for  b, knml in enumerate(config.mlknotsteps):
+        for  b, ml in enumerate(ml_param):
             lcs = copy.deepcopy(base_lcs)
             destpath = os.path.join(main_path, config.lens_directory + config.combkw[a, b] + '/')
             print destpath
             ##### We start by shifting our curves "by eye", to get close to the result and help the optimisers to do a good job
-            applyshifts(lcs, config.timeshifts, config.magshifts)
+            applyshifts(lcs, config.timeshifts, config.magshifts) #be carefull, this remove ml as well...
 
             # We also give them a microlensing model (here, similar to Courbin 2011)
-            config.attachml(lcs,knml)
+            config.attachml(lcs,ml) #this is because they were saved as raw lcs, wihtout lcs.
+
             if config.max_core == None :
                 nworkers = cpu_count()
             else :
@@ -101,11 +116,12 @@ def main(lensname,dataname,work_dir='./'):
                         if a == 0 and b == 0 : # for copies, run on only 1 (knstp,mlknstp) as it the same for others
                             job_args = (0, config.simset_copy, lcs, config.simoptfct, kwargs, opts, config.tsrand, destpath)
                             success_list_copies = exec_worker_copie_aux(job_args)
+                            success_list_copies = [success_list_copies] # we hace to turn it into a list to match spl format
                             dir_link = os.path.join(destpath,"sims_%s_opt_%s" % (config.simset_copy, opts))
                             print "Dir link :", dir_link
                             pkl.dump(dir_link,open(os.path.join(config.lens_directory,'regdiff_copies_link_%s.pkl'%kwargs['name']),'w'))
                         # p.map(exec_worker_copie_aux, job_args)# because for some reason, regdiff does not like multiproc.
-                    f.write('COPIES, kn%i, knml%i, optimiseur %s : \n' % (kn, knml, kwargs['name']))
+                    f.write('COPIES, kn%i, %s%i, optimiseur %s : \n' % (kn, string_ML, ml, kwargs['name']))
                     write_report_optimisation(f, success_list_copies)
                     f.write('################### \n')
 
@@ -120,8 +136,9 @@ def main(lensname,dataname,work_dir='./'):
                     elif config.simoptfctkw == "regdiff":
                         job_args = (0, config.simset_mock, lcs, config.simoptfct, kwargs, opts, config.tsrand, destpath)
                         success_list_simu = exec_worker_mocks_aux(job_args)  # because for some reason, regdiff does not like multiproc.
+                        success_list_simu = [success_list_simu]
                         # p.map(exec_worker_copie_aux, job_args)
-                    f.write('SIMULATIONS, kn%i, knml%i, optimiseur %s : \n' % (kn, knml, kwargs['name']))
+                    f.write('SIMULATIONS, kn%i, %s%i, optimiseur %s : \n' % (kn,string_ML, ml, kwargs['name']))
                     write_report_optimisation(f, success_list_simu)
                     f.write('################### \n')
 

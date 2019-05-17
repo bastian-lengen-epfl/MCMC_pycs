@@ -58,28 +58,42 @@ def main(lensname,dataname,work_dir='./'):
 
 
     # Do the optimisation with the splines
-    chi2 = np.zeros((len(config.knotstep),len(config.mlknotsteps)))
-    dof = np.zeros((len(config.knotstep),len(config.mlknotsteps)))
+    if config.mltype == "splml":
+        if config.forcen :
+            ml_param = config.nmlspl
+            string_ML ="nmlspl"
+        else :
+            ml_param = config.mlknotsteps
+            string_ML = "knml"
+    elif config.mltype == "polyml" :
+        ml_param = config.degree
+        string_ML = "deg"
+    else :
+        raise RuntimeError('I dont know your microlensing type. Choose "polyml" or "spml".')
+    chi2 = np.zeros((len(config.knotstep),len(ml_param)))
+    dof = np.zeros((len(config.knotstep),len(ml_param)))
+
     for i,kn in enumerate(config.knotstep) :
-        for j, knml in enumerate(config.mlknotsteps):
+        for j, ml in enumerate(ml_param):
+            print ("ML param", j, ml)
             lcs = pycs.gen.util.readpickle(config.data)
             applyshifts(lcs, config.timeshifts, config.magshifts)
-            if knml != 0 :
-                config.attachml(lcs, knml) # add microlensing
+            if ml != 0 :
+                config.attachml(lcs, ml) # add microlensing
 
             spline = config.spl1(lcs, kn = kn)
             pycs.gen.mrg.colourise(lcs)
             rls = pycs.gen.stat.subtract(lcs, spline)
-            chi2[i,j] = compute_chi2(rls, kn, knml)
-            dof[i,j] = compute_dof_spline(rls, kn, knml)
+            chi2[i,j] = compute_chi2(rls, kn, ml)
+            dof[i,j] = compute_dof_spline(rls, kn, ml)
 
             if config.display :
                 pycs.gen.lc.display(lcs, [spline], showlegend=True, showdelays=True, filename="screen")
                 pycs.gen.stat.plotresiduals([rls])
             else :
                 pycs.gen.lc.display(lcs, [spline], showlegend=True, showdelays=True,
-                                    filename=figure_directory + "spline_fit_ks%i_ksml%i.png"%(kn,knml))
-                pycs.gen.stat.plotresiduals([rls], filename=figure_directory + "residual_fit_ks%i_ksml%i.png"%(kn,knml))
+                                    filename=figure_directory + "spline_fit_ks%i_%s%i.png"%(kn,string_ML,ml))
+                pycs.gen.stat.plotresiduals([rls], filename=figure_directory + "residual_fit_ks%i_%s%i.png"%(kn,string_ML,ml))
 
 
 
@@ -87,10 +101,10 @@ def main(lensname,dataname,work_dir='./'):
             if not os.path.isdir(config.lens_directory + config.combkw[i,j]):
                 os.mkdir(config.lens_directory + config.combkw[i,j])
 
-            pycs.gen.util.writepickle((lcs, spline), config.lens_directory + '%s/initopt_%s_ks%i_ksml%i.pkl' % (config.combkw[i,j], dataname, kn,knml))
+            pycs.gen.util.writepickle((lcs, spline), config.lens_directory + '%s/initopt_%s_ks%i_%s%i.pkl' % (config.combkw[i,j], dataname, kn,string_ML, ml))
 
 
-
+    ### REGDIFF ####
     #DO the optimisation with regdiff as well, just to have an idea, this the first point of the grid !
     lcs = pycs.gen.util.readpickle(config.data)
     pycs.gen.mrg.colourise(lcs)
@@ -128,6 +142,7 @@ def main(lensname,dataname,work_dir='./'):
             os.mkdir(config.lens_directory + 'regdiff_fitting')
         pycs.gen.util.writepickle(lcs, config.lens_directory + 'regdiff_fitting/initopt_regdiff%s.pkl'%regdiff_param_kw[i])
 
+
     #Write the report :
     print "Report will be writen in " + config.lens_directory +'report/report_fitting.txt'
 
@@ -136,12 +151,12 @@ def main(lensname,dataname,work_dir='./'):
     f.write('------------------------------------------------\n')
 
     for i,kn in enumerate(config.knotstep) :
-        f.write('knotsetp : %i'%kn +'\n')
+        f.write('knotstep : %i'%kn +'\n')
         f.write('\n')
-        for j, knml in enumerate(config.mlknotsteps):
-            lcs, spline = pycs.gen.util.readpickle(config.lens_directory + '%s/initopt_%s_ks%i_ksml%i.pkl' % (config.combkw[i,j], dataname, kn,knml), verbose = False)
+        for j, ml in enumerate(ml_param):
+            lcs, spline = pycs.gen.util.readpickle(config.lens_directory + '%s/initopt_%s_ks%i_%s%i.pkl' % (config.combkw[i,j], dataname, kn,string_ML,ml), verbose = False)
             delay_pair, delay_name = ut.getdelays(lcs)
-            f.write('Micro-lensing knotstep = %i'%knml +"     Delays are " + str(delay_pair) + " for pairs "  +
+            f.write('Micro-lensing %s = %i'%(string_ML,ml) +"     Delays are " + str(delay_pair) + " for pairs "  +
                     str(delay_name) + '. Chi2 Red : %2.5f '%chi2[i,j] + ' DoF : %i \n'%dof[i,j])
 
         f.write('\n')

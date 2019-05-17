@@ -13,10 +13,10 @@ import pickle
 from functools import partial
 
 class Optimiser(object):
-    def __init__(self, lcs, fit_vector, spline, knotstep=None,
+    def __init__(self, lcs, fit_vector, spline, attachml_function,attachml_param, knotstep=None,
                      savedirectory="./", recompute_spline=True, max_core = 16, theta_init = None,
                     n_curve_stat = 32, shotnoise = "magerrs", tweakml_type = 'colored_noise', display = False, verbose = False,
-                 tweakml_name = '', correction_PS_residuals = True):
+                 tweakml_name = '', correction_PS_residuals = True, tolerance = 0.75):
 
         if len(fit_vector) != len(lcs):
             print "Error : Your target vector and list of light curves must have the same size !"
@@ -32,6 +32,8 @@ class Optimiser(object):
         self.ncurve = len(lcs)
         self.fit_vector = np.asarray(fit_vector)
         self.spline = spline
+        self.attachml_function = attachml_function
+        self.attachml_param = attachml_param
         if theta_init == None :
             if tweakml_type == 'colored_noise':
                 theta_init = [[-2.0,0.1] for i in range(self.ncurve)]
@@ -80,7 +82,9 @@ class Optimiser(object):
         self.grid = None
         self.message = '\n'
         self.error_message = []
-        self.tolerance = 0.75 # tolerance in unit of sigma for the fit
+        self.tolerance = tolerance # tolerance in unit of sigma for the fit
+        self.timeshifts = [l.timeshift for l in self.lcs]
+        self.magshifts = [l.magshift for l in self.lcs]
 
     def make_mocks_para(self, theta):
         stat = []
@@ -151,13 +155,18 @@ class Optimiser(object):
 
         tweak_list = self.get_tweakml_list(theta)
         mocklc = pycs.sim.draw.draw(self.lcs, self.spline,
-                                    tweakml= tweak_list,shotnoise=self.shotnoise, shotnoisefrac=self.shotnoisefrac, keeptweakedml=False)
+                                    tweakml= tweak_list,shotnoise=self.shotnoise,
+                                    shotnoisefrac=self.shotnoisefrac, keeptweakedml=False, keepshifts=False, keeporiginalml=False) #this return mock curve without ML
+
+        self.applyshifts(mocklc, self.timeshifts, self.magshifts)
+        self.attachml_function(mocklc, self.attachml_param)  # adding the microlensing here ! Before the optimisation
 
         if self.recompute_spline:
             if self.knotstep == None:
                 print "Error : you must give a knotstep to recompute the spline"
             try :
-                spline_on_mock = pycs.spl.topopt.opt_fine(mocklc, nit=5, knotstep=self.knotstep, verbose=False)
+                spline_on_mock = pycs.spl.topopt.opt_fine(mocklc, nit=5, knotstep=self.knotstep,
+                                                          verbose=self.verbose, bokeps=self.knotstep/3.0, stabext=100)
                 mockrls = pycs.gen.stat.subtract(mocklc, spline_on_mock)
                 stat = pycs.gen.stat.mapresistats(mockrls)
             except Exception as e:
@@ -208,13 +217,22 @@ class Optimiser(object):
         for i in range(self.n_curve_stat):
             tweak_list = self.get_tweakml_list(theta)
             mocklc.append(pycs.sim.draw.draw(self.lcs, self.spline,
-                                        tweakml=tweak_list, shotnoise=self.shotnoise,shotnoisefrac=self.shotnoisefrac, keeptweakedml=False))
+                                        tweakml=tweak_list, shotnoise=self.shotnoise,shotnoisefrac=self.shotnoisefrac,
+                                             keeptweakedml=False, keepshifts=False, keeporiginalml=False)) # this will return mock curve WITHOUT microlensing !
+
+            # print mocklc[i][0].ml
+            self.applyshifts(mocklc[i], self.timeshifts, self.magshifts)
+            self.attachml_function(mocklc[i], self.attachml_param) # adding the microlensing here
+            # print mocklc[i][0].ml
 
             if self.recompute_spline:
                 if self.knotstep == None:
                     print "Error : you must give a knotstep to recompute the spline"
-                spline_on_mock = pycs.spl.topopt.opt_fine(mocklc[i], nit=5, knotstep=self.knotstep, verbose=self.verbose)
+                spline_on_mock = pycs.spl.topopt.opt_fine(mocklc[i], nit=5, knotstep=self.knotstep,
+                                                          verbose=self.verbose, bokeps=self.knotstep/3.0, stabext=100) #TODO : maybe pass the optimisation function to the class in argument
                 mockrls.append(pycs.gen.stat.subtract(mocklc[i], spline_on_mock))
+                # pycs.gen.lc.display(mocklc[i], [spline_on_mock], showlegend=True, showdelays=True, filename="screen")
+                # pycs.gen.stat.plotresiduals([mockrls[i]])
             else:
                 mockrls.append(pycs.gen.stat.subtract(mocklc[i], self.spline))
 
@@ -241,7 +259,7 @@ class Optimiser(object):
             mean_sigmas.append(np.mean(sigmas[:, i]))
             std_sigmas.append(np.std(sigmas[:, i]))
             if self.verbose :
-                print 'Curve %i :' % (i + 1)
+                print 'Curve %s :' % self.lcs[i].object
                 print 'Mean zruns (simu): ', np.mean(zruns[:, i]), '+/-', np.std(zruns[:, i])
                 print 'Mean sigmas (simu): ', np.mean(sigmas[:, i]), '+/-', np.std(sigmas[:, i])
                 print 'Mean nruns (simu): ', np.mean(nruns[:, i]), '+/-', np.std(nruns[:, i])
@@ -316,17 +334,30 @@ class Optimiser(object):
         self.A_correction = self.fit_vector[:,1] / mean_sigmas # set the A correction
         return self.A_correction, mean_zruns, mean_sigmas, std_zruns, std_sigmas
 
+    def applyshifts(self, lcs, timeshifts, magshifts):
+
+        if not len(lcs) == len(timeshifts) and len(lcs) == len(magshifts):
+            print "Hey, give me arrays of the same lenght !"
+            sys.exit()
+
+        for lc, timeshift, magshift in zip(lcs, timeshifts, magshifts):
+            lc.resetshifts()
+            # lc.shiftmag(-np.median(lc.getmags()))
+            lc.shiftmag(magshift)
+            lc.shifttime(timeshift)
+
 
 class Metropolis_Hasting_Optimiser(Optimiser):
-    def __init__(self, lcs, fit_vector, spline, knotstep=None, n_iter=1000,
+    def __init__(self, lcs, fit_vector, spline, attachml_function,attachml_param, knotstep=None, n_iter=1000,
                     burntime=100, savedirectory="./", recompute_spline=True, rdm_walk='gaussian', max_core = 16,
                     n_curve_stat = 32, stopping_condition = True, shotnoise = "magerrs", theta_init = None
-                 , gaussian_step = [0.1, 0.01],
+                 , gaussian_step = [0.1, 0.01], tolerance = 0.75,
                  tweakml_type = 'coloired_noise' ,tweakml_name = '',correction_PS_residuals = True):
 
-        Optimiser.__init__(self,lcs, fit_vector,spline, knotstep = knotstep, savedirectory= savedirectory, recompute_spline=recompute_spline,
-                                   max_core =max_core, n_curve_stat = n_curve_stat, shotnoise = shotnoise, theta_init= theta_init,
-                           tweakml_type= tweakml_type, tweakml_name= tweakml_name, correction_PS_residuals = correction_PS_residuals)
+        Optimiser.__init__(self,lcs, fit_vector,spline, attachml_function,attachml_param, knotstep = knotstep,
+                           savedirectory= savedirectory, recompute_spline=recompute_spline,
+                            max_core =max_core, n_curve_stat = n_curve_stat, shotnoise = shotnoise, theta_init= theta_init,
+                           tweakml_type= tweakml_type, tweakml_name= tweakml_name, correction_PS_residuals = correction_PS_residuals, tolerance = tolerance)
         self.n_iter = n_iter
         self.burntime = burntime
         self.rdm_walk = rdm_walk
@@ -517,15 +548,16 @@ class Metropolis_Hasting_Optimiser(Optimiser):
 class PSO_Optimiser(Optimiser) :
     #Attention here : You cannot use the parrallel computing of the mock curves because PSO, already launch the particles on several thread !
 
-    def __init__(self, lcs, fit_vector, spline, savedirectory ="./", knotstep = None, max_core = 8, shotnoise = 'magerrs',
+    def __init__(self, lcs, fit_vector, spline,attachml_function,attachml_param,savedirectory ="./", knotstep = None, max_core = 8, shotnoise = 'magerrs',
                  recompute_spline = True, n_curve_stat= 32, theta_init = None, n_particles = 30, n_iter = 50, verbose = False,
                  lower_limit = [-8., 0.], upper_limit = [-1.0, 0.5], mpi = False, tweakml_type = 'colored_noise', tweakml_name = '',
-                 correction_PS_residuals = True):
+                 correction_PS_residuals = True, tolerance = 0.75):
 
-        Optimiser.__init__(self,lcs, fit_vector,spline, knotstep = knotstep, savedirectory= savedirectory, recompute_spline=recompute_spline,
-                                   max_core =1, n_curve_stat = n_curve_stat, shotnoise = shotnoise, theta_init= theta_init,
+        Optimiser.__init__(self,lcs, fit_vector,spline,attachml_function,attachml_param, knotstep = knotstep,
+                           savedirectory= savedirectory, recompute_spline=recompute_spline,
+                            max_core =1, n_curve_stat = n_curve_stat, shotnoise = shotnoise, theta_init= theta_init,
                            tweakml_type = tweakml_type, tweakml_name = tweakml_name, correction_PS_residuals= correction_PS_residuals,
-                           verbose= verbose, display= False)
+                           verbose= verbose, display= False, tolerance = tolerance)
 
 
         self.n_particles = n_particles
@@ -654,94 +686,17 @@ class PSO_Optimiser(Optimiser) :
             if self.display:
                 plt.show()
 
-# class Grid_Optimiser(Optimiser): DEPRECATED !!!
-#     def __init__(self, lcs, fit_vector, spline, knotstep=None,
-#                      savedirectory="./", recompute_spline=True, max_core = 16, theta_init = None,
-#                     n_curve_stat = 32, shotnoise = "magerrs", tweakml_type = 'PS_from_residuals', tweakml_name = '',
-#                  display = False, verbose = False, grid = np.linspace(0.5,2,10), correction_PS_residuals = True):
-#
-#         Optimiser.__init__(self,lcs, fit_vector,spline, knotstep = knotstep, savedirectory= savedirectory, recompute_spline=recompute_spline,
-#                                    max_core =max_core, n_curve_stat = n_curve_stat, shotnoise = shotnoise, theta_init= theta_init,
-#                            tweakml_type= tweakml_type, tweakml_name = tweakml_name, correction_PS_residuals=correction_PS_residuals,
-#                            verbose=verbose, display= display)
-#
-#         self.grid = grid #should be only a 1D array for the moment
-#         self.chain_list = None
-#
-#     def optimise(self):
-#
-#         sigma = []
-#         zruns = []
-#         sigma_std = []
-#         zruns_std = []
-#         chi2 = []
-#         zruns_target = self.fit_vector[0]
-#         sigma_target = self.fit_vector[1]
-#
-#         if self.correction_PS_residuals:
-#             self.A_correction = self.compute_set_A_correction()
-#             print "I will slightly correct the amplitude of the Power Spectrum by a factor :", self.A_correction
-#
-#         for i, B in enumerate(self.grid):
-#             if self.para :
-#                 [[zruns_c, sigma_c], [zruns_std_c, sigma_std_c]], _, _ = self.make_mocks_para(theta=[B]) # Careful here, theta is a list even if there is only 1 parameter
-#             else :
-#                 [[zruns_c,sigma_c],[zruns_std_c,sigma_std_c]], _, _ = self.make_mocks(theta=[B]) #to debug, remove multiprocessing
-#             chi2.append(
-#                 (zruns_c - zruns_target) ** 2 / zruns_std_c ** 2 + (sigma_c - sigma_target) ** 2 / sigma_std_c ** 2)
-#
-#             sigma.append(sigma_c)
-#             zruns.append(zruns_c)
-#             sigma_std.append(sigma_std_c)
-#             zruns_std.append(zruns_std_c)
-#
-#         min_ind = np.argmin(chi2)
-#         self.chi2_mini = np.min(chi2)
-#         self.mean_mini = [zruns[min_ind], sigma[min_ind]]
-#         self.sigma_mini = [zruns_std[min_ind], sigma_std[min_ind]]
-#         self.rel_error_mini = [np.abs(zruns[min_ind] - zruns_target) / zruns_std[min_ind],
-#                                np.abs(sigma[min_ind] - sigma_target) / sigma_std[min_ind]]
-#
-#         self.chain_list = [self.grid, chi2, [zruns,sigma], [zruns_std,sigma_std]]
-#         self.chi2_mini, self.best_param = self.get_best_param()
-#
-#
-#         if self.verbose:
-#             print "target :", self.fit_vector
-#             print "Best parameter from grid search :", self.grid[min_ind]
-#             print "Associated chi2 : ", chi2[min_ind]
-#             print "Zruns : %2.6f +/- %2.6f (%2.4f sigma from target)" % (
-#             zruns[min_ind], zruns_std[min_ind], self.rel_error_mini[0])
-#             print "Sigma : %2.6f +/- %2.6f (%2.4f sigma from target)" % (sigma[min_ind], sigma_std[min_ind], self.rel_error_mini[1])
-#
-#         if self.rel_error_mini[0] < self.tolerance and self.rel_error_mini[1] < self.tolerance:
-#             self.success = True
-#         else:
-#             self.success = False
-#
-#         return self.chain_list
-#
-#     def get_best_param(self):
-#         if self.chain_list == None :
-#             print "Error you should run optimise() first !"
-#             exit()
-#         else:
-#             ind_min = np.argmin(self.chain_list[1][:])
-#             return self.chi2_mini, self.chain_list[0][ind_min]
-#
-#     def analyse_plot_results(self):
-#         pltfct.plot_chain_grid_dic(self)
-
 class Dic_Optimiser(Optimiser):
-    def __init__(self, lcs, fit_vector, spline, knotstep=None,
+    def __init__(self, lcs, fit_vector, spline,attachml_function,attachml_param, knotstep=None,
                      savedirectory="./", recompute_spline=True, max_core = 16, theta_init = None,
                     n_curve_stat = 32, shotnoise = None, tweakml_type = 'PS_from_residuals', tweakml_name = '',
-                 display = False, verbose = False, step = 0.1, correction_PS_residuals = True, max_iter = 10):
+                 display = False, verbose = False, step = 0.1, correction_PS_residuals = True, max_iter = 10, tolerance = 0.75):
 
-        Optimiser.__init__(self,lcs, fit_vector,spline, knotstep = knotstep, savedirectory= savedirectory, recompute_spline=recompute_spline,
+        Optimiser.__init__(self,lcs, fit_vector,spline,attachml_function,attachml_param,
+                           knotstep = knotstep, savedirectory= savedirectory, recompute_spline=recompute_spline,
                                    max_core =max_core, n_curve_stat = n_curve_stat, shotnoise = shotnoise, theta_init= theta_init,
                            tweakml_type= tweakml_type, tweakml_name = tweakml_name, correction_PS_residuals=correction_PS_residuals,
-                           verbose=verbose, display= display)
+                           verbose=verbose, display= display, tolerance = tolerance)
 
         self.chain_list = None
         self.step = [step for i in range(self.ncurve)]
@@ -809,6 +764,10 @@ class Dic_Optimiser(Optimiser):
                 B[i][0] += self.step[i]
                 if B[i][0] <= 0.15 : B[i][0] = 0.15 #minimum for B
 
+            if self.iteration%5 == 0:
+                self.A_correction, _, _, _, _ = self.compute_set_A_correction(B) #recompute A correction every 5 iterations.
+                print "I will slightly correct the amplitude of the Power Spectrum by a factor :", self.A_correction
+
         self.chain_list = [self.explored_param, chi2, zruns, sigma, zruns_std, sigma_std]#explored param has dimension(n_iter,ncurve,1)
         self.chi2_mini, self.best_param = chi2[-1], self.explored_param[-1] # take the last iteration as the best estimate
         self.mean_zruns_mini = zruns[-1]
@@ -852,4 +811,6 @@ def get_fit_vector(lcs,spline):
     fit_sigma = [pycs.gen.stat.mapresistats(rls)[i]["std"] for i in range(len(rls))]
     fit_zruns = [pycs.gen.stat.mapresistats(rls)[i]["zruns"] for i in range(len(rls))]
     fit_vector = [[fit_zruns[i], fit_sigma[i]] for i in range(len(rls))]
+    # pycs.gen.lc.display(lcs, [spline], showlegend=True, showdelays=True, filename="screen")
+    # pycs.gen.stat.plotresiduals([rls]) #DEBUG
     return fit_vector

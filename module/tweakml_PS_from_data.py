@@ -5,20 +5,17 @@ import scipy.signal as sc
 
 def tweakml_PS(lcs, spline, B, f_min = 1/300.0,psplot=False, save_figure_folder = None,  verbose = False, interpolation = 'linear', A_correction = 1.0):
     for l in lcs:
+        # We check if the attached ml really is a spline, you should change that before calling the function if this is not the case
         if l.ml == None:
-            print "WARNING, curve %s has no ML to tweak ! I won't tweak anything." % (str(l))
-            continue
-        # No ! Then we just add some flat spline
-        # pycs.gen.splml.addtolc(l) # knotstep has no imortantce
+            raise RuntimeError("ERROR, curve %s has no ML to tweak ! I won't tweak anything." % (str(l)))
 
         elif l.ml.mltype != "spline":
-            print "WARNING, I can only tweak SplineML objects, curve %s has something else !  I won't tweak anything." % (str(l))
-            continue
+            raise RuntimeError("ERROR, I can only tweak SplineML objects, curve %s has something else !  I won't tweak anything." % (str(l)))
 
         name = "ML(%s)" % (l.object)
         ml_spline = l.ml.spline.copy()
         np.random.seed() #this is to reset the seed when using multiprocessing
-
+        # pycs.gen.lc.display([l], [spline], showlegend=True, showdelays=True, filename="screen")
         rls = pycs.gen.stat.subtract([l], spline)[0]
         target_std = pycs.gen.stat.resistats(rls)['std']
         target_nruns = pycs.gen.stat.resistats(rls)['nruns']
@@ -31,7 +28,12 @@ def tweakml_PS(lcs, spline, B, f_min = 1/300.0,psplot=False, save_figure_folder 
         span = stop - start
         sampling = span / n
 
-        samples =  int(span) * 5  # 5 samples per day, number of samples you want in the generated noise, the final curve is interpolated from this
+        sample_per_day = 5  # number of samples you want in the generated noise, the final curve is interpolated from this, choosing this too low will cut the high frequencies, and you will have too much correlated noise (too low zruns, B is going up and not converging). The high frequency can be limited by this so we adjust this value with the frequency window.
+        if B >= 1 : sample_per_day = 7
+        if B >= 1.5 : sample_per_day = 10
+        if B >= 2. : sample_per_day = 15
+
+        samples =  int(span) * sample_per_day
         if samples%2 ==1 :
             samples -= 1
         samplerate = 1 # don't touch this, add more sample if you want
@@ -86,6 +88,7 @@ def tweakml_PS(lcs, spline, B, f_min = 1/300.0,psplot=False, save_figure_folder 
 
         source.imags += noise_lcs_rescaled.mags
         newspline = source.spline()
+        # pycs.gen.lc.display([], [newspline], showlegend=True, showdelays=True, filename="screen")
         l.ml.replacespline(newspline) # replace the previous spline with the tweaked one...
 
         if psplot :

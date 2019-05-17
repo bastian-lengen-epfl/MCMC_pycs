@@ -3,49 +3,33 @@ import os,sys, glob
 import argparse as ap
 import multiprocess
 
-def draw_mock_para(i, j, kn, knml, lensname, dataname, work_dir):
+def draw_mock_para(i, j, kn, ml,string_ML, lensname, dataname, work_dir):
     current_dir = os.getcwd()
     import importlib
     sys.path.append(work_dir + "config/")
     config = importlib.import_module("config_" + lensname + "_" + dataname)
 
-    print "I am drawing curves for ks%i, ksml%i" % (kn, knml)
+    print "I am drawing curves for ks%i, ksml%i" % (kn, ml)
     os.chdir(config.lens_directory + config.combkw[i, j])
-    lcs, spline = pycs.gen.util.readpickle('initopt_%s_ks%i_ksml%i.pkl' % (dataname, kn, knml))
+    lcs, spline = pycs.gen.util.readpickle('initopt_%s_ks%i_%s%i.pkl' % (dataname, kn,string_ML,ml))
 
     pycs.sim.draw.saveresiduals(lcs, spline)
 
     if config.run_on_copies:
         files_copy = glob.glob("sims_" + config.simset_copy + '/*.pkl')
-        if len(files_copy) != 0 and config.askquestions == True:
-            answer = raw_input(
-                "You already have copies in the folder %s. Do you want to add more ? (yes/no)" % config.simset_copy)
-            if answer[:3] == "yes":
-                pycs.sim.draw.multidraw(lcs, onlycopy=True, n=config.ncopy, npkl=config.ncopypkls,
-                                        simset=config.simset_copy)
-            elif answer[:2] == "no":
-                answer2 = raw_input("Should I erase everything and create new ones ? (yes/no)")
-                if answer2[:3] == "yes":
-                    print "OK, deleting everything ! "
-                    for f in files_copy:
-                        os.remove(f)
-                    pycs.sim.draw.multidraw(lcs, onlycopy=True, n=config.ncopy, npkl=config.ncopypkls,
-                                            simset=config.simset_copy)
-                elif answer2[:2] == "no":
-                    print "OK, I am doing nothing then !"
-        else:
-            for f in files_copy:
-                os.remove(f)
-                print "deleting %s" % f
-            pycs.sim.draw.multidraw(lcs, onlycopy=True, n=config.ncopy, npkl=config.ncopypkls,
+        pycs.sim.draw.multidraw(lcs, onlycopy=True, n=config.ncopy, npkl=config.ncopypkls,
                                     simset=config.simset_copy)
 
     if config.run_on_sims:
         # add splml so that mytweakml will be applied by multidraw
-        # Will not work if you have polyml ! But why would you do that ?
 
         for l in lcs:
             if l.ml == None:
+                print ('Adding flat ML')
+                pycs.gen.splml.addtolc(l, n=2)
+            elif l.ml.mltype == 'poly' :
+                print('Adding flat ML, that can be tweaked')
+                l.resetml()
                 pycs.gen.splml.addtolc(l, n=2)
 
         # import the module with the parameter of the noise :
@@ -55,30 +39,7 @@ def draw_mock_para(i, j, kn, knml, lensname, dataname, work_dir):
         execfile('tweakml_' + config.tweakml_name + '.py', globals())
 
         files_mock = glob.glob("sims_" + config.simset_mock + '/*.pkl')
-        if len(files_mock) != 0 and config.askquestions == True:
-            answer = raw_input(
-                "You already have mocks in the folder %s. Do you want to add more ? (yes/no)" % simset_mock)
-            if answer[:3] == "yes":
-                pycs.sim.draw.multidraw(lcs, spline, onlycopy=False, n=config.nsim, npkl=config.nsimpkls,
-                                        simset=config.simset_mock, tweakml=tweakml_list,
-                                        shotnoise=config.shotnoise_type, truetsr=config.truetsr, shotnoisefrac=1.0)
-            elif answer[:2] == "no":
-                answer2 = raw_input("Should I erase everything and create new ones ? (yes/no)")
-                if answer2[:3] == "yes":
-                    print "OK, deleting everything ! "
-                    for f in files_mock:
-                        os.remove(f)
-                    pycs.sim.draw.multidraw(lcs, spline, onlycopy=False, n=config.nsim, npkl=config.nsimpkls,
-                                            simset=config.simset_mock, tweakml=tweakml_list,
-                                            shotnoise=config.shotnoise_type,
-                                            truetsr=config.truetsr, shotnoisefrac=1.0)
-                elif answer2[:2] == "no":
-                    print "OK, I am doing nothing then !"
-        else:
-            for f in files_mock:
-                os.remove(f)
-                print "deleting %s" % f
-            pycs.sim.draw.multidraw(lcs, spline, onlycopy=False, n=config.nsim, npkl=config.nsimpkls,
+        pycs.sim.draw.multidraw(lcs, spline, onlycopy=False, n=config.nsim, npkl=config.nsimpkls,
                                     simset=config.simset_mock, tweakml=tweakml_list,
                                     shotnoise=config.shotnoise_type,
                                     truetsr=config.truetsr, shotnoisefrac=1.0)
@@ -100,10 +61,48 @@ def main(lensname,dataname,work_dir='./'):
     p = multiprocess.Pool(processes=processes)
     print "Runing on %i cores. "%processes
     job_args = []
-    for i,kn in enumerate(config.knotstep) :
-        for j, knml in enumerate(config.mlknotsteps):
-            job_args.append((i,j,kn,knml,lensname, dataname, work_dir))
 
+    if config.mltype == "splml":
+        if config.forcen :
+            ml_param = config.nmlspl
+            string_ML ="nmlspl"
+        else :
+            ml_param = config.mlknotsteps
+            string_ML = "knml"
+    elif config.mltype == "polyml" :
+        ml_param = config.degree
+        string_ML = "deg"
+    else :
+        raise RuntimeError('I dont know your microlensing type. Choose "polyml" or "spml".')
+
+
+
+    for i,kn in enumerate(config.knotstep) :
+        for j, ml in enumerate(ml_param):
+            for simset in [config.simset_mock, config.simset_copy] :
+                file= glob.glob(os.path.join(config.lens_directory + config.combkw[i, j],"sims_" + simset + '/*.pkl'))
+                if len(file) != 0 and config.askquestions == True:
+                    while True :
+                        answer = int(raw_input(
+                            "You already have files in the folder %s. Do you want to add more (1) or replace the existing file (2) ? (1/2)" % simset))
+                        if answer != 1 or answer != 2 :
+                            break
+                        else :
+                            print "I did not understand your answer."
+
+                    if answer == 1:
+                        print "OK, deleting everything ! "
+                        for f in file:
+                            os.remove(f)
+                    elif answer == 2 :
+                        print "OK, I'll add more mocks !"
+                elif len(file) != 0 :
+                    print "You already have files in the folder %s. You did not turn your ask question flag. By default, I will replace your simulation !"%simset
+                    print "OK, deleting ! "
+                    for f in file:
+                        os.remove(f)
+
+            job_args.append((i,j,kn,ml,string_ML,lensname, dataname, work_dir))
     p.map(draw_mock_para_aux, job_args)
     print "Done."
 
