@@ -19,7 +19,7 @@ def main(lensname,dataname,work_dir='./'):
         os.mkdir(regdiff_dir)
 
     binclip = True
-    binclipr = 20.0
+    binclipr = 50.0
 
     for a,kn in enumerate(config.knotstep) :
         for  b, knml in enumerate(config.mlknotsteps):
@@ -34,6 +34,9 @@ def main(lensname,dataname,work_dir='./'):
                 if config.simoptfctkw == "regdiff" :
                     kwargs = config.kwargs_optimiser_simoptfct[o]
                     dir_link = pkl.load(open(os.path.join(config.lens_directory,'regdiff_copies_link_%s.pkl'%kwargs['name']),'r'))
+		    #main_path = os.getcwd()
+		    #destpath = os.path.join(main_path, config.lens_directory + config.combkw[a, b] + '/')
+		    #dir_link = os.path.join(destpath,"sims_%s_opt_%s" % (config.simset_copy, opt))
                     if a == 0 and b ==0 :
                         regdiff_copie_dir = os.path.join(regdiff_dir, "copies/")
                         if not os.path.isdir(regdiff_copie_dir):

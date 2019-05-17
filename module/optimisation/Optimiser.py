@@ -807,7 +807,7 @@ class Dic_Optimiser(Optimiser):
 
             for i in range(self.ncurve):
                 B[i][0] += self.step[i]
-                if B[i][0] <= 0.1 : B[i][0] = 0.1 #minimum for B
+                if B[i][0] <= 0.15 : B[i][0] = 0.15 #minimum for B
 
         self.chain_list = [self.explored_param, chi2, zruns, sigma, zruns_std, sigma_std]#explored param has dimension(n_iter,ncurve,1)
         self.chi2_mini, self.best_param = chi2[-1], self.explored_param[-1] # take the last iteration as the best estimate
