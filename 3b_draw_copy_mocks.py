@@ -1,6 +1,6 @@
 import os
 import matplotlib as mpl
-mpl.use('Agg') #these scripts re for cluster so need to be sure
+# mpl.use('Agg') # for cluster so need to be sure
 import matplotlib.pyplot as plt
 import pycs
 import sys, glob
@@ -26,27 +26,28 @@ def draw_mock_para(i, j, kn, ml,string_ML, lensname, dataname, work_dir):
 
     if config.run_on_sims:
         # add splml so that mytweakml will be applied by multidraw
-
+        polyml = False
         for l in lcs:
             if l.ml == None:
                 print ('Adding flat ML')
                 pycs.gen.splml.addtolc(l, n=2)
             elif l.ml.mltype == 'poly' :
-                print('Adding flat ML, that can be tweaked')
-                l.resetml()
-                pycs.gen.splml.addtolc(l, n=2)
+                polyml =True
+                print('Poly ML : Using the saved generative curve instead')
+
+        if polyml:
+            lcs, spline = pycs.gen.util.readpickle('initopt_%s_ks%i_%s%i_generative_polyml.pkl' %(dataname, kn, string_ML, ml))
+            pycs.sim.draw.saveresiduals(lcs, spline)
 
         # import the module with the parameter of the noise :
         print 'I will use the parameter from : %s' % ('tweakml_' + config.tweakml_name + '.py')
-        # sys.path.append(os.getcwd())
-        # noise_module = importlib.import_module('tweakml_' + config.tweakml_name)
         execfile('tweakml_' + config.tweakml_name + '.py', globals())
 
         files_mock = glob.glob("sims_" + config.simset_mock + '/*.pkl')
         pycs.sim.draw.multidraw(lcs, spline, onlycopy=False, n=config.nsim, npkl=config.nsimpkls,
                                     simset=config.simset_mock, tweakml=tweakml_list,
                                     shotnoise=config.shotnoise_type,
-                                    truetsr=config.truetsr, shotnoisefrac=1.0)
+                                    truetsr=config.truetsr, shotnoisefrac=1.0, scaletweakresi = False)
     os.chdir(current_dir)
 
 def draw_mock_para_aux(args):
@@ -107,7 +108,11 @@ def main(lensname,dataname,work_dir='./'):
                         os.remove(f)
 
             job_args.append((i,j,kn,ml,string_ML,lensname, dataname, work_dir))
-    p.map(draw_mock_para_aux, job_args)
+    if processes > 1 :
+        p.map(draw_mock_para_aux, job_args)
+    else :
+        for args in job_args :
+            draw_mock_para(*args)
     print "Done."
 
 if __name__ == '__main__':

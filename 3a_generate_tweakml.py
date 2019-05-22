@@ -1,6 +1,6 @@
 import os
 import matplotlib as mpl
-mpl.use('Agg') #these scripts re for cluster so need to be sure
+# mpl.use('Agg') #these scripts re for cluster so need to be sure
 import matplotlib.pyplot as plt
 import pycs
 from module import tweakml_PS_from_data as twk
@@ -172,6 +172,7 @@ def main(lensname,dataname,work_dir='./'):
                                                               stabext=100) # we replace the spline optimised with poly ml by one without ml
                 for l in lcs :
                     pycs.gen.splml.addtolc(l, n=2)
+                pycs.gen.util.writepickle((lcs,spline), config.lens_directory + '%s/initopt_%s_ks%i_%s%i_generative_polyml.pkl' % (config.combkw[i, j], dataname, kn, string_ML, ml))
 
             #Starting to write tweakml function depending on tweak_ml_type :
             if config.tweakml_type == 'colored_noise':

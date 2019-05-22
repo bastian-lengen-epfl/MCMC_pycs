@@ -155,9 +155,12 @@ class Optimiser(object):
 
         tweak_list = self.get_tweakml_list(theta)
         mocklc = pycs.sim.draw.draw(self.lcs, self.spline,
-                                    tweakml= tweak_list,shotnoise=self.shotnoise,
-                                    shotnoisefrac=self.shotnoisefrac, keeptweakedml=False, keepshifts=False, keeporiginalml=False) #this return mock curve without ML
+                                    tweakml= tweak_list,shotnoise=self.shotnoise,scaletweakresi = False,
+                                    shotnoisefrac=self.shotnoisefrac, keeptweakedml=False, keepshifts=False,
+                                    keeporiginalml=False, inprint_fake_shifts= None) #this return mock curve without ML
 
+        # sampleshifts = [np.random.uniform(low=-10, high=10, size=1) + self.timeshifts[i] for i in
+        #                 range(self.ncurve)]
         self.applyshifts(mocklc, self.timeshifts, self.magshifts)
         self.attachml_function(mocklc, self.attachml_param)  # adding the microlensing here ! Before the optimisation
 
@@ -218,7 +221,8 @@ class Optimiser(object):
             tweak_list = self.get_tweakml_list(theta)
             mocklc.append(pycs.sim.draw.draw(self.lcs, self.spline,
                                         tweakml=tweak_list, shotnoise=self.shotnoise,shotnoisefrac=self.shotnoisefrac,
-                                             keeptweakedml=False, keepshifts=False, keeporiginalml=False)) # this will return mock curve WITHOUT microlensing !
+                                             keeptweakedml=False, keepshifts=False, keeporiginalml=False,
+                                             scaletweakresi = False, inprint_fake_shifts= None)) # this will return mock curve WITHOUT microlensing !
 
             # print mocklc[i][0].ml
             self.applyshifts(mocklc[i], self.timeshifts, self.magshifts)
@@ -811,6 +815,4 @@ def get_fit_vector(lcs,spline):
     fit_sigma = [pycs.gen.stat.mapresistats(rls)[i]["std"] for i in range(len(rls))]
     fit_zruns = [pycs.gen.stat.mapresistats(rls)[i]["zruns"] for i in range(len(rls))]
     fit_vector = [[fit_zruns[i], fit_sigma[i]] for i in range(len(rls))]
-    # pycs.gen.lc.display(lcs, [spline], showlegend=True, showdelays=True, filename="screen")
-    # pycs.gen.stat.plotresiduals([rls]) #DEBUG
     return fit_vector

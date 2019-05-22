@@ -15,10 +15,10 @@ def tweakml_PS(lcs, spline, B, f_min = 1/300.0,psplot=False, save_figure_folder 
         name = "ML(%s)" % (l.object)
         ml_spline = l.ml.spline.copy()
         np.random.seed() #this is to reset the seed when using multiprocessing
+        # print ml_spline, B, A_correction
         # pycs.gen.lc.display([l], [spline], showlegend=True, showdelays=True, filename="screen")
         rls = pycs.gen.stat.subtract([l], spline)[0]
         target_std = pycs.gen.stat.resistats(rls)['std']
-        target_nruns = pycs.gen.stat.resistats(rls)['nruns']
 
         x = rls.jds
         y = rls.mags
@@ -92,6 +92,7 @@ def tweakml_PS(lcs, spline, B, f_min = 1/300.0,psplot=False, save_figure_folder 
         newspline = source.spline()
         # pycs.gen.lc.display([], [newspline], showlegend=True, showdelays=True, filename="screen")
         l.ml.replacespline(newspline) # replace the previous spline with the tweaked one...
+        # pycs.gen.lc.display([l], [], showlegend=True, showdelays=True, filename="screen")
 
         if psplot :
             pgram_resampled = sc.lombscargle(noise_lcs_resampled.jds, noise_lcs_resampled.mags, freqs_data)
