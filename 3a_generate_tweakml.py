@@ -1,6 +1,6 @@
 import os
 import matplotlib as mpl
-# mpl.use('Agg') #these scripts re for cluster so need to be sure
+mpl.use('Agg') #these scripts re for cluster so need to be sure
 import matplotlib.pyplot as plt
 import pycs
 from module import tweakml_PS_from_data as twk

@@ -1,6 +1,6 @@
 import os
 import matplotlib as mpl
-# mpl.use('Agg') # for cluster so need to be sure
+mpl.use('Agg') # for cluster so need to be sure
 import matplotlib.pyplot as plt
 import pycs
 import sys, glob
