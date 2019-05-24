@@ -59,7 +59,7 @@ def main(lensname,dataname,work_dir='./'):
     combkw_marg = np.asarray(combkw_marg)
 
     for a,kn in enumerate(config.knotstep_marg):
-        for b, ml in enumerate(ml_param):
+        for b, ml in enumerate(config.mlknotsteps_marg):
             for n, noise in enumerate(config.tweakml_name_marg_spline):
                 result_file_delay = config.lens_directory + combkw_marg[a, b] + '/sims_%s_opt_%st%i/' % (config.simset_copy, opt, int(config.tsrand)) \
                                     + 'sims_%s_opt_%s' % (config.simset_copy, opt) + 't%i_delays.pkl'%int(config.tsrand)
