@@ -54,7 +54,7 @@ def main(lensname,dataname,work_dir='./'):
         raise RuntimeError('I dont know your microlensing type. Choose "polyml" or "spml".')
 
     #Redefine the keyword here because you don't necessary want to marginalise over everything
-    combkw_marg = [["%s_ks%i_%s_%s_%i" % (config.optfctkw, config.knotstep_marg[i], config.mlname, string_ML, config.ml_marg[j])
+    combkw_marg = [["%s_ks%i_%s_%s_%i" % (config.optfctkw, config.knotstep_marg[i], config.mlname, string_ML, config.mlknotsteps_marg[j])
                for j in range(len(config.mlknotsteps_marg))] for i in range(len(config.knotstep_marg))]
     combkw_marg = np.asarray(combkw_marg)
 
