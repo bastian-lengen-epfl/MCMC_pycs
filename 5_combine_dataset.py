@@ -171,13 +171,8 @@ def main(lensname,work_dir='./'):
 
     pycs.mltd.plot.delayplot(groups_all + groups_extra_spline + groups_extra_regdiff + [sum_all], rplot=radius, refgroup=sum_all, text=text,
                              hidedetails=True, showbias=False, showran=False, showlegend=True, figsize=(15, 10), auto_radius=auto_radius, tick_step_auto= True,
-<<<<<<< HEAD
-                             horizontaldisplay=False, legendfromrefgroup=False, filename = plot_dir + "/combined_estimate_regdiff-spline"+config.combi_name + ".png",
-                             legendx = 0.85, legendy_offset = 0.12,autoobj = config.lcs_label,)
-=======
                              horizontaldisplay=False, legendfromrefgroup=False, filename = plot_dir + "/" + lensname + "_combined_estimate_regdiff-spline"+config.combi_name + ".png",
                              legendx = 0.85, legendy_offset = 0.12)
->>>>>>> 80ac862ebc76cd19d68ec7232760a9573c705c9e
 
 
 
