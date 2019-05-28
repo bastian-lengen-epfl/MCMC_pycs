@@ -19,6 +19,8 @@ def tweakml_PS(lcs, spline, B, f_min = 1/300.0,psplot=False, save_figure_folder 
         # pycs.gen.lc.display([l], [spline], showlegend=True, showdelays=True, filename="screen")
         rls = pycs.gen.stat.subtract([l], spline)[0]
         target_std = pycs.gen.stat.resistats(rls)['std']
+        target_zruns = pycs.gen.stat.resistats(rls)['zruns']
+        # print l.object, target_std,target_zruns
 
         x = rls.jds
         y = rls.mags

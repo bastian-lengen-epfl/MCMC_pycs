@@ -10,7 +10,7 @@ import os,sys, glob, importlib
 import argparse as ap
 import numpy as np
 
-def write_report_checkstat(f, lcs, stats, combkw, sset, ooset,  tolerance = 2.0):
+def write_report_checkstat(f, lcs, stats, combkw, sset, ooset,  tolerance = 1.0):
     f.write('\n')
     f.write('-'*30 + '\n')
     f.write('%s, simset %s, optimiseur %s : \n' % (combkw, sset, ooset))

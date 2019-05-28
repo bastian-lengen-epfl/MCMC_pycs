@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pycs
 import pycs.regdiff
-import copy, os
+import copy, os, sys
 import time
 import multiprocess
 from module import tweakml_PS_from_data as twk
@@ -216,14 +216,17 @@ class Optimiser(object):
         zruns = []
         sigmas = []
         nruns = []
+        lcscopies = [l.copy() for l in self.lcs]
+        spline_copy = self.spline.copy()
 
         for i in range(self.n_curve_stat):
             tweak_list = self.get_tweakml_list(theta)
-            mocklc.append(pycs.sim.draw.draw(self.lcs, self.spline,
+            print theta
+            print tweak_list
+            mocklc.append(pycs.sim.draw.draw(lcscopies, spline_copy,
                                         tweakml=tweak_list, shotnoise=self.shotnoise,shotnoisefrac=self.shotnoisefrac,
                                              keeptweakedml=False, keepshifts=False, keeporiginalml=False,
                                              scaletweakresi = False, inprint_fake_shifts= None)) # this will return mock curve WITHOUT microlensing !
-
             # print mocklc[i][0].ml
             self.applyshifts(mocklc[i], self.timeshifts, self.magshifts)
             self.attachml_function(mocklc[i], self.attachml_param) # adding the microlensing here
@@ -235,6 +238,8 @@ class Optimiser(object):
                 spline_on_mock = pycs.spl.topopt.opt_fine(mocklc[i], nit=5, knotstep=self.knotstep,
                                                           verbose=self.verbose, bokeps=self.knotstep/3.0, stabext=100) #TODO : maybe pass the optimisation function to the class in argument
                 mockrls.append(pycs.gen.stat.subtract(mocklc[i], spline_on_mock))
+                # print pycs.gen.stat.mapresistats(mockrls[i])
+                # exit()
                 # pycs.gen.lc.display(mocklc[i], [spline_on_mock], showlegend=True, showdelays=True, filename="screen")
                 # pycs.gen.stat.plotresiduals([mockrls[i]])
             else:
@@ -242,7 +247,8 @@ class Optimiser(object):
 
 
             if self.recompute_spline and self.display:
-                    pycs.gen.lc.display([self.lcs], [spline_on_mock], showdelays=True)
+                    pycs.gen.lc.display(lcscopies, [spline_on_mock], showdelays=True)
+                    pycs.gen.lc.display(mocklc[i], [spline_on_mock], showdelays=True)
                     pycs.gen.stat.plotresiduals([mockrls[i]])
 
             stat.append(pycs.gen.stat.mapresistats(mockrls[i]))
@@ -816,3 +822,32 @@ def get_fit_vector(lcs,spline):
     fit_zruns = [pycs.gen.stat.mapresistats(rls)[i]["zruns"] for i in range(len(rls))]
     fit_vector = [[fit_zruns[i], fit_sigma[i]] for i in range(len(rls))]
     return fit_vector
+
+def applyshifts(lcs, timeshifts, magshifts):
+    if not len(lcs) == len(timeshifts) and len(lcs) == len(magshifts):
+        print "Hey, give me arrays of the same lenght !"
+        sys.exit()
+
+    for lc, timeshift, magshift in zip(lcs, timeshifts, magshifts):
+        lc.resetshifts()
+        # lc.shiftmag(-np.median(lc.getmags()))
+        lc.shiftmag(magshift)
+        lc.shifttime(timeshift)
+
+def tweakml_PS_1(lcs, spline):
+    return twk.tweakml_PS(lcs, spline, 0.12500000000000003, f_min=1 / 300.0, psplot=False, verbose=False,
+                          interpolation='linear', A_correction=1.0385175125538744)
+
+def tweakml_PS_2(lcs, spline):
+    return twk.tweakml_PS(lcs, spline, 0.12500000000000003, f_min=1 / 300.0, psplot=False, verbose=False,
+                          interpolation='linear', A_correction=1.0439695004938903)
+
+def tweakml_PS_3(lcs, spline):
+    return twk.tweakml_PS(lcs, spline, 1.5499999999999998, f_min=1 / 300.0, psplot=False, verbose=False,
+                          interpolation='linear', A_correction=0.9497062988061292)
+
+def tweakml_PS_4(lcs, spline):
+    return twk.tweakml_PS(lcs, spline, 0.12500000000000003, f_min=1 / 300.0, psplot=False, verbose=False,
+                          interpolation='linear', A_correction=0.9883240534172314)
+
+tweakml_list = [tweakml_PS_1,tweakml_PS_2,tweakml_PS_3,tweakml_PS_4,]

@@ -83,7 +83,7 @@ PS_param_B = [[1.0],[1.0],[1.0]] #if you don't want the algorithm fine tune the 
 
 #if you chose to optimise the tweakml automatically, you might want to change this
 optimiser = 'DIC' # choose between PSO, MCMC or GRID or DIC
-n_curve_stat =24# Number of curve to compute the statistics on, (the larger the better but it takes longer... 16 or 32 are good, 8 is still OK) .
+n_curve_stat =16# Number of curve to compute the statistics on, (the larger the better but it takes longer... 16 or 32 are good, 8 is still OK) .
 n_particles = 50 #this is use only in PSO optimser
 n_iter = 80 #number of iteration in PSO or MCMC
 mpi = False # if you want to use MPI for the PSO

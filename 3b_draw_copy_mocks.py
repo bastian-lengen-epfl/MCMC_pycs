@@ -1,6 +1,6 @@
 import os
 import matplotlib as mpl
-mpl.use('Agg') # for cluster so need to be sure
+# mpl.use('Agg') # for cluster so need to be sure
 import matplotlib.pyplot as plt
 import pycs
 import sys, glob
@@ -46,7 +46,7 @@ def draw_mock_para(i, j, kn, ml,string_ML, lensname, dataname, work_dir):
         files_mock = glob.glob("sims_" + config.simset_mock + '/*.pkl')
         pycs.sim.draw.multidraw(lcs, spline, onlycopy=False, n=config.nsim, npkl=config.nsimpkls,
                                     simset=config.simset_mock, tweakml=tweakml_list,
-                                    shotnoise=config.shotnoise_type,
+                                    shotnoise=config.shotnoise_type, trace= False,
                                     truetsr=config.truetsr, shotnoisefrac=1.0, scaletweakresi = False)
     os.chdir(current_dir)
 

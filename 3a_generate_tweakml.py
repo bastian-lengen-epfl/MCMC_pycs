@@ -1,6 +1,6 @@
 import os
 import matplotlib as mpl
-mpl.use('Agg') #these scripts re for cluster so need to be sure
+# mpl.use('Agg') #these scripts re for cluster so need to be sure
 import matplotlib.pyplot as plt
 import pycs
 from module import tweakml_PS_from_data as twk
@@ -95,7 +95,8 @@ def run_DIC(lcs,spline,fit_vector, kn,ml,optim_directory, config_file,stream, to
                                  n_curve_stat=config.n_curve_stat,
                                  shotnoise=config.shotnoise_type, tweakml_type=config.tweakml_type,
                                  tweakml_name=config.tweakml_name, display=config.display, verbose=False,
-                                 correction_PS_residuals=True, max_iter=config.max_iter, tolerance=tolerance)
+                                 correction_PS_residuals=True, max_iter=config.max_iter, tolerance=tolerance,
+                                 theta_init =None)
 
     chain = dic_opt.optimise()
     dic_opt.analyse_plot_results()
@@ -117,7 +118,7 @@ def run_DIC(lcs,spline,fit_vector, kn,ml,optim_directory, config_file,stream, to
                                   interpolation='linear', A_correction=A_PARAM)
 
         util.write_func_append(tweakml_PS_NUMBER, stream,
-                               B_PARAM=str(B_best[k]), NUMBER=str(k + 1), A_PARAM=str(A[k]))
+                               B_PARAM=str(B_best[k][0]), NUMBER=str(k + 1), A_PARAM=str(A[k]))
 
 
 def main(lensname,dataname,work_dir='./'):
