@@ -15,8 +15,21 @@ def main(lensname,dataname, work_dir = './'):
     sys.path.append(work_dir)
     config = importlib.import_module("config_" + lensname + "_" + dataname)
 
+    if config.mltype == "splml":
+        if config.forcen :
+            ml_param = config.nmlspl
+            string_ML ="nmlspl"
+        else :
+            ml_param = config.mlknotsteps
+            string_ML = "knml"
+    elif config.mltype == "polyml" :
+        ml_param = config.degree
+        string_ML = "deg"
+    else :
+        raise RuntimeError('I dont know your microlensing type. Choose "polyml" or "spml".')
+
     for a,kn in enumerate(config.knotstep) :
-        for  b, knml in enumerate(config.mlknotsteps):
+        for  b, knml in enumerate(ml_param):
             os.chdir(config.lens_directory + config.combkw[a, b])
             files = glob.glob('sims*/*.workingon')
             print "files to remove : ", files
