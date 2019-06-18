@@ -143,7 +143,7 @@ def group_estimate(path_list, name_list, delay_labels, colors, sigma_thresh, new
 
     combined = copy.deepcopy(pycs.mltd.comb.combine_estimates(group_list, sigmathresh=sigma_thresh, testmode=testmode))
     combined.linearize(testmode=testmode)
-    combined.name = 'combined $\sigma = %2.2f$'%sigma_thresh
+    combined.name = 'combined $\sigma_{thresh} = %2.2f$'%sigma_thresh
     combined.plotcolor = 'black'
     print "Final combination for marginalisation ", new_name_marg
     combined.niceprint()

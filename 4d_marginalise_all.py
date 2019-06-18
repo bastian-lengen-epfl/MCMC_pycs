@@ -5,6 +5,8 @@ import pickle as pkl
 import importlib
 import argparse as ap
 from module import util_func as ut
+import matplotlib as mpl
+mpl.rcParams['font.family'] = 'serif'
 
 
 def main(lensname,dataname,work_dir='./'):

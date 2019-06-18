@@ -4,6 +4,8 @@ import numpy as np
 import pickle as pkl
 import importlib
 import argparse as ap
+import matplotlib as mpl
+mpl.rcParams['font.family'] = 'serif'
 
 def main(lensname,dataname,work_dir='./'):
     sys.path.append(work_dir + "config/")

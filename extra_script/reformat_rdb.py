@@ -12,7 +12,7 @@ def main(lensname,dataname, data_dir = '../data/'):
     header = header.split('\t')
     lcs = []
 
-    magerr = 5
+    magerr = 4
 
     if "mag_A" in header :
         lcs.append(pycs.gen.lc.rdbimport(rdbfile, 'A', 'mag_A', 'magerr_A_%i'%magerr, dataname))
