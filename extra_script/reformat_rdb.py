@@ -2,7 +2,7 @@ import os
 import argparse as ap
 import pycs
 
-def main(lensname,dataname, data_dir = '../data/'):
+def main(lensname,dataname, magerr, data_dir = '../data/'):
     rdbfile = data_dir + lensname + '_' + dataname+ '.rdb'
     print rdbfile
 
@@ -11,8 +11,6 @@ def main(lensname,dataname, data_dir = '../data/'):
 
     header = header.split('\t')
     lcs = []
-
-    magerr = 4
 
     if "mag_A" in header :
         lcs.append(pycs.gen.lc.rdbimport(rdbfile, 'A', 'mag_A', 'magerr_A_%i'%magerr, dataname))
@@ -35,6 +33,7 @@ if __name__ == '__main__':
                                formatter_class=ap.RawTextHelpFormatter)
     help_lensname = "name of the lens to process"
     help_dataname = "name of the data set to process (Euler, SMARTS, ... )"
+    help_magerr = "Type of COSMOULINE error, take 5 by default"
     help_data_dir = "name of the data directory"
     parser.add_argument(dest='lensname', type=str,
                         metavar='lens_name', action='store',
@@ -42,8 +41,12 @@ if __name__ == '__main__':
     parser.add_argument(dest='dataname', type=str,
                         metavar='dataname', action='store',
                         help=help_dataname)
+    parser.add_argument(dest='magerr', type=float,
+                        metavar='magerr', action='store',
+                        help=help_magerr)
     parser.add_argument('--dir', dest='data_dir', type=str,
                         metavar='', action='store', default='../data/',
                         help=help_data_dir)
     args = parser.parse_args()
-    main(args.lensname, args.dataname, data_dir=args.data_dir)
+
+    main(args.lensname, args.dataname, args.magerr, data_dir=args.data_dir)
