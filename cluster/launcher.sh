@@ -17,7 +17,7 @@ export WORK_DIR='./'
 max_node=1
 
 
-start_file="start_3c.slurm"
+start_file="start_3all.slurm"
 job_name_csr=$OBJECT_NAME$JOB_BASENAME
 
 echo "job name = "$job_name_csr

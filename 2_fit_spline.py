@@ -122,7 +122,6 @@ def main(lensname,dataname,work_dir='./'):
         regdiff_param_kw = ut.generate_regdiffparamskw(config.pointdensity, config.covkernel, config.pow, config.amp, config.scale, config.errscale)
 
     for i,k in enumerate(kwargs_optimiser_simoptfct):
-        myrslcs = []
         myrslcs = [pycs.regdiff.rslc.factory(l, pd=k['pointdensity'], covkernel=k['covkernel'],
                                              pow=k['pow'], amp=k['amp'], scale=k['scale'], errscale=k['errscale']) for l in lcs]
 

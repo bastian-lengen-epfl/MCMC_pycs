@@ -87,7 +87,7 @@ def main(lensname,work_dir='./'):
              g.plotcolor = 'darkgrey'
              groups_extra_regdiff.append(g)
 
-    radius = (sum.errors_down[0] + sum.errors_up[0]) / 2.0 * 2.5
+    radius = (sum.errors_down[0] + sum.errors_up[0]) / 2.0 * 3.0
     ncurve = len(config.lcs_label)
     if ncurve > 2:
         auto_radius = True
