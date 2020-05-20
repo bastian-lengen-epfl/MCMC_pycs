@@ -1,0 +1,21 @@
+- Need to have the .txt data in a sub-directory called ./data/*name*  Example : ./data/tdc1_rung0/
+- In the .data/*name* directory, have another /guess directory with a *name*_guess.txt file inside.
+- In the .data/*name*/guess_*name*.txt, have the initial guess in this format :
+	test_double_pair1.txt     -70.89
+	test_double_pair2.txt     104.22
+	test_double_pair3.txt     56.59
+(the text in the first column is not important, but the code read the second column)
+- run the extra script : python multiple_txt_to_rdb.py *name* double *nbr of txt files*
+		-> It will create the .rdb files in the ./data directory
+- run the 0th script : python multiple_0.py *name* double *nbr of txt files*
+		-> It will create the ./config/multiple/config_multiple_*name*.py 
+		   where you can modify the config parameters.
+- run the 1st script : python multiple_1.py *name* double *nbr of txt files*
+		-> It will create the ./config/config_*name*_double_pair*number*_ECAM.py (and .pyc)
+		   and will modify the values inside with the ones from the  config_multiple_*name*.py file already created
+	       + insert the initial guess with a value taken in a gaussian of mean *guess* and variance of 5.
+- run the 2nd script : python multiple_2.py *name* double *nbr of txt files*
+		-> Launch the 2_fit_spline.py for *nbr of txt files* times.
+- run the ./cluster/multiple_launcher.sh for the 3rd script
+		-> need to modify the script in order to run the good jobs.
+- run the multiple_4a.py and multiple_4b.py with argument *name* double *nbr of txt files*

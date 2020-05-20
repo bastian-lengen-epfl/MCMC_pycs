@@ -48,7 +48,7 @@ def main(lensname,dataname,work_dir='./'):
             string_ML ="nmlspl"
         else :
             ml_param = config.mlknotsteps
-            string_ML = "knml"
+            string_ML = "ksml"   # Was knml, changed it
     elif config.mltype == "polyml" :
         ml_param = config.degree
         string_ML = "deg"

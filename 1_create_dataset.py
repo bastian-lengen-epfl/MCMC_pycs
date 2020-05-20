@@ -8,7 +8,6 @@ from shutil import copyfile
 from module import util_func as ut
 
 def main(lensname,dataname, work_dir = './'):
-
     data_directory = work_dir + "data/"
     pickle_directory = work_dir + "pkl/"
     config_directory = work_dir + "config/"
@@ -62,7 +61,7 @@ def main(lensname,dataname, work_dir = './'):
             cfile.close()
 
             print "Default config file created ! You might want to change the default parameters. "
-            ut.proquest(True)
+#            ut.proquest(True)
 
         else :
             print " Warning : do you have a quad or a double ? Make sure you update lcs_label in the config file ! I'll copy the double template for this time !"

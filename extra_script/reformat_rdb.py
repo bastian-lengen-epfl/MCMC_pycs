@@ -2,6 +2,7 @@ import os
 import argparse as ap
 import pycs
 
+
 def main(lensname,dataname, magerr, data_dir = '../data/'):
     rdbfile = data_dir + lensname + '_' + dataname+ '.rdb'
     print rdbfile
