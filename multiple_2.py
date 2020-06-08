@@ -9,6 +9,7 @@ def main(name, name_type, number_pair = 1, work_dir = './'):
 	lens_name = []
 	for i in range(1,number_pair+1):
 		lens_name.append(name + '_' + name_type + '_' + 'pair%i'%i)
+		#if i<=19 : continue
 		try :
 			subprocess.call([sys.executable, '2_fit_spline.py', lens_name[i-1], dataname])
 			print("Sucessully executed 2_fit_spline.py with the pair %i"%i)

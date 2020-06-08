@@ -79,7 +79,7 @@ def main(lensname,dataname,work_dir='./'):
                     copiesres = [pycs.sim.run.collect(config.lens_directory + config.combkw[a, b] + '/sims_%s_opt_%s' %(config.simset_copy, opt), 'blue',
                                                       dataname + "_" + config.combkw[a, b])]
 
-                    pycs.sim.plot.hists(copiesres, r=50.0, nbins=100, dataout=True,
+                    pycs.sim.plot.hists(copiesres, r=50.0, nbins=100, dataout=True, usemedian = True,
                                         filename=figure_directory+'delay_hist_%i-%i_sims_%s_opt_%s.png'%(kn,ml,config.simset_copy, opt),
                                         outdir = config.lens_directory + config.combkw[a, b] + '/sims_%s_opt_%s/' %(config.simset_copy, opt))
                     pycs.sim.plot.measvstrue(simres, r=2 * config.truetsr , nbins=1, plotpoints=True,

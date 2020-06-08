@@ -27,8 +27,8 @@ def main(name, name_type, number_pair = 1, work_dir = './'): #Make sure the dire
 			Lines=f.readlines()
 			for line in Lines :
 				line_count += 1
-				if (line_count == 99) :
-					tmp += 'mlknotsteps_marg = [200, 300]\n'
+				if (line_count == 98) :
+					tmp += 'knotstep_marg = knotstep #parameters to marginalise over, give a list or just select the same that you used above to marginalise over all the available parameters\n'
 				else :
 					tmp += line
 

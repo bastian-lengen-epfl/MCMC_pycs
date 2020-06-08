@@ -14,6 +14,13 @@ def main(name, name_type, number_pair = 1, work_dir = './'): #Make sure the dire
 	data_directory = work_dir + "data/"
 	guess_directory = data_directory + name + "/guess/"
 	dataname = 'ECAM'
+	Simulation_directory = work_dir + "Simulation/"
+	Simulation_multiple_directory = Simulation_directory + "multiple/" + name + "_double/"
+	if not os.path.exists(Simulation_directory + "multiple/"):
+		print "I will create the multiple simulation directory for you ! "
+		os.mkdir(Simulation_directory + "multiple/")
+	if not os.path.exists(Simulation_multiple_directory):
+		os.mkdir(Simulation_multiple_directory)
 	
 	### Open the initial guess folder with the name guess_name.txt in the data/name/guess directory
 	### The folder has to be the same form as a csv file ie. name value \n name2 value 2 \n...
@@ -22,7 +29,9 @@ def main(name, name_type, number_pair = 1, work_dir = './'): #Make sure the dire
 	with open(guess_directory + 'guess_' + name + '.txt','r') as f:
 		Lines=f.readlines()
 		for line in Lines :
-			guess.append(np.random.normal(float(line.partition(' ')[2]), 5, 1)[0])	
+			guess.append(np.random.normal(float(line.partition(' ')[2]), 5, 1)[0])
+
+	
 
 	### Open the multiple_config 
 	with open(multiple_config_directory + 'config_multiple_' + name + '.py', 'r') as f:
@@ -39,7 +48,15 @@ def main(name, name_type, number_pair = 1, work_dir = './'): #Make sure the dire
 			guess = [-x for x in guess]
 		elif (int(Lines[21][6:9])!=1):
 			print('ERROR : Make sure the sign of the config_multiple file is +1 or -1')
-			sys.exit()		
+			sys.exit()	
+			
+	### Save the guesses
+	with open(Simulation_multiple_directory + 'post_gaussian_guess.txt', 'w') as f :
+		i=1
+		for x in guess :
+			f.write('Guess' + str(i) + ':' + str(x) + '\n')
+			i+=1
+		f.close()
 	
 	### Create the config files for each pairs ###
 	lens_name = []	
